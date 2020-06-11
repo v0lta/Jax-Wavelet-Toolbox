@@ -1,4 +1,4 @@
-# Differentiable and gpu enabled analsysis and synthesis fast wavelet transforms in jax. 
+# Differentiable and gpu enabled fast wavelet transforms in jax. 
 
 # Features:
     - 1d forward and backward fwt
