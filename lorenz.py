@@ -32,8 +32,14 @@ if __name__ == '__main__':
     # plt.plot(lorenz[:, 0])
     # plt.show()
 
+    import os
+    os.environ["DISPLAY"] = ":1"
+    import matplotlib
+    matplotlib.use('Qt5Agg')
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D
+
+    print(plt.get_backend())
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.plot(lorenz[:, 0], lorenz[:, 1], lorenz[:, 2])

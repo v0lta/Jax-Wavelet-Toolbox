@@ -4,6 +4,11 @@ import jax.numpy as np
 
 
 def fwt_pad(data, wavelet):
+    pad = 0
+    if data.shape[-1] % 2 != 0:
+        pad += 1
+
+    data = np.pad(data, ((0, 0), (0, 0), (0, pad)), 'reflect')
     return data
 
 
@@ -27,12 +32,12 @@ def get_filter_tensors(wavelet, flip):
     return dec_lo, dec_hi, rec_lo, rec_hi
 
 
-def forward_fwt(data, wavelet, scales: int = None):
+def analysis_fwt(data, wavelet, scales: int = None):
 
     dec_lo, dec_hi, _, _ = get_filter_tensors(wavelet, flip=True)
     filt_len = dec_lo.shape[-1]
-    dec_lo = np.expand_dims(np.array(dec_lo[::-1]), 0)
-    dec_hi = np.expand_dims(np.array(dec_hi[::-1]), 0)
+    dec_lo = np.array(dec_lo[::-1])
+    dec_hi = np.array(dec_hi[::-1])
     filt = np.stack([dec_lo, dec_hi], 0)
 
     if scales is None:
@@ -41,31 +46,36 @@ def forward_fwt(data, wavelet, scales: int = None):
     result_lst = []
     res_lo = data
     for _ in range(scales):
-        #if filt_len > 2:
         res_lo = fwt_pad(res_lo, wavelet)
-        res = jax.lax.conv(lhs=res_lo, # lhs = NCHW image tensor
-                           rhs=filt,   # rhs = OIHW conv kernel tensor
-                           padding='SAME', window_strides=[1, 2])
+        res = jax.lax.conv(lhs=res_lo, # lhs = NCW image tensor
+                           rhs=filt,   # rhs = OIW conv kernel tensor
+                           padding='VALID', window_strides=[2,])
         res_lo, res_hi = np.split(res, 2, 1)
-        result_lst.append(res_hi.squeeze(1))
-    result_lst.append(res_lo.squeeze(1))
+        result_lst.append(res_hi)
+    result_lst.append(res_lo)
     return result_lst[::-1]
+
+
+def synthesis_fwt(data, wavelet, scales: int= None):
+    pass
 
 
 
 if __name__ == '__main__':
     from lorenz import generate_lorenz
+    import os
+    os.environ["DISPLAY"] = ":1"
+    import matplotlib
+    matplotlib.use('Qt5Agg')
     import matplotlib.pyplot as plt
 
-    data = np.expand_dims(np.expand_dims(generate_lorenz(), 0), 0)
-    data = np.transpose(data, axes=[0, 1, 3, 2])
     wavelet = pywt.Wavelet('haar')
-    coeff = forward_fwt(data, wavelet)
-    cat_coeff = np.concatenate(coeff, axis=-1)
-    plt.plot(cat_coeff[0, 0, :])
-    pywt_coeff = pywt.wavedec(data, wavelet)
-    pywt_cat_coeff = np.concatenate(pywt_coeff, axis=-1)
-    plt.plot(pywt_cat_coeff[0, 0, 0, :])
-    plt.show()
-    print('err', np.sum(np.abs(cat_coeff - pywt_cat_coeff[0])))
-    print('done')
+
+    data = np.array([1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14., 15., 16.])
+    data = np.expand_dims(np.expand_dims(data, 0), 0)
+    coeffs = pywt.wavedec(data, wavelet, level=2)
+    coeffs2 = analysis_fwt(data, wavelet, scales=2)
+    cat_coeffs = np.concatenate(coeffs, -1)
+    cat_coeffs2 = np.concatenate(coeffs2, -1)
+    err = np.sum(np.abs(cat_coeffs - cat_coeffs2))
+    print(err, 'done')
