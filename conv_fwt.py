@@ -1,7 +1,11 @@
+#
+# Created on Thu Jun 11 2020
+# Copyright (c) 2020 Moritz Wolter
+#
+
 import pywt
 import jax
 import jax.numpy as np
-
 
 def fwt_pad(data, wavelet):
     # pad to ensure complete filter positions.
