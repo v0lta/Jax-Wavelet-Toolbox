@@ -13,4 +13,4 @@
 - To verify your version of jax-wavelets type `pytest`.
 
 ## Goals:
-- In the spirit of jax we aim to be 100% pywt compatible. We want the same interfaces and the same results.
+- In the spirit of jax we aim to be 100% pywt compatible. Whenever possible, we want the same interfaces and the same results.
