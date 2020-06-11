@@ -4,11 +4,19 @@ import jax.numpy as np
 
 
 def fwt_pad(data, wavelet):
-    pad = 0
-    if data.shape[-1] % 2 != 0:
-        pad += 1
+    # pad to ensure complete filter positions.
+    filt_len = len(wavelet.dec_lo)
+    padr = 0
+    padl = 0
+    if filt_len > 2:
+        padr += (2*filt_len - 3)//2
+        padl += (2*filt_len - 3)//2
 
-    data = np.pad(data, ((0, 0), (0, 0), (0, pad)), 'reflect')
+    # pad to even singal length.
+    if data.shape[-1] % 2 != 0:
+        padr += 1
+
+    data = np.pad(data, ((0, 0), (0, 0), (padl, padr)), 'reflect')
     return data
 
 
@@ -72,18 +80,24 @@ def synthesis_fwt(coeffs, wavelet, scales: int= None):
                                         strides=[2,],
                                         dimension_numbers=('NCH', 'OIH', 'NCH'))
 
-        # remove the padding
-        # padl = (2*filt_len - 3)//2
-        # padr = (2*filt_len - 3)//2
+        padr = 0
         padl = 0
+        # print('res_lo conv shape', res_lo.shape)
+        if filt_len > 2:
+            padr += (2*filt_len - 3)//2
+            padl += (2*filt_len - 3)//2
         if c_pos < len(coeffs)-2:
-            pred_len = res_lo.shape[-1]
+            pred_len = res_lo.shape[-1] - (padl + padr)
             nex_len = coeffs[c_pos+2].shape[-1]
             if nex_len != pred_len:
                 padl += 1
                 pred_len = res_lo.shape[-1] - padl
-                assert nex_len == pred_len, 'padding error, please open an issue on github '
-                res_lo = res_lo[..., :-padl]
+                # assert nex_len == pred_len, 'padding error, please open an issue on github '
+        if padl == 0:
+            res_lo = res_lo[..., padr:]
+        else:    
+            res_lo = res_lo[..., padr:-padl]
+        # print('res_lo shape', res_lo.shape)
     return res_lo
 
 
@@ -96,7 +110,7 @@ if __name__ == '__main__':
     matplotlib.use('Qt5Agg')
     import matplotlib.pyplot as plt
 
-    wavelet = pywt.Wavelet('haar')
+    wavelet = pywt.Wavelet('db4')
     # ---- Test harr wavelet analysis and synthesis on lorenz signal. -----
     lorenz = np.transpose(np.expand_dims(generate_lorenz()[:, 0], -1), [1, 0])
     data = np.expand_dims(lorenz, 0)
@@ -106,12 +120,11 @@ if __name__ == '__main__':
     pywt_coeff = pywt.wavedec(lorenz, wavelet, mode='reflect')
     pywt_cat_coeff = np.concatenate(pywt_coeff, axis=-1)
     err = np.mean(np.abs(cat_coeff - pywt_cat_coeff))
-    assert err < 1e-6
+    print('coefficient', err)
 
-    rest_data = synthesis_fwt(coeff, wavelet, scales=2)
+    rest_data = synthesis_fwt(coeff, wavelet)
     err = np.mean(np.abs(rest_data - data))
     plt.plot(rest_data[0, 0, :])
     plt.plot(data[0, 0, :])
     plt.show()
-    # assert err < 1e-6
-    print('done')
+    print(err, 'done')
