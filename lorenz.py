@@ -4,7 +4,7 @@ import jax.numpy as np
 import matplotlib.pyplot as plt
 
 @jax.jit
-def generate_lorenz(a=10., b=28., c=8./3., dt=0.01, tmax=10, x0=np.array([2.1, 1., 3.])):
+def generate_lorenz(a=10., b=28., c=8./3., dt=0.01, tmax=10.23, x0=np.array([2.1, 1., 3.])):
     steps = tmax/dt
     x_lst = []
 
