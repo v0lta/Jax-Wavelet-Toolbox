@@ -9,5 +9,5 @@
 - Head to https://github.com/google/jax#installation and follow the procedure described there.
 - Install pytest `pip install -U pytest`
 - Clone this repository `git clone https://github.com/v0lta/jax-wavelets`
-- Move into the new directory `cd jax_wavelets`
+- Move into the new directory `cd jax-wavelets`
 - To verify your version of jax-wavelets type `pytest`.
