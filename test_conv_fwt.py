@@ -20,12 +20,12 @@ def test_haar_fwt_ifwt_16():
     assert err < 1e-5
 
 def fwt_ifwt_lorenz(wavelet):
-    # ---- Test harr wavelet analysis and synthesis on lorenz signal. -----
+    # ---- Test wavelet analysis and synthesis on lorenz signal. -----
     lorenz = np.transpose(np.expand_dims(generate_lorenz()[:, 0], -1), [1, 0])
     data = np.expand_dims(lorenz, 0)
     coeff = analysis_fwt(data, wavelet)
-    cat_coeff = np.concatenate(coeff, axis=-1)
     pywt_coeff = pywt.wavedec(lorenz, wavelet, mode='reflect')
+    cat_coeff = np.concatenate(coeff, axis=-1)
     pywt_cat_coeff = np.concatenate(pywt_coeff, axis=-1)
     err = np.mean(np.abs(cat_coeff - pywt_cat_coeff))
     assert err < 1e-5
