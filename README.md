@@ -1,9 +1,9 @@
 ## Differentiable and gpu enabled fast wavelet transforms in jax. 
 
 ## Features:
-    - 1d forward and backward fwt
-    - 2d forward and backard fwt (Todo)
-    - Wavelet packets (TODO)
+- 1d forward and backward fwt
+- 2d forward and backard fwt (Todo)
+- Wavelet packets (TODO)
 
 ## Installation:
 - Head to https://github.com/google/jax#installation and follow the procedure described there.
