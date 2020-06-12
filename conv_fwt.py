@@ -6,6 +6,7 @@
 import pywt
 import jax
 import jax.numpy as np
+from wave_util import JaxWavelet
 
 def fwt_pad(data, wavelet, mode='reflect'):
     # pad to we see all filter positions and pywt compatability.
@@ -46,21 +47,28 @@ def get_filter_arrays(wavelet, flip):
                 return np.expand_dims(filter, 0)
             else:
                 return np.expand_dims(np.array(filter), 0)
-    dec_lo, dec_hi, rec_lo, rec_hi = wavelet.filter_bank
+    if type(wavelet) is pywt.Wavelet:
+        dec_lo, dec_hi, rec_lo, rec_hi = wavelet.filter_bank
+    else:
+        dec_lo, dec_hi, rec_lo, rec_hi = wavelet
     dec_lo = create_array(dec_lo)
     dec_hi = create_array(dec_hi)
     rec_lo = create_array(rec_lo)
     rec_hi = create_array(rec_hi)
     return dec_lo, dec_hi, rec_lo, rec_hi
 
+@jax.jit
+def dwt_max_level(data_len: int, filt_len: int) -> int:
+    return np.floor(np.log2(data_len/(filt_len - 1.))).astype(np.int32)
 
-def wavedec(data, wavelet, scales: int = None):
+def wavedec(data: np.array, wavelet: JaxWavelet, scales: int = None) -> list:
     dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True)
     filt_len = dec_lo.shape[-1]
     filt = np.stack([dec_lo, dec_hi], 0)
 
     if scales is None:
-        scales = pywt.dwt_max_level(data.shape[-1], filt_len)
+        # scales = pywt.dwt_max_level(data.shape[-1], filt_len)
+        scales = dwt_max_level(data.shape[-1], filt_len)
 
     result_lst = []
     res_lo = data
@@ -77,8 +85,8 @@ def wavedec(data, wavelet, scales: int = None):
     result_lst.reverse()
     return result_lst
 
-
-def waverec(coeffs, wavelet, scales: int= None):
+@jax.jit
+def waverec(coeffs: list, wavelet: JaxWavelet, scales: int= None) -> np.array:
     # lax's transpose conv requires filter flips in contrast to pytorch.
     _, _, rec_lo, rec_hi = get_filter_arrays(wavelet, flip=True) 
     filt_len = rec_lo.shape[-1]
@@ -113,7 +121,6 @@ def waverec(coeffs, wavelet, scales: int= None):
     return res_lo
 
 
-
 if __name__ == '__main__':
     from lorenz import generate_lorenz
     import os
@@ -122,19 +129,21 @@ if __name__ == '__main__':
     matplotlib.use('Qt5Agg')
     import matplotlib.pyplot as plt
 
-    wavelet = pywt.Wavelet('db4')
-    # ---- Test harr wavelet analysis and synthesis on lorenz signal. -----
+    wavelet = pywt.Wavelet('haar')
+    jax_wavelet = JaxWavelet(wavelet.dec_lo, wavelet.dec_hi,
+                             wavelet.rec_lo, wavelet.rec_hi)
+    # ---- Test haar wavelet analysis and synthesis on lorenz signal. -----
     lorenz = np.transpose(np.expand_dims(generate_lorenz()[:, 0], -1), [1, 0])
     data = np.expand_dims(lorenz, 0)
 
-    coeff = wavedec(data, wavelet)
+    coeff = wavedec(data, jax_wavelet)
     cat_coeff = np.concatenate(coeff, axis=-1)
     pywt_coeff = pywt.wavedec(lorenz, wavelet, mode='reflect')
     pywt_cat_coeff = np.concatenate(pywt_coeff, axis=-1)
     err = np.mean(np.abs(cat_coeff - pywt_cat_coeff))
     print('coefficient', err)
 
-    rest_data = waverec(coeff, wavelet)
+    rest_data = waverec(coeff, jax_wavelet)
     err = np.mean(np.abs(rest_data - data))
     plt.plot(rest_data[0, 0, :])
     plt.plot(data[0, 0, :])

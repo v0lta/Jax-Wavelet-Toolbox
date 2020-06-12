@@ -7,7 +7,7 @@ import jax
 import jax.numpy as np
 from conv_fwt import fwt_pad
 from conv_fwt import get_filter_arrays
-
+from wave_util import JaxWavelet
 
 
 def construct_2d_filt(lo, hi):
@@ -53,9 +53,10 @@ def wavedec2(data, wavelet, scales: int=None):
     # dec_hi = torch.tensor(dec_hi[::-1]).unsqueeze(0)
     dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True)
     dec_filt = construct_2d_filt(lo=dec_lo, hi=dec_hi)
+    filt_len = dec_lo.shape[-1]
 
     if scales is None:
-        scales = pywt.dwtn_max_level([data.shape[-1], data.shape[-2]], wavelet)
+        scales = pywt.dwtn_max_level([data.shape[-1], data.shape[-2]], pywt.Wavelet('MyWavelet', wavelet))
 
     result_lst = []
     res_ll = data
@@ -142,10 +143,12 @@ if __name__ == '__main__':
     face = face[:, 128:(512+128), 256:(512+256)]
     face_exd = np.expand_dims(np.array(face), 1)
     wavelet = pywt.Wavelet('haar')
+    jax_wavelet = JaxWavelet(wavelet.dec_lo, wavelet.dec_hi,
+                             wavelet.rec_lo, wavelet.rec_hi)
     level = None
     coeff2d_pywt = pywt.wavedec2(face, wavelet, mode='reflect', level=level)
-    coeff2d = wavedec2(face_exd, wavelet, scales=level)
-    recss2d = waverec2(coeff2d, wavelet)
+    coeff2d = wavedec2(face_exd, jax_wavelet, scales=level)
+    recss2d = waverec2(coeff2d, jax_wavelet)
 
     flat_lst = np.concatenate(flatten_2d_coeff_lst(coeff2d_pywt), -1)
     flat_lst2 = np.concatenate(flatten_2d_coeff_lst(coeff2d), -1)
