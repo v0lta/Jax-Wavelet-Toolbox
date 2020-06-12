@@ -7,12 +7,22 @@ import pywt
 import jax
 import jax.numpy as np
 
-def fwt_pad(data, wavelet):
-    # pad to ensure complete filter positions.
+def fwt_pad(data, wavelet, mode='reflect'):
+    # pad to we see all filter positions and pywt compatability.
+    # convolution output length:
+    # see https://arxiv.org/pdf/1603.07285.pdf section 2.3:
+    # floor([data_len - filt_len]/2) + 1
+    # should equal pywt output length 
+    # floor((data_len + filt_len - 1)/2)
+    # => floor([data_len + total_pad - filt_len]/2) + 1
+    #    = floor((data_len + filt_len - 1)/2)
+    # (data_len + total_pad - filt_len) + 2 = data_len + filt_len - 1
+    # total_pad = 2*filt_len - 3 
     filt_len = len(wavelet.dec_lo)
     padr = 0
     padl = 0
     if filt_len > 2:
+        # we pad half of the total requried padding on each side.
         padr += (2*filt_len - 3)//2
         padl += (2*filt_len - 3)//2
 
@@ -20,12 +30,12 @@ def fwt_pad(data, wavelet):
     if data.shape[-1] % 2 != 0:
         padr += 1
 
-    data = np.pad(data, ((0, 0), (0, 0), (padl, padr)), 'reflect')
+    data = np.pad(data, ((0, 0), (0, 0), (padl, padr)), mode)
     return data
 
 
-def get_filter_tensors(wavelet, flip):
-    def create_tensor(filter):
+def get_filter_arrays(wavelet, flip):
+    def create_array(filter):
         if flip:
             if type(filter) is np.array:
                 return np.expand_dims(np.flip(filter), 0)
@@ -37,19 +47,16 @@ def get_filter_tensors(wavelet, flip):
             else:
                 return np.expand_dims(np.array(filter), 0)
     dec_lo, dec_hi, rec_lo, rec_hi = wavelet.filter_bank
-    dec_lo = create_tensor(dec_lo)
-    dec_hi = create_tensor(dec_hi)
-    rec_lo = create_tensor(rec_lo)
-    rec_hi = create_tensor(rec_hi)
+    dec_lo = create_array(dec_lo)
+    dec_hi = create_array(dec_hi)
+    rec_lo = create_array(rec_lo)
+    rec_hi = create_array(rec_hi)
     return dec_lo, dec_hi, rec_lo, rec_hi
 
 
-def analysis_fwt(data, wavelet, scales: int = None):
-
-    dec_lo, dec_hi, _, _ = get_filter_tensors(wavelet, flip=True)
+def wavedec(data, wavelet, scales: int = None):
+    dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True)
     filt_len = dec_lo.shape[-1]
-    # dec_lo = np.array(dec_lo[::-1])
-    # dec_hi = np.array(dec_hi[::-1])
     filt = np.stack([dec_lo, dec_hi], 0)
 
     if scales is None:
@@ -67,12 +74,13 @@ def analysis_fwt(data, wavelet, scales: int = None):
         res_lo, res_hi = np.split(res, 2, 1)
         result_lst.append(res_hi)
     result_lst.append(res_lo)
-    return result_lst[::-1]
+    result_lst.reverse()
+    return result_lst
 
 
-def synthesis_fwt(coeffs, wavelet, scales: int= None):
+def waverec(coeffs, wavelet, scales: int= None):
     # lax's transpose conv requires filter flips in contrast to pytorch.
-    _, _, rec_lo, rec_hi = get_filter_tensors(wavelet, flip=True) 
+    _, _, rec_lo, rec_hi = get_filter_arrays(wavelet, flip=True) 
     filt_len = rec_lo.shape[-1]
     filt = np.stack([rec_lo, rec_hi], 1)
 
@@ -119,14 +127,14 @@ if __name__ == '__main__':
     lorenz = np.transpose(np.expand_dims(generate_lorenz()[:, 0], -1), [1, 0])
     data = np.expand_dims(lorenz, 0)
 
-    coeff = analysis_fwt(data, wavelet)
+    coeff = wavedec(data, wavelet)
     cat_coeff = np.concatenate(coeff, axis=-1)
     pywt_coeff = pywt.wavedec(lorenz, wavelet, mode='reflect')
     pywt_cat_coeff = np.concatenate(pywt_coeff, axis=-1)
     err = np.mean(np.abs(cat_coeff - pywt_cat_coeff))
     print('coefficient', err)
 
-    rest_data = synthesis_fwt(coeff, wavelet)
+    rest_data = waverec(coeff, wavelet)
     err = np.mean(np.abs(rest_data - data))
     plt.plot(rest_data[0, 0, :])
     plt.plot(data[0, 0, :])
