@@ -85,6 +85,7 @@ def wavedec(data: np.array, wavelet: JaxWavelet, scales: int = None) -> list:
     result_lst.reverse()
     return result_lst
 
+
 @jax.jit
 def waverec(coeffs: list, wavelet: JaxWavelet, scales: int= None) -> np.array:
     # lax's transpose conv requires filter flips in contrast to pytorch.
