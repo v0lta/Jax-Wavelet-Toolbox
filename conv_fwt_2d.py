@@ -84,7 +84,7 @@ def waverec2(coeffs, wavelet):
 
     res_ll = coeffs[0]
     for c_pos, res_lh_hl_hh in enumerate(coeffs[1:]):
-        print(res_ll.shape)
+        # print(res_ll.shape)
         res_ll = np.concatenate([res_ll, res_lh_hl_hh[0], res_lh_hl_hh[1], res_lh_hl_hh[2]], 1)
         res_ll = jax.lax.conv_transpose(lhs=res_ll, rhs=rec_filt,
                                         padding='VALID',
@@ -116,6 +116,7 @@ def waverec2(coeffs, wavelet):
                 padb += 1
                 pred_len2 = res_ll.shape[-2] - (padt + padb)
                 assert next_len2 == pred_len2, 'padding error, please open an issue on github '
+        # print('padding', padt, padb, padl, padr)
         if padt > 0:
             res_ll = res_ll[..., padt:, :]
         if padb > 0:
@@ -138,11 +139,12 @@ if __name__ == '__main__':
     from test_conv_fwt2d import flatten_2d_coeff_lst
     
     face = np.transpose(scipy.misc.face(), [2, 0, 1]).astype(np.float32)
+    face = face[:, 128:(512+128), 256:(512+256)]
     face_exd = np.expand_dims(np.array(face), 1)
     wavelet = pywt.Wavelet('haar')
-
-    coeff2d_pywt = pywt.wavedec2(face, wavelet, mode='reflect', level=1)
-    coeff2d = wavedec2(face_exd, wavelet, scales=1)
+    level = None
+    coeff2d_pywt = pywt.wavedec2(face, wavelet, mode='reflect', level=level)
+    coeff2d = wavedec2(face_exd, wavelet, scales=level)
     recss2d = waverec2(coeff2d, wavelet)
 
     flat_lst = np.concatenate(flatten_2d_coeff_lst(coeff2d_pywt), -1)
