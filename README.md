@@ -2,8 +2,7 @@
 
 ## Features:
 - 1d forward and backward fwt
-- 2d forward and backard fwt (Todo)
-- Wavelet packets (TODO)
+- 2d forward and backard fwt 
 
 ## Installation:
 - Head to https://github.com/google/jax#installation and follow the procedure described there.
@@ -14,3 +13,6 @@
 
 ## Goals:
 - In the spirit of jax we aim to be 100% pywt compatible. Whenever possible, we want the same interfaces and the same results.
+
+## Coming up:
+- Wavelet packets (TODO)
