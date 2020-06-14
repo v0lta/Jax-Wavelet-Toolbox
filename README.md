@@ -1,8 +1,8 @@
 ## Differentiable and gpu enabled fast wavelet transforms in jax. 
 
 ## Features:
-- 1d forward and backward fwt
-- 2d forward and backard fwt 
+- 1d forward and backward fwt implemented in `conv_fwt.py`.
+- 2d forward and backard fwt methods are part of the `conv_fwt_2d.py` module.
 
 ## Installation:
 - Head to https://github.com/google/jax#installation and follow the procedure described there.
@@ -12,7 +12,10 @@
 - To verify your version of jax-wavelets type `pytest`.
 
 ## Goals:
-- In the spirit of jax the aim is to be 100% pywt compatible. Whenever possible, same interfaces and results should be identical.
+- In the spirit of jax the aim is to be 100% pywt compatible. Whenever possible, interfaces should be the same
+  results identical.
 
 ## Coming up:
 - Wavelet packets (TODO)
+- Interface improvements
+- Extended jit support.

@@ -61,18 +61,27 @@ def get_filter_arrays(wavelet, flip):
 def dwt_max_level(data_len: int, filt_len: int) -> int:
     return np.floor(np.log2(data_len/(filt_len - 1.))).astype(np.int32)
 
-def wavedec(data: np.array, wavelet: JaxWavelet, scales: int = None) -> list:
+def wavedec(data: np.array, wavelet: JaxWavelet, level: int = None) -> list:
+    """Computes the one dimensional analysis wavelet transform of the last dimension.
+    Args:
+        data (np.array): Input data array of shape [batch, channels, time]
+        wavelet (JaxWavelet): The named touple containing the wavelet filter arrays.
+        level (int, optional): Max scale level to be used, of none as many levels as possible are
+                               used. Defaults to None.
+    Returns:
+        list: List containing the wavelet coefficients.
+    """    
     dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True)
     filt_len = dec_lo.shape[-1]
     filt = np.stack([dec_lo, dec_hi], 0)
 
-    if scales is None:
+    if level is None:
         # scales = pywt.dwt_max_level(data.shape[-1], filt_len)
-        scales = dwt_max_level(data.shape[-1], filt_len)
+        level = dwt_max_level(data.shape[-1], filt_len)
 
     result_lst = []
     res_lo = data
-    for _ in range(scales):
+    for _ in range(level):
         res_lo = fwt_pad(res_lo, wavelet)
         res = jax.lax.conv_general_dilated(
             lhs=res_lo, # lhs = NCH image tensor
@@ -87,7 +96,16 @@ def wavedec(data: np.array, wavelet: JaxWavelet, scales: int = None) -> list:
 
 
 @jax.jit
-def waverec(coeffs: list, wavelet: JaxWavelet, scales: int= None) -> np.array:
+def waverec(coeffs: list, wavelet: JaxWavelet) -> np.array:
+    """ The one dimensional wavelet synthesis transform reconstructs the original
+        signal given the wavelet coefficients.
+    Args:
+        coeffs (list): Wavelet coefficients, typically produced by the wavedec function.
+        wavelet (JaxWavelet): The named tuple containing the wavelet filters used to evaluate
+                              the decomposition.
+    Returns:
+        np.array: Reconstruction of the original data.
+    """    
     # lax's transpose conv requires filter flips in contrast to pytorch.
     _, _, rec_lo, rec_hi = get_filter_arrays(wavelet, flip=True) 
     filt_len = rec_lo.shape[-1]

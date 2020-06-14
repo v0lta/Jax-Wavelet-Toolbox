@@ -45,24 +45,29 @@ def fwt_pad2d(data: np.array, wavelet, mode='reflect') -> np.array:
     return data
 
 
-def wavedec2(data, wavelet, scales: int=None):
-    """ 2d non-seperated fwt """
-    # dec_lo, dec_hi, _, _ = wavelet.filter_bank
-    # filt_len = len(dec_lo)
-    # dec_lo = torch.tensor(dec_lo[::-1]).unsqueeze(0)
-    # dec_hi = torch.tensor(dec_hi[::-1]).unsqueeze(0)
+def wavedec2(data: np.array, wavelet: JaxWavelet, level: int=None) -> list:
+    """Compute the two dimensional wavelet analysis transform on the last two dimensions 
+       of the input data array.
+    Args:
+        data (np.array): Jax array containing the data to be transformed. Assumed shape:
+                         [batch size, channels, hight, width].
+        wavelet (JaxWavelet): A namedtouple containing the filters for the transformation.
+        level (int, optional): The max level to be used, if not set as many levels as possible
+                               will be used. Defaults to None.
+    Returns:
+        list: The wavelet coefficients in a nested list.
+    """
     dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True)
     dec_filt = construct_2d_filt(lo=dec_lo, hi=dec_hi)
     filt_len = dec_lo.shape[-1]
 
-    if scales is None:
-        scales = pywt.dwtn_max_level([data.shape[-1], data.shape[-2]], pywt.Wavelet('MyWavelet', wavelet))
+    if level is None:
+        level = pywt.dwtn_max_level([data.shape[-1], data.shape[-2]], pywt.Wavelet('MyWavelet', wavelet))
 
     result_lst = []
     res_ll = data
-    for _ in range(scales):
+    for _ in range(level):
         res_ll = fwt_pad2d(res_ll, wavelet)
-        # res = torch.nn.functional.conv2d(res_ll, dec_filt, stride=2)
         res = jax.lax.conv_general_dilated(
             lhs=res_ll, # lhs = NCHw image tensor
             rhs=dec_filt,   # rhs = OIHw conv kernel tensor
@@ -75,9 +80,16 @@ def wavedec2(data, wavelet, scales: int=None):
     result_lst.reverse()
     return result_lst
 
+def waverec2(coeffs: list, wavelet: JaxWavelet) -> np.array:
+    """ This function implements the two dimensional synthesis wavelet transfrom,
+       it is used to reconstruct the original input image from the wavelet coefficients.
+    Args:
+        coeffs (list): The input coefficients, typically the output of wavedec2.
+        wavelet (JaxWavelet): The named touple contining the filters used to compute the analysis transform.
 
-def waverec2(coeffs, wavelet):
-    """ 2d non separated ifwt"""
+    Returns:
+        np.array: Reconstruction of the original input data array of shape [batch, channel, height, width].
+    """
     _, _, rec_lo, rec_hi = get_filter_arrays(wavelet, flip=True)
     filt_len = rec_lo.shape[-1]
     rec_filt = construct_2d_filt(lo=rec_lo, hi=rec_hi)
@@ -85,20 +97,11 @@ def waverec2(coeffs, wavelet):
 
     res_ll = coeffs[0]
     for c_pos, res_lh_hl_hh in enumerate(coeffs[1:]):
-        # print(res_ll.shape)
         res_ll = np.concatenate([res_ll, res_lh_hl_hh[0], res_lh_hl_hh[1], res_lh_hl_hh[2]], 1)
         res_ll = jax.lax.conv_transpose(lhs=res_ll, rhs=rec_filt,
                                         padding='VALID',
                                         strides=[2,2],
                                         dimension_numbers=('NCHW', 'OIHW', 'NCHW'))
-        # rec_filt_rot = np.rot90(np.rot90(rec_filt, axes=[0, 1]), axes=[0, 1])
-        # res_ll = jax.lax.conv_general_dilated(
-        #      lhs=res_ll, # lhs = NCHw image tensor
-        #      rhs=rec_filt_rot,   # rhs = OIHw conv kernel tensor
-        #      padding=((1, 1), (1, 1)), 
-        #      window_strides=[1, 1], lhs_dilation=[2, 2],
-        #      dimension_numbers=('NCHW', 'OIHW', 'NCHW'))
-
         # remove the padding
         padl = (2*filt_len - 3)//2
         padr = (2*filt_len - 3)//2
@@ -147,7 +150,7 @@ if __name__ == '__main__':
                              wavelet.rec_lo, wavelet.rec_hi)
     level = None
     coeff2d_pywt = pywt.wavedec2(face, wavelet, mode='reflect', level=level)
-    coeff2d = wavedec2(face_exd, jax_wavelet, scales=level)
+    coeff2d = wavedec2(face_exd, jax_wavelet, level=level)
     recss2d = waverec2(coeff2d, jax_wavelet)
 
     flat_lst = np.concatenate(flatten_2d_coeff_lst(coeff2d_pywt), -1)

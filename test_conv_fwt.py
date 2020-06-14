@@ -19,12 +19,12 @@ def test_haar_fwt_ifwt_16():
     data = np.array([1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14., 15., 16.])
     data = np.expand_dims(np.expand_dims(data, 0), 0)
     coeffs = pywt.wavedec(data, wavelet, level=2)
-    coeffs2 = wavedec(data, jax_wavelet, scales=2)
+    coeffs2 = wavedec(data, jax_wavelet, level=2)
     cat_coeffs = np.concatenate(coeffs, -1)
     cat_coeffs2 = np.concatenate(coeffs2, -1)
     err = np.mean(np.abs(cat_coeffs - cat_coeffs2))
     assert err < 1e-4
-    rest_data = waverec(coeffs2, jax_wavelet, scales=2)
+    rest_data = waverec(coeffs2, jax_wavelet, level=2)
     err = np.mean(np.abs(rest_data - data))
     assert err < 1e-4
 
