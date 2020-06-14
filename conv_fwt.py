@@ -8,58 +8,6 @@ import jax
 import jax.numpy as np
 from wave_util import JaxWavelet
 
-def fwt_pad(data, wavelet, mode='reflect'):
-    # pad to we see all filter positions and pywt compatability.
-    # convolution output length:
-    # see https://arxiv.org/pdf/1603.07285.pdf section 2.3:
-    # floor([data_len - filt_len]/2) + 1
-    # should equal pywt output length 
-    # floor((data_len + filt_len - 1)/2)
-    # => floor([data_len + total_pad - filt_len]/2) + 1
-    #    = floor((data_len + filt_len - 1)/2)
-    # (data_len + total_pad - filt_len) + 2 = data_len + filt_len - 1
-    # total_pad = 2*filt_len - 3 
-    filt_len = len(wavelet.dec_lo)
-    padr = 0
-    padl = 0
-    if filt_len > 2:
-        # we pad half of the total requried padding on each side.
-        padr += (2*filt_len - 3)//2
-        padl += (2*filt_len - 3)//2
-
-    # pad to even singal length.
-    if data.shape[-1] % 2 != 0:
-        padr += 1
-
-    data = np.pad(data, ((0, 0), (0, 0), (padl, padr)), mode)
-    return data
-
-
-def get_filter_arrays(wavelet, flip):
-    def create_array(filter):
-        if flip:
-            if type(filter) is np.array:
-                return np.expand_dims(np.flip(filter), 0)
-            else:
-                return np.expand_dims(np.array(filter[::-1]), 0)
-        else:
-            if type(filter) is np.array:
-                return np.expand_dims(filter, 0)
-            else:
-                return np.expand_dims(np.array(filter), 0)
-    if type(wavelet) is pywt.Wavelet:
-        dec_lo, dec_hi, rec_lo, rec_hi = wavelet.filter_bank
-    else:
-        dec_lo, dec_hi, rec_lo, rec_hi = wavelet
-    dec_lo = create_array(dec_lo)
-    dec_hi = create_array(dec_hi)
-    rec_lo = create_array(rec_lo)
-    rec_hi = create_array(rec_hi)
-    return dec_lo, dec_hi, rec_lo, rec_hi
-
-@jax.jit
-def dwt_max_level(data_len: int, filt_len: int) -> int:
-    return np.floor(np.log2(data_len/(filt_len - 1.))).astype(np.int32)
 
 def wavedec(data: np.array, wavelet: JaxWavelet, level: int = None) -> list:
     """Computes the one dimensional analysis wavelet transform of the last dimension.
@@ -140,12 +88,67 @@ def waverec(coeffs: list, wavelet: JaxWavelet) -> np.array:
     return res_lo
 
 
+def fwt_pad(data, wavelet, mode='reflect'):
+    # pad to we see all filter positions and pywt compatability.
+    # convolution output length:
+    # see https://arxiv.org/pdf/1603.07285.pdf section 2.3:
+    # floor([data_len - filt_len]/2) + 1
+    # should equal pywt output length 
+    # floor((data_len + filt_len - 1)/2)
+    # => floor([data_len + total_pad - filt_len]/2) + 1
+    #    = floor((data_len + filt_len - 1)/2)
+    # (data_len + total_pad - filt_len) + 2 = data_len + filt_len - 1
+    # total_pad = 2*filt_len - 3 
+    filt_len = len(wavelet.dec_lo)
+    padr = 0
+    padl = 0
+    if filt_len > 2:
+        # we pad half of the total requried padding on each side.
+        padr += (2*filt_len - 3)//2
+        padl += (2*filt_len - 3)//2
+
+    # pad to even singal length.
+    if data.shape[-1] % 2 != 0:
+        padr += 1
+
+    data = np.pad(data, ((0, 0), (0, 0), (padl, padr)), mode)
+    return data
+
+
+def get_filter_arrays(wavelet, flip):
+    def create_array(filter):
+        if flip:
+            if type(filter) is np.array:
+                return np.expand_dims(np.flip(filter), 0)
+            else:
+                return np.expand_dims(np.array(filter[::-1]), 0)
+        else:
+            if type(filter) is np.array:
+                return np.expand_dims(filter, 0)
+            else:
+                return np.expand_dims(np.array(filter), 0)
+    if type(wavelet) is pywt.Wavelet:
+        dec_lo, dec_hi, rec_lo, rec_hi = wavelet.filter_bank
+    else:
+        dec_lo, dec_hi, rec_lo, rec_hi = wavelet
+    dec_lo = create_array(dec_lo)
+    dec_hi = create_array(dec_hi)
+    rec_lo = create_array(rec_lo)
+    rec_hi = create_array(rec_hi)
+    return dec_lo, dec_hi, rec_lo, rec_hi
+
+@jax.jit
+def dwt_max_level(data_len: int, filt_len: int) -> int:
+    return np.floor(np.log2(data_len/(filt_len - 1.))).astype(np.int32)
+
+
+
 if __name__ == '__main__':
     from lorenz import generate_lorenz
-    import os
-    os.environ["DISPLAY"] = ":1"
-    import matplotlib
-    matplotlib.use('Qt5Agg')
+    # import os
+    # os.environ["DISPLAY"] = ":1"
+    # import matplotlib
+    # matplotlib.use('Qt5Agg')
     import matplotlib.pyplot as plt
 
     wavelet = pywt.Wavelet('haar')
