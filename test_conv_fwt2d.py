@@ -27,7 +27,7 @@ def run_2dtest(wavelet, level=None):
     face_exd = np.expand_dims(np.array(face), 1)
     
     coeff2d_pywt = pywt.wavedec2(face, wavelet, mode='reflect', level=level)
-    coeff2d = wavedec2(face_exd, wavelet, scales=level)
+    coeff2d = wavedec2(face_exd, wavelet, level=level)
     # test pywt compatability
     flat_lst = np.concatenate(flatten_2d_coeff_lst(coeff2d_pywt), -1)
     flat_lst2 = np.concatenate(flatten_2d_coeff_lst(coeff2d), -1)

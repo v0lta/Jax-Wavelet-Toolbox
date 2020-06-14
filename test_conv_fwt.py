@@ -24,7 +24,7 @@ def test_haar_fwt_ifwt_16():
     cat_coeffs2 = np.concatenate(coeffs2, -1)
     err = np.mean(np.abs(cat_coeffs - cat_coeffs2))
     assert err < 1e-4
-    rest_data = waverec(coeffs2, jax_wavelet, level=2)
+    rest_data = waverec(coeffs2, jax_wavelet)
     err = np.mean(np.abs(rest_data - data))
     assert err < 1e-4
 
