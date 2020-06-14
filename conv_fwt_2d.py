@@ -10,41 +10,6 @@ from conv_fwt import get_filter_arrays
 from wave_util import JaxWavelet
 
 
-def construct_2d_filt(lo, hi):
-    """ Construct 2d filters from 1d inputs."""
-    ll = np.outer(lo, lo)
-    lh = np.outer(hi, lo)
-    hl = np.outer(lo, hi)
-    hh = np.outer(hi, hi)
-    filt = np.stack([ll, lh, hl, hh], 0)
-    filt = np.expand_dims(filt, 1)
-    return filt
-
-
-def fwt_pad2d(data: np.array, wavelet, mode='reflect') -> np.array:
-    filt_len = len(wavelet.dec_lo)
-    padr = 0
-    padl = 0
-    padt = 0
-    padb = 0
-    if filt_len > 2:
-        # we pad half of the total requried padding on each side.
-        padr += (2*filt_len - 3)//2
-        padl += (2*filt_len - 3)//2
-        padt += (2*filt_len - 3)//2
-        padb += (2*filt_len - 3)//2
-
-    # pad to even singal length.
-    if data.shape[-1] % 2 != 0:
-        padr += 1
-    if data.shape[-2] % 2 != 0:
-        padb += 1
-
-    data = np.pad(data, ((0, 0), (0, 0), (padt, padb), (padl, padr)),
-                  mode)
-    return data
-
-
 def wavedec2(data: np.array, wavelet: JaxWavelet, level: int=None) -> list:
     """Compute the two dimensional wavelet analysis transform on the last two dimensions 
        of the input data array.
@@ -131,12 +96,48 @@ def waverec2(coeffs: list, wavelet: JaxWavelet) -> np.array:
             res_ll = res_ll[..., :-padr]
     return res_ll
 
+
+def construct_2d_filt(lo, hi):
+    """ Construct 2d filters from 1d inputs."""
+    ll = np.outer(lo, lo)
+    lh = np.outer(hi, lo)
+    hl = np.outer(lo, hi)
+    hh = np.outer(hi, hi)
+    filt = np.stack([ll, lh, hl, hh], 0)
+    filt = np.expand_dims(filt, 1)
+    return filt
+
+
+def fwt_pad2d(data: np.array, wavelet, mode='reflect') -> np.array:
+    filt_len = len(wavelet.dec_lo)
+    padr = 0
+    padl = 0
+    padt = 0
+    padb = 0
+    if filt_len > 2:
+        # we pad half of the total requried padding on each side.
+        padr += (2*filt_len - 3)//2
+        padl += (2*filt_len - 3)//2
+        padt += (2*filt_len - 3)//2
+        padb += (2*filt_len - 3)//2
+
+    # pad to even singal length.
+    if data.shape[-1] % 2 != 0:
+        padr += 1
+    if data.shape[-2] % 2 != 0:
+        padb += 1
+
+    data = np.pad(data, ((0, 0), (0, 0), (padt, padb), (padl, padr)),
+                  mode)
+    return data
+
+
 if __name__ == '__main__':
     import os
-    os.environ["DISPLAY"] = ":1"
-    os.environ["CUDA_VISIBLE_DEVICES"] = ""
+    # os.environ["DISPLAY"] = ":1"
+    # os.environ["CUDA_VISIBLE_DEVICES"] = ""
     import matplotlib
-    matplotlib.use('Qt5Agg')
+    # matplotlib.use('Qt5Agg')
     import matplotlib.pyplot as plt
     import jax.numpy as np
     import scipy.misc
