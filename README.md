@@ -19,3 +19,6 @@
 - Wavelet packets (TODO)
 - Interface improvements
 - Extended jit support.
+
+## Feedback:
+This is an early release, if you have questions or run into issues, please let me know.
