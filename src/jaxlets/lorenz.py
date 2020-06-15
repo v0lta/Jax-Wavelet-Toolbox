@@ -41,8 +41,8 @@ def generate_lorenz(
 
 
 @click.command()
-@click.option('--directory', default=os.getcwd())
-def main(directory):
+@click.option('-o', '--output')
+def main(output):
     print('Simulation of the lorenz equation.')
     lorenz = generate_lorenz()
     print(lorenz.shape)
@@ -51,13 +51,18 @@ def main(directory):
 
     os.environ["DISPLAY"] = ":1"
     import matplotlib.pyplot as plt
-    # matplotlib.use('Qt5Agg')
+    if output is None:
+        import matplotlib
+        matplotlib.use('Qt5Agg')
 
     print('Backend', plt.get_backend())
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.plot(lorenz[:, 0], lorenz[:, 1], lorenz[:, 2])
-    plt.savefig(os.path.join(directory, 'lorenz_result.pdf'))
+    if output is None:
+        plt.show()
+    else:
+        plt.savefig(output)
 
 
 if __name__ == '__main__':

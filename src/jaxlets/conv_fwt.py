@@ -4,8 +4,6 @@
 # Copyright (c) 2020 Moritz Wolter
 #
 
-import os
-
 import click
 import jax
 import jax.numpy as np
@@ -151,8 +149,8 @@ def dwt_max_level(data_len: int, filt_len: int) -> int:
 
 
 @click.command()
-@click.option('--directory', default=os.getcwd())
-def main(directory):
+@click.option('-o', '--output')
+def main(output):
     # import os
     # os.environ["DISPLAY"] = ":1"
     # import matplotlib
@@ -177,7 +175,10 @@ def main(directory):
     err = np.mean(np.abs(rest_data - data))
     plt.plot(rest_data[0, 0, :])
     plt.plot(data[0, 0, :])
-    plt.savefig(os.path.join(directory, 'conv_fwt_1d_results.pdf'))
+    if output is None:
+        plt.show()
+    else:
+        plt.savefig(output)
     print(err, 'done')
 
 

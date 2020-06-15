@@ -5,7 +5,6 @@
 # Copyright (c) 2020 Moritz Wolter
 #
 
-import os
 from typing import Optional
 
 import click
@@ -142,9 +141,9 @@ def fwt_pad2d(data: np.array, wavelet, mode='reflect') -> np.array:
 
 
 @click.command()
-@click.option('--directory', default=os.getcwd())
+@click.option('-o', '--output')
 @click.option('--level', type=int)
-def main(directory, level: Optional[int]):
+def main(output, level: Optional[int]):
     import matplotlib.pyplot as plt
     import scipy.misc
     # os.environ["DISPLAY"] = ":1"
@@ -173,7 +172,10 @@ def main(directory, level: Optional[int]):
     axes[0].imshow(np.transpose(recss2d[:, 0, :, :], [1, 2, 0]) / np.max(np.abs(recss2d)))
     errimg = np.abs(recss2d - face_exd)
     axes[1].imshow(np.transpose(errimg[:, 0, :, :], [1, 2, 0]) / np.max(np.abs(errimg)))
-    plt.savefig(os.path.join(directory, 'conv_fwt_2d_results.pdf'))
+    if output is None:
+        plt.show()
+    else:
+        plt.savefig(output)
 
 
 if __name__ == '__main__':
