@@ -28,4 +28,4 @@
 - Extended jit support.
 
 ## Feedback:
-This is an early release, if you have questions or run into issues, please let me know.
+This is an early release, if you have questions, suggestions or run into issues, please let me know.
