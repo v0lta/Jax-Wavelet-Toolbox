@@ -61,4 +61,4 @@ Coming up
 
 Feedback
 --------
-This is an early release, if you have questions, suggestions or run into issues, please let me know.
+This is an early release, if you have questions, suggestions or run into issues, please open an issue.
