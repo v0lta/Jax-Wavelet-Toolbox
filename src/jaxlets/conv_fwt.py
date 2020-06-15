@@ -4,11 +4,15 @@
 # Copyright (c) 2020 Moritz Wolter
 #
 
-import pywt
+import os
+
+import click
 import jax
 import jax.numpy as np
+import pywt
 
-from .wave_util import JaxWavelet
+from .lorenz import generate_lorenz
+from .utils import JaxWavelet
 
 
 def wavedec(data: np.array, wavelet: JaxWavelet, level: int = None) -> list:
@@ -20,7 +24,7 @@ def wavedec(data: np.array, wavelet: JaxWavelet, level: int = None) -> list:
                                used. Defaults to None.
     Returns:
         list: List containing the wavelet coefficients.
-    """    
+    """
     dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True)
     filt_len = dec_lo.shape[-1]
     filt = np.stack([dec_lo, dec_hi], 0)
@@ -34,9 +38,9 @@ def wavedec(data: np.array, wavelet: JaxWavelet, level: int = None) -> list:
     for _ in range(level):
         res_lo = fwt_pad(res_lo, wavelet)
         res = jax.lax.conv_general_dilated(
-            lhs=res_lo, # lhs = NCH image tensor
-            rhs=filt,   # rhs = OIH conv kernel tensor
-            padding='VALID', window_strides=[2,],
+            lhs=res_lo,  # lhs = NCH image tensor
+            rhs=filt,  # rhs = OIH conv kernel tensor
+            padding='VALID', window_strides=[2, ],
             dimension_numbers=('NCH', 'OIH', 'NCH'))
         res_lo, res_hi = np.split(res, 2, 1)
         result_lst.append(res_hi)
@@ -55,9 +59,9 @@ def waverec(coeffs: list, wavelet: JaxWavelet) -> np.array:
                               the decomposition.
     Returns:
         np.array: Reconstruction of the original data.
-    """    
+    """
     # lax's transpose conv requires filter flips in contrast to pytorch.
-    _, _, rec_lo, rec_hi = get_filter_arrays(wavelet, flip=True) 
+    _, _, rec_lo, rec_hi = get_filter_arrays(wavelet, flip=True)
     filt_len = rec_lo.shape[-1]
     filt = np.stack([rec_lo, rec_hi], 1)
 
@@ -66,25 +70,25 @@ def waverec(coeffs: list, wavelet: JaxWavelet) -> np.array:
         # print('shapes', res_lo.shape, res_hi.shape)
         res_lo = np.concatenate([res_lo, res_hi], 1)
         res_lo = jax.lax.conv_transpose(lhs=res_lo, rhs=filt, padding='VALID',
-                                        strides=[2,],
+                                        strides=[2, ],
                                         dimension_numbers=('NCH', 'OIH', 'NCH'))
 
         padr = 0
         padl = 0
         # print('res_lo conv shape', res_lo.shape)
         if filt_len > 2:
-            padr += (2*filt_len - 3)//2
-            padl += (2*filt_len - 3)//2
-        if c_pos < len(coeffs)-2:
+            padr += (2 * filt_len - 3) // 2
+            padl += (2 * filt_len - 3) // 2
+        if c_pos < len(coeffs) - 2:
             pred_len = res_lo.shape[-1] - (padl + padr)
-            nex_len = coeffs[c_pos+2].shape[-1]
+            nex_len = coeffs[c_pos + 2].shape[-1]
             if nex_len != pred_len:
                 padl += 1
                 pred_len = res_lo.shape[-1] - padl
                 # assert nex_len == pred_len, 'padding error, please open an issue on github '
         if padl == 0:
             res_lo = res_lo[..., padr:]
-        else:    
+        else:
             res_lo = res_lo[..., padr:-padl]
         # print('res_lo shape', res_lo.shape)
     return res_lo
@@ -106,8 +110,8 @@ def fwt_pad(data, wavelet, mode='reflect'):
     padl = 0
     if filt_len > 2:
         # we pad half of the total requried padding on each side.
-        padr += (2*filt_len - 3)//2
-        padl += (2*filt_len - 3)//2
+        padr += (2 * filt_len - 3) // 2
+        padl += (2 * filt_len - 3) // 2
 
     # pad to even singal length.
     if data.shape[-1] % 2 != 0:
@@ -129,6 +133,7 @@ def get_filter_arrays(wavelet, flip):
                 return np.expand_dims(filter, 0)
             else:
                 return np.expand_dims(np.array(filter), 0)
+
     if type(wavelet) is pywt.Wavelet:
         dec_lo, dec_hi, rec_lo, rec_hi = wavelet.filter_bank
     else:
@@ -139,14 +144,15 @@ def get_filter_arrays(wavelet, flip):
     rec_hi = create_array(rec_hi)
     return dec_lo, dec_hi, rec_lo, rec_hi
 
+
 @jax.jit
 def dwt_max_level(data_len: int, filt_len: int) -> int:
-    return np.floor(np.log2(data_len/(filt_len - 1.))).astype(np.int32)
+    return np.floor(np.log2(data_len / (filt_len - 1.))).astype(np.int32)
 
 
-
-if __name__ == '__main__':
-    from src.jaxlets.lorenz import generate_lorenz
+@click.command()
+@click.option('--directory', default=os.getcwd())
+def main(directory):
     # import os
     # os.environ["DISPLAY"] = ":1"
     # import matplotlib
@@ -171,5 +177,9 @@ if __name__ == '__main__':
     err = np.mean(np.abs(rest_data - data))
     plt.plot(rest_data[0, 0, :])
     plt.plot(data[0, 0, :])
-    plt.show()
+    plt.savefig(os.path.join(directory, 'conv_fwt_1d_results.pdf'))
     print(err, 'done')
+
+
+if __name__ == '__main__':
+    main()

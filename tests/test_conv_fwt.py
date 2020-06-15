@@ -1,14 +1,16 @@
+# -*- coding: utf-8 -*-
+
 #
 # Created on Thu Jun 11 2020
 # Copyright (c) 2020 Moritz Wolter
 #
 
-
 import jax.numpy as np
 import pywt
+
 from jaxlets.conv_fwt import wavedec, waverec
 from jaxlets.lorenz import generate_lorenz
-from jaxlets.wave_util import JaxWavelet
+from jaxlets.utils import JaxWavelet
 
 
 def test_haar_fwt_ifwt_16():
@@ -68,11 +70,3 @@ def test_db8_fwt_ifwt_lorenz():
     # ---- Test db8 wavelet analysis and synthesis on lorenz signal. -----
     wavelet = pywt.Wavelet('db8')
     fwt_ifwt_lorenz(wavelet)
-
-
-if __name__ == '__main__':
-    test_haar_fwt_ifwt_lorenz()
-    test_db3_fwt_ifwt_lorenz()
-    test_db4_fwt_ifwt_lorenz()
-    test_db8_fwt_ifwt_lorenz()
-    print('all pass')

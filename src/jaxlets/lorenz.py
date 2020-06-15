@@ -5,7 +5,9 @@
 # Copyright (c) 2020 Moritz Wolter
 #
 
+import os
 
+import click
 import jax
 import jax.numpy as np
 
@@ -15,7 +17,8 @@ def generate_lorenz(
     a=10.,
     b=28.,
     c=8. / 3.,
-    dt=0.01, tmax=5.11,
+    dt=0.01,
+    tmax=5.11,
     x0=np.array([2., 1., 3.]),
 ):
     steps = tmax / dt
@@ -37,24 +40,24 @@ def generate_lorenz(
     return x_sim
 
 
-def main():
+@click.command()
+@click.option('--directory', default=os.getcwd())
+def main(directory):
     print('Simulation of the lorenz equation.')
     lorenz = generate_lorenz()
     print(lorenz.shape)
     # plt.plot(lorenz[:, 0])
     # plt.show()
 
-    import os
     os.environ["DISPLAY"] = ":1"
-    import matplotlib
-    matplotlib.use('Qt5Agg')
     import matplotlib.pyplot as plt
+    # matplotlib.use('Qt5Agg')
 
-    print(plt.get_backend())
+    print('Backend', plt.get_backend())
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.plot(lorenz[:, 0], lorenz[:, 1], lorenz[:, 2])
-    plt.show()
+    plt.savefig(os.path.join(directory, 'lorenz_result.pdf'))
 
 
 if __name__ == '__main__':

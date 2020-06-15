@@ -37,7 +37,7 @@ using the `jax_cpu` extra. This means you have to use development mode and insta
 
 Testing
 -------
-Tests are handled by ``tox``. Clone the repository and run it with the following:
+Unit tests are handled by ``tox``. Clone the repository and run it with the following:
 
 .. code-block:: sh
 
@@ -45,6 +45,8 @@ Tests are handled by ``tox``. Clone the repository and run it with the following
     $ git clone https://github.com/v0lta/jaxlets
     $ cd jaxlets
     $ tox
+
+Test outputs can also be generated with ``tox -e plots``.
 
 Goals
 -----

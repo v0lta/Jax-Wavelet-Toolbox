@@ -5,12 +5,16 @@
 # Copyright (c) 2020 Moritz Wolter
 #
 
+import os
+from typing import Optional
+
+import click
 import jax
 import jax.numpy as np
 import pywt
 
 from .conv_fwt import get_filter_arrays
-from .wave_util import JaxWavelet
+from .utils import JaxWavelet, flatten_2d_coeff_lst
 
 
 def wavedec2(data: np.array, wavelet: JaxWavelet, level: int = None) -> list:
@@ -137,22 +141,22 @@ def fwt_pad2d(data: np.array, wavelet, mode='reflect') -> np.array:
     return data
 
 
-def main():
+@click.command()
+@click.option('--directory', default=os.getcwd())
+@click.option('--level', type=int)
+def main(directory, level: Optional[int]):
+    import matplotlib.pyplot as plt
+    import scipy.misc
     # os.environ["DISPLAY"] = ":1"
     # os.environ["CUDA_VISIBLE_DEVICES"] = ""
     # matplotlib.use('Qt5Agg')
-    import matplotlib.pyplot as plt
-    import jax.numpy as np
-    import scipy.misc
-    from tests.test_conv_fwt2d import flatten_2d_coeff_lst
-
     face = np.transpose(scipy.misc.face(), [2, 0, 1]).astype(np.float32)
     face = face[:, 128:(512 + 128), 256:(512 + 256)]
     face_exd = np.expand_dims(np.array(face), 1)
     wavelet = pywt.Wavelet('haar')
-    jax_wavelet = JaxWavelet(wavelet.dec_lo, wavelet.dec_hi,
-                             wavelet.rec_lo, wavelet.rec_hi)
-    level = None
+    jax_wavelet = JaxWavelet(wavelet.dec_lo, wavelet.dec_hi, wavelet.rec_lo, wavelet.rec_hi)
+
+    print(f'Using level: {level}')
     coeff2d_pywt = pywt.wavedec2(face, wavelet, mode='reflect', level=level)
     coeff2d = wavedec2(face_exd, jax_wavelet, level=level)
     recss2d = waverec2(coeff2d, jax_wavelet)
@@ -165,12 +169,11 @@ def main():
 
     print('err pywt', np.mean(np.abs(pywt.waverec2(coeff2d, wavelet) - face_exd)))
     print('err', np.mean(np.abs(recss2d - face_exd)))
-    plt.imshow(np.transpose(recss2d[:, 0, :, :], [1, 2, 0]) / np.max(np.abs(recss2d)))
-    plt.show()
+    fig, axes = plt.subplots(nrows=1, ncols=2)
+    axes[0].imshow(np.transpose(recss2d[:, 0, :, :], [1, 2, 0]) / np.max(np.abs(recss2d)))
     errimg = np.abs(recss2d - face_exd)
-    plt.imshow(np.transpose(errimg[:, 0, :, :], [1, 2, 0]) / np.max(np.abs(errimg)))
-    plt.show()
-    print('done')
+    axes[1].imshow(np.transpose(errimg[:, 0, :, :], [1, 2, 0]) / np.max(np.abs(errimg)))
+    plt.savefig(os.path.join(directory, 'conv_fwt_2d_results.pdf'))
 
 
 if __name__ == '__main__':

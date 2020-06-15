@@ -1,24 +1,11 @@
+# -*- coding: utf-8 -*-
+
 import jax.numpy as np
 import pywt
 import scipy
+
 from jaxlets.conv_fwt_2d import wavedec2, waverec2
-
-
-def flatten_2d_coeff_lst(coeff_lst_2d, flatten_arrays=True):
-    flat_coeff_lst = []
-    for coeff in coeff_lst_2d:
-        if type(coeff) is tuple:
-            for c in coeff:
-                if flatten_arrays:
-                    flat_coeff_lst.append(c.flatten())
-                else:
-                    flat_coeff_lst.append(c)
-        else:
-            if flatten_arrays:
-                flat_coeff_lst.append(coeff.flatten())
-            else:
-                flat_coeff_lst.append(coeff)
-    return flat_coeff_lst
+from jaxlets.utils import flatten_2d_coeff_lst
 
 
 def run_2dtest(wavelet, level=None):
