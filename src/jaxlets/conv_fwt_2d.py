@@ -1,16 +1,22 @@
+# -*- coding: utf-8 -*-
+
 #
 # Created on Thu Jun 12 2020
 # Copyright (c) 2020 Moritz Wolter
 #
-import pywt
+
+from typing import Optional
+
+import click
 import jax
 import jax.numpy as np
-from conv_fwt import fwt_pad
-from conv_fwt import get_filter_arrays
-from wave_util import JaxWavelet
+import pywt
+
+from .conv_fwt import get_filter_arrays
+from .utils import JaxWavelet, flatten_2d_coeff_lst
 
 
-def wavedec2(data: np.array, wavelet: JaxWavelet, level: int=None) -> list:
+def wavedec2(data: np.array, wavelet: JaxWavelet, level: int = None) -> list:
     """Compute the two dimensional wavelet analysis transform on the last two dimensions 
        of the input data array.
     Args:
@@ -34,16 +40,18 @@ def wavedec2(data: np.array, wavelet: JaxWavelet, level: int=None) -> list:
     for _ in range(level):
         res_ll = fwt_pad2d(res_ll, wavelet)
         res = jax.lax.conv_general_dilated(
-            lhs=res_ll, # lhs = NCHw image tensor
-            rhs=dec_filt,   # rhs = OIHw conv kernel tensor
-            padding='VALID', window_strides=[2,2],
-            dimension_numbers=('NCHW', 'OIHW', 'NCHW'))
+            lhs=res_ll,  # lhs = NCHw image tensor
+            rhs=dec_filt,  # rhs = OIHw conv kernel tensor
+            padding='VALID', window_strides=[2, 2],
+            dimension_numbers=('NCHW', 'OIHW', 'NCHW'),
+        )
 
         res_ll, res_lh, res_hl, res_hh = np.split(res, 4, 1)
         result_lst.append((res_lh, res_hl, res_hh))
     result_lst.append(res_ll)
     result_lst.reverse()
     return result_lst
+
 
 def waverec2(coeffs: list, wavelet: JaxWavelet) -> np.array:
     """ This function implements the two dimensional synthesis wavelet transfrom,
@@ -65,18 +73,18 @@ def waverec2(coeffs: list, wavelet: JaxWavelet) -> np.array:
         res_ll = np.concatenate([res_ll, res_lh_hl_hh[0], res_lh_hl_hh[1], res_lh_hl_hh[2]], 1)
         res_ll = jax.lax.conv_transpose(lhs=res_ll, rhs=rec_filt,
                                         padding='VALID',
-                                        strides=[2,2],
+                                        strides=[2, 2],
                                         dimension_numbers=('NCHW', 'OIHW', 'NCHW'))
         # remove the padding
-        padl = (2*filt_len - 3)//2
-        padr = (2*filt_len - 3)//2
-        padt = (2*filt_len - 3)//2
-        padb = (2*filt_len - 3)//2
-        if c_pos < len(coeffs)-2:
+        padl = (2 * filt_len - 3) // 2
+        padr = (2 * filt_len - 3) // 2
+        padt = (2 * filt_len - 3) // 2
+        padb = (2 * filt_len - 3) // 2
+        if c_pos < len(coeffs) - 2:
             pred_len = res_ll.shape[-1] - (padl + padr)
-            next_len = coeffs[c_pos+2][0].shape[-1]
+            next_len = coeffs[c_pos + 2][0].shape[-1]
             pred_len2 = res_ll.shape[-2] - (padt + padb)
-            next_len2 = coeffs[c_pos+2][0].shape[-2]
+            next_len2 = coeffs[c_pos + 2][0].shape[-2]
             if next_len != pred_len:
                 padr += 1
                 pred_len = res_ll.shape[-1] - (padl + padr)
@@ -116,10 +124,10 @@ def fwt_pad2d(data: np.array, wavelet, mode='reflect') -> np.array:
     padb = 0
     if filt_len > 2:
         # we pad half of the total requried padding on each side.
-        padr += (2*filt_len - 3)//2
-        padl += (2*filt_len - 3)//2
-        padt += (2*filt_len - 3)//2
-        padb += (2*filt_len - 3)//2
+        padr += (2 * filt_len - 3) // 2
+        padl += (2 * filt_len - 3) // 2
+        padt += (2 * filt_len - 3) // 2
+        padb += (2 * filt_len - 3) // 2
 
     # pad to even singal length.
     if data.shape[-1] % 2 != 0:
@@ -132,24 +140,22 @@ def fwt_pad2d(data: np.array, wavelet, mode='reflect') -> np.array:
     return data
 
 
-if __name__ == '__main__':
-    import os
+@click.command()
+@click.option('-o', '--output')
+@click.option('--level', type=int)
+def main(output, level: Optional[int]):
+    import matplotlib.pyplot as plt
+    import scipy.misc
     # os.environ["DISPLAY"] = ":1"
     # os.environ["CUDA_VISIBLE_DEVICES"] = ""
-    import matplotlib
     # matplotlib.use('Qt5Agg')
-    import matplotlib.pyplot as plt
-    import jax.numpy as np
-    import scipy.misc
-    from test_conv_fwt2d import flatten_2d_coeff_lst
-    
     face = np.transpose(scipy.misc.face(), [2, 0, 1]).astype(np.float32)
-    face = face[:, 128:(512+128), 256:(512+256)]
+    face = face[:, 128:(512 + 128), 256:(512 + 256)]
     face_exd = np.expand_dims(np.array(face), 1)
     wavelet = pywt.Wavelet('haar')
-    jax_wavelet = JaxWavelet(wavelet.dec_lo, wavelet.dec_hi,
-                             wavelet.rec_lo, wavelet.rec_hi)
-    level = None
+    jax_wavelet = JaxWavelet(wavelet.dec_lo, wavelet.dec_hi, wavelet.rec_lo, wavelet.rec_hi)
+
+    print(f'Using level: {level}')
     coeff2d_pywt = pywt.wavedec2(face, wavelet, mode='reflect', level=level)
     coeff2d = wavedec2(face_exd, jax_wavelet, level=level)
     recss2d = waverec2(coeff2d, jax_wavelet)
@@ -161,10 +167,16 @@ if __name__ == '__main__':
     print('done')
 
     print('err pywt', np.mean(np.abs(pywt.waverec2(coeff2d, wavelet) - face_exd)))
-    print('err', np.mean(np.abs(recss2d -  face_exd)))
-    plt.imshow(np.transpose(recss2d[:, 0,:,:], [1, 2, 0])/np.max(np.abs(recss2d)))
-    plt.show()
-    errimg = np.abs(recss2d -  face_exd)
-    plt.imshow(np.transpose(errimg[:, 0,:,:], [1, 2, 0])/np.max(np.abs(errimg)))
-    plt.show()
-    print('done')
+    print('err', np.mean(np.abs(recss2d - face_exd)))
+    fig, axes = plt.subplots(nrows=1, ncols=2)
+    axes[0].imshow(np.transpose(recss2d[:, 0, :, :], [1, 2, 0]) / np.max(np.abs(recss2d)))
+    errimg = np.abs(recss2d - face_exd)
+    axes[1].imshow(np.transpose(errimg[:, 0, :, :], [1, 2, 0]) / np.max(np.abs(errimg)))
+    if output is None:
+        plt.show()
+    else:
+        plt.savefig(output)
+
+
+if __name__ == '__main__':
+    main()

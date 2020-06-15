@@ -1,15 +1,17 @@
+# -*- coding: utf-8 -*-
+
 #
 # Created on Thu Jun 11 2020
 # Copyright (c) 2020 Moritz Wolter
 #
 
-
-import jax
 import jax.numpy as np
 import pywt
-from lorenz import generate_lorenz
-from conv_fwt import wavedec, waverec
-from wave_util import JaxWavelet
+
+from jaxlets.conv_fwt import wavedec, waverec
+from jaxlets.lorenz import generate_lorenz
+from jaxlets.utils import JaxWavelet
+
 
 def test_haar_fwt_ifwt_16():
     # ---- Test harr wavelet analysis and synthesis on 16 sample signal. -----
@@ -28,6 +30,7 @@ def test_haar_fwt_ifwt_16():
     err = np.mean(np.abs(rest_data - data))
     assert err < 1e-4
 
+
 def fwt_ifwt_lorenz(wavelet):
     jax_wavelet = JaxWavelet(wavelet.dec_lo, wavelet.dec_hi,
                              wavelet.rec_lo, wavelet.rec_hi)
@@ -44,30 +47,26 @@ def fwt_ifwt_lorenz(wavelet):
     err = np.mean(np.abs(rest_data - data))
     assert err < 1e-4
 
+
 def test_haar_fwt_ifwt_lorenz():
     # ---- Test haar wavelet analysis and synthesis on lorenz signal. -----
     wavelet = pywt.Wavelet('haar')
     fwt_ifwt_lorenz(wavelet)
+
 
 def test_db3_fwt_ifwt_lorenz():
     # ---- Test db3 wavelet analysis and synthesis on lorenz signal. -----
     wavelet = pywt.Wavelet('db3')
     fwt_ifwt_lorenz(wavelet)
 
+
 def test_db4_fwt_ifwt_lorenz():
     # ---- Test db4 wavelet analysis and synthesis on lorenz signal. -----
     wavelet = pywt.Wavelet('db4')
     fwt_ifwt_lorenz(wavelet)
 
+
 def test_db8_fwt_ifwt_lorenz():
     # ---- Test db8 wavelet analysis and synthesis on lorenz signal. -----
     wavelet = pywt.Wavelet('db8')
     fwt_ifwt_lorenz(wavelet)
-
-
-if __name__ == '__main__':
-    test_haar_fwt_ifwt_lorenz()
-    test_db3_fwt_ifwt_lorenz()
-    test_db4_fwt_ifwt_lorenz()
-    test_db8_fwt_ifwt_lorenz()
-    print('all pass')
