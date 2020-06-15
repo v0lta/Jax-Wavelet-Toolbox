@@ -4,8 +4,10 @@ Differentiable and gpu enabled fast wavelet transforms in jax.
 
 Features
 --------
-- 1d forward and backward fwt implemented in `conv_fwt.py`.
-- 2d forward and backard fwt methods are part of the `conv_fwt_2d.py` module.
+- 1d forward and backward fwt implemented in `src/jaxlets/
+conv_fwt.py`.
+- 2d forward and backard fwt methods are part of the `src/jaxlets/
+conv_fwt_2d.py` module.
 
 Installation
 ------------
