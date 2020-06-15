@@ -1,4 +1,5 @@
-#
+# -*- coding: utf-8 -*-
+
 # Created on Thu Jun 11 2020
 # Copyright (c) 2020 Moritz Wolter
 #
@@ -6,7 +7,8 @@
 import pywt
 import jax
 import jax.numpy as np
-from wave_util import JaxWavelet
+
+from .wave_util import JaxWavelet
 
 
 def wavedec(data: np.array, wavelet: JaxWavelet, level: int = None) -> list:
@@ -144,7 +146,7 @@ def dwt_max_level(data_len: int, filt_len: int) -> int:
 
 
 if __name__ == '__main__':
-    from lorenz import generate_lorenz
+    from src.jaxlets.lorenz import generate_lorenz
     # import os
     # os.environ["DISPLAY"] = ":1"
     # import matplotlib
