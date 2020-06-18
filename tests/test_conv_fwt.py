@@ -31,14 +31,14 @@ def test_haar_fwt_ifwt_16():
     assert err < 1e-4
 
 
-def fwt_ifwt_lorenz(wavelet):
+def fwt_ifwt_lorenz(wavelet, mode='reflect'):
     jax_wavelet = JaxWavelet(wavelet.dec_lo, wavelet.dec_hi,
                              wavelet.rec_lo, wavelet.rec_hi)
     # ---- Test wavelet analysis and synthesis on lorenz signal. -----
     lorenz = np.transpose(np.expand_dims(generate_lorenz()[:, 0], -1), [1, 0])
     data = np.expand_dims(lorenz, 0)
-    coeff = wavedec(data, jax_wavelet)
-    pywt_coeff = pywt.wavedec(lorenz, wavelet, mode='reflect')
+    coeff = wavedec(data, jax_wavelet, mode=mode)
+    pywt_coeff = pywt.wavedec(lorenz, wavelet, mode=mode)
     cat_coeff = np.concatenate(coeff, axis=-1)
     pywt_cat_coeff = np.concatenate(pywt_coeff, axis=-1)
     err = np.mean(np.abs(cat_coeff - pywt_cat_coeff))
@@ -70,3 +70,8 @@ def test_db8_fwt_ifwt_lorenz():
     # ---- Test db8 wavelet analysis and synthesis on lorenz signal. -----
     wavelet = pywt.Wavelet('db8')
     fwt_ifwt_lorenz(wavelet)
+
+def test_db8_fwt_ifwt_lorenz_symmetric():
+    # ---- Test db8 wavelet analysis and synthesis on lorenz signal. -----
+    wavelet = pywt.Wavelet('db8')
+    fwt_ifwt_lorenz(wavelet, mode='symmetric')
