@@ -43,7 +43,7 @@ Usage Example
 
     import pywt
     import jax.numpy as np
-    import jaxlets
+    from jaxlets.packets import WaveletPacket
     import matplotlib.pyplot as plt
     import scipy.signal as signal
     t = np.linspace(0, 10, 5001)
