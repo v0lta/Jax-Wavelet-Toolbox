@@ -49,20 +49,10 @@ Usage Example
     t = np.linspace(0, 10, 5001)
     wavelet = pywt.Wavelet('db4')
     w = signal.chirp(t, f0=.00001, f1=20, t1=10, method='linear')
-<<<<<<< HEAD
 
     wp = WaveletPacket(data=w,
                                wavelet=wavelet,
                                mode='reflect')
-=======
-    plt.plot(t, w)
-    plt.title("Linear Chirp, f(0)=6, f(10)=1")
-    plt.xlabel('t (sec)')
-    plt.show()
-    wp = WaveletPacket(data=w,
-                       wavelet=wavelet,
-                       mode='reflect')
->>>>>>> d28fb9dbc15c85a167cc59d64a96b12bc02935c7
     nodes = wp.get_level(7)
     np_lst = []
     for node in nodes:
@@ -80,7 +70,9 @@ Usage Example
     axs[1].set_ylabel('frequency')
     plt.show()
 
-
+In the above example the increasing frequency of a chirp signal is visualized
+using wavelet packets, the expected output is shown below: 
+![Alt Text](analysis.png)
 
 Testing
 -------
