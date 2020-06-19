@@ -13,11 +13,11 @@ class WaveletPacket(collections.UserDict):
     def __init__(self, data: np.array, wavelet, mode: str='reflect'):
         """Create a wavelet packet decomposition object
         Args:
-            data (np.array): The input data array of shape [batch, channels, time].
+            data (np.array): The input data array of shape [time].
             wavelet (pywt.Wavelet or JaxWavelet): The wavelet used for the decomposition.
             mode ([str]): The desired padding method
         """        
-        self.input_data = data
+        self.input_data = np.expand_dims(np.expand_dims(data, 0), 0)
         self.wavelet = wavelet
         self.mode = mode 
         self.nodes = {}
@@ -36,7 +36,7 @@ class WaveletPacket(collections.UserDict):
 
 
     def recursive_dwt(self, data, filt, mode , level, max_level, path):
-        self.data[path] = data
+        self.data[path] = np.squeeze(data)
         if level < max_level:
             data = fwt_pad(data, filt_len=filt.shape[-1])
             res = jax.lax.conv_general_dilated(
@@ -48,7 +48,7 @@ class WaveletPacket(collections.UserDict):
             return self.recursive_dwt(res_lo, filt, mode, level+1, max_level, path + 'a'), \
                    self.recursive_dwt(res_hi, filt, mode, level+1, max_level, path + 'd')
         else:
-            self.data[path] = data
+            self.data[path] = np.squeeze(data)
 
 
     def _wavepacketdec(self, data, wavelet, level=None, mode='reflect'):
@@ -75,33 +75,34 @@ if __name__ == '__main__':
     matplotlib.use('Qt5Agg')
 
     # t = [1,   2, 3,  4,  5,  6,  7]
-    w = [56., 40., 8., 24., 48., 40., 16.]
-    wavelet = pywt.Wavelet('haar')
-    data = np.expand_dims(np.expand_dims(np.array(w), 0), 0)
-    jwp = WaveletPacket(data, wavelet, mode='reflect')
-    nodes = jwp.get_level(2)
-    jnp_lst = []
-    for node in nodes:
-        jnp_lst.append(np.squeeze(jwp[node]))
-    res = np.stack(jnp_lst)
+    # w = [56., 40., 8., 24., 48., 40., 16.]
+    # wavelet = pywt.Wavelet('haar')
+    # data = np.expand_dims(np.expand_dims(np.array(w), 0), 0)
+    # jwp = WaveletPacket(data, wavelet, mode='reflect')
+    # nodes = jwp.get_level(2)
+    # jnp_lst = []
+    # for node in nodes:
+    #     jnp_lst.append(np.squeeze(jwp[node]))
+    # res = np.stack(jnp_lst)
 
-    wp = pywt.WaveletPacket(data=nnp.array(w), wavelet='haar',
-                            mode='reflect')
-    nodes = [node.path for node in wp.get_level(2, 'freq')]
-    np_lst = []
-    for node in nodes:
-        np_lst.append(wp[node].data)
-    viz = np.stack(np_lst)
+    # wp = pywt.WaveletPacket(data=nnp.array(w), wavelet='haar',
+    #                         mode='reflect')
+    # nodes = [node.path for node in wp.get_level(2, 'freq')]
+    # np_lst = []
+    # for node in nodes:
+    #     np_lst.append(wp[node].data)
+    # viz = np.stack(np_lst)
 
-    print(res)
-    print(viz)
-    print(np.round(res))
-    print(np.round(viz))
-    print('err', np.mean(np.abs(res - viz)))
-    print('stop')
+    # print(res)
+    # print(viz)
+    # print(np.round(res))
+    # print(np.round(viz))
+    # print('err', np.mean(np.abs(res - viz)))
+    # print('stop')
 
 
     t = np.linspace(0, 10, 5001)
+    wavelet = pywt.Wavelet('db4')
     w = signal.chirp(t, f0=.00001, f1=20, t1=10, method='linear')
 
     plt.plot(t, w)
@@ -109,18 +110,28 @@ if __name__ == '__main__':
     plt.xlabel('t (sec)')
     plt.show()
 
-    wp = pywt.WaveletPacket(data=w, wavelet='db4',
-                            mode='symmetric')
-    print('maxlevel', wp.maxlevel)
-    print([node.path for node in wp.get_level(2, 'natural')])
-    nodes = [node.path for node in wp.get_level(7, 'freq')]
+    wp = WaveletPacket(data=np.expand_dims(np.expand_dims(w, 0), 0),
+                       wavelet=wavelet,
+                       mode='reflect')
+    nodes = wp.get_level(7)
     np_lst = []
     for node in nodes:
-        np_lst.append(wp[node].data)
+        np_lst.append(np.squeeze(wp[node]))
     viz = np.stack(np_lst)
     plt.imshow(viz[:20, :])
     plt.show()
 
+
+    # wp = pywt.WaveletPacket(data=w, wavelet=wavelet,
+    #                         mode='reflect')
+    # nodes = [node.path for node in wp.get_level(7, 'freq')]
+    # np_lst = []
+    # for node in nodes:
+    #     np_lst.append(wp[node].data)
+    # viz = np.stack(np_lst)
+    # plt.imshow(viz[:20, :])
+    # plt.show()
+    print('stop')
 
 
     # plt.imshow(np.log(np.abs(viz)+0.01))

@@ -15,15 +15,15 @@ def packets_lorenz(wavelet, level=2, mode='reflect'):
     jax_wavelet = JaxWavelet(wavelet.dec_lo, wavelet.dec_hi,
                              wavelet.rec_lo, wavelet.rec_hi)
     # ---- Test wavelet analysis and synthesis on lorenz signal. -----
-    lorenz = np.transpose(np.expand_dims(generate_lorenz()[:, 0], -1), [1, 0])
-    jwp = WaveletPacket(np.expand_dims(lorenz, 0), jax_wavelet, mode=mode)
+    lorenz = generate_lorenz()[:, 0]
+    jwp = WaveletPacket(lorenz, jax_wavelet, mode=mode)
     nodes = jwp.get_level(level)
     jnp_lst = []
     for node in nodes:
-        jnp_lst.append(np.squeeze(jwp[node]))
+        jnp_lst.append(jwp[node])
     jres = np.stack(jnp_lst)
 
-    np_lorenz = nnp.array(lorenz._value[0, :])
+    np_lorenz = nnp.array(lorenz._value)
     wp = pywt.WaveletPacket(np_lorenz, wavelet=wavelet,
                             mode=mode)
     nodes = [node.path for node in wp.get_level(level, 'freq')]
@@ -36,15 +36,15 @@ def packets_lorenz(wavelet, level=2, mode='reflect'):
     assert err < 1e-4
 
 
-def test_haar_reflect():
+def test_haar():
     wavelet = pywt.Wavelet('haar')
-    packets_lorenz(wavelet, level=2, mode='reflect')
+    packets_lorenz(wavelet, level=2)
 
-def test_db2_reflect():
+def test_db2():
     wavelet = pywt.Wavelet('db2')
-    packets_lorenz(wavelet, level=2, mode='reflect')
+    packets_lorenz(wavelet, level=2)
 
-def test_db4_reflect():
+def test_db4():
     wavelet = pywt.Wavelet('db4')
-    packets_lorenz(wavelet, level=5, mode='reflect')
+    packets_lorenz(wavelet, level=5)
 
