@@ -74,7 +74,7 @@ In the above example the increasing frequency of a chirp signal is visualized
 using wavelet packets, the expected output is shown below: 
 
 .. image:: analysis.png
-    :width: 400
+    :width: 200
 
 Testing
 -------
