@@ -53,9 +53,9 @@ Usage Example
     plt.title("Linear Chirp, f(0)=6, f(10)=1")
     plt.xlabel('t (sec)')
     plt.show()
-    wp = jaxlets.WaveletPacket(data=w),
-                            wavelet=wavelet,
-                            mode='reflect')
+    wp = jaxlets.WaveletPacket(data=w,
+                               wavelet=wavelet,
+                               mode='reflect')
     nodes = wp.get_level(7)
     np_lst = []
     for node in nodes:
