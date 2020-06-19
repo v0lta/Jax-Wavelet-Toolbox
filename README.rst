@@ -38,7 +38,7 @@ using the `jax_cpu` extra. This means you have to use development mode and insta
 
 Usage Example
 -------------
-.. code-block:: python
+```python
     import pywt
     import jaxlets
     import matplotlib.pyplot as plt
@@ -63,7 +63,7 @@ Usage Example
     viz = np.stack(np_lst)
     plt.imshow(viz[:20, :])
     plt.show()
-.. code-block:: python
+```
 
 
 Testing
