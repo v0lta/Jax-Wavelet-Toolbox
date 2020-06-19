@@ -96,7 +96,6 @@ Goals
 
 Coming up
 ---------
-- Wavelet packets (TODO)
 - Interface improvements
 - Extended jit support.
 
