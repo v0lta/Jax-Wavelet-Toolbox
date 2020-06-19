@@ -39,7 +39,8 @@ using the `jax_cpu` extra. This means you have to use development mode and insta
 Usage Example
 -------------
 
-.. code-block:: sh
+.. code-block:: python
+
     import pywt
     import jaxlets
     import matplotlib.pyplot as plt
