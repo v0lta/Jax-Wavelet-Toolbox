@@ -51,8 +51,8 @@ Usage Example
     w = signal.chirp(t, f0=.00001, f1=20, t1=10, method='linear')
 
     wp = WaveletPacket(data=w,
-                               wavelet=wavelet,
-                               mode='reflect')
+                       wavelet=wavelet,
+                       mode='reflect')
     nodes = wp.get_level(7)
     np_lst = []
     for node in nodes:
