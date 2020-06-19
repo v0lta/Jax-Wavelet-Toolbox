@@ -16,7 +16,7 @@ from .utils import JaxWavelet
 def dwt(data: np.array, wavelet: JaxWavelet, mode='reflect'):
     dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True)
     filt = np.stack([dec_lo, dec_hi], 0)
-    res_lo = fwt_pad(data, wavelet, mode)
+    res_lo = fwt_pad(data, len(wavelet.dec_lo), mode)
     res = jax.lax.conv_general_dilated(
         lhs=res_lo,  # lhs = NCH image tensor
         rhs=filt,  # rhs = OIH conv kernel tensor
@@ -46,6 +46,7 @@ def wavedec(data: np.array, wavelet: JaxWavelet, level: int = None, mode='reflec
         wavelet (JaxWavelet): The named touple containing the wavelet filter arrays.
         level (int, optional): Max scale level to be used, of none as many levels as possible are
                                used. Defaults to None.
+        mode: The padding used to extend the input signal. Default: reflect.
     Returns:
         list: List containing the wavelet coefficients.
     """
@@ -60,7 +61,7 @@ def wavedec(data: np.array, wavelet: JaxWavelet, level: int = None, mode='reflec
     result_lst = []
     res_lo = data
     for _ in range(level):
-        res_lo = fwt_pad(res_lo, wavelet, mode=mode)
+        res_lo = fwt_pad(res_lo, len(wavelet.dec_lo), mode=mode)
         res = jax.lax.conv_general_dilated(
             lhs=res_lo,  # lhs = NCH image tensor
             rhs=filt,  # rhs = OIH conv kernel tensor
@@ -120,7 +121,7 @@ def fwt_unpad(res_lo, filt_len, c_pos, coeffs):
         res_lo = res_lo[..., padr:-padl]
     return res_lo
 
-def fwt_pad(data, wavelet, mode='reflect'):
+def fwt_pad(data, filt_len, mode='reflect'):
     # pad to we see all filter positions and pywt compatability.
     # convolution output length:
     # see https://arxiv.org/pdf/1603.07285.pdf section 2.3:
@@ -131,7 +132,6 @@ def fwt_pad(data, wavelet, mode='reflect'):
     #    = floor((data_len + filt_len - 1)/2)
     # (data_len + total_pad - filt_len) + 2 = data_len + filt_len - 1
     # total_pad = 2*filt_len - 3 
-    filt_len = len(wavelet.dec_lo)
     padr = 0
     padl = 0
     if filt_len > 2:
