@@ -13,13 +13,40 @@ from .lorenz import generate_lorenz
 from .utils import JaxWavelet
 
 
-def wavedec(data: np.array, wavelet: JaxWavelet, level: int = None) -> list:
+def dwt(data: np.array, wavelet: JaxWavelet, mode='reflect'):
+    dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True)
+    filt = np.stack([dec_lo, dec_hi], 0)
+    res_lo = fwt_pad(data, len(wavelet.dec_lo), mode)
+    res = jax.lax.conv_general_dilated(
+        lhs=res_lo,  # lhs = NCH image tensor
+        rhs=filt,  # rhs = OIH conv kernel tensor
+        padding='VALID', window_strides=[2, ],
+        dimension_numbers=('NCH', 'OIH', 'NCH'))
+    res_lo, res_hi = np.split(res, 2, 1)
+    return res_lo, res_hi 
+
+
+@jax.jit
+def idwt(coeff_lst: list, wavelet: JaxWavelet):
+    _, _, rec_lo, rec_hi = get_filter_arrays(wavelet, flip=True)
+    filt_len = rec_lo.shape[-1]
+    filt = np.stack([rec_lo, rec_hi], 1)
+    res_lo = np.concatenate([coeff_lst[0], coeff_lst[1]], 1)
+    rec = jax.lax.conv_transpose(lhs=res_lo, rhs=filt, padding='VALID',
+                                 strides=[2, ],
+                                 dimension_numbers=('NCH', 'OIH', 'NCH'))
+    rec = fwt_unpad(rec, filt_len, 0, coeff_lst)
+    return rec
+
+
+def wavedec(data: np.array, wavelet: JaxWavelet, level: int = None, mode='reflect') -> list:
     """Computes the one dimensional analysis wavelet transform of the last dimension.
     Args:
         data (np.array): Input data array of shape [batch, channels, time]
         wavelet (JaxWavelet): The named touple containing the wavelet filter arrays.
         level (int, optional): Max scale level to be used, of none as many levels as possible are
                                used. Defaults to None.
+        mode: The padding used to extend the input signal. Default: reflect.
     Returns:
         list: List containing the wavelet coefficients.
     """
@@ -34,7 +61,7 @@ def wavedec(data: np.array, wavelet: JaxWavelet, level: int = None) -> list:
     result_lst = []
     res_lo = data
     for _ in range(level):
-        res_lo = fwt_pad(res_lo, wavelet)
+        res_lo = fwt_pad(res_lo, len(wavelet.dec_lo), mode=mode)
         res = jax.lax.conv_general_dilated(
             lhs=res_lo,  # lhs = NCH image tensor
             rhs=filt,  # rhs = OIH conv kernel tensor
@@ -70,29 +97,31 @@ def waverec(coeffs: list, wavelet: JaxWavelet) -> np.array:
         res_lo = jax.lax.conv_transpose(lhs=res_lo, rhs=filt, padding='VALID',
                                         strides=[2, ],
                                         dimension_numbers=('NCH', 'OIH', 'NCH'))
-
-        padr = 0
-        padl = 0
-        # print('res_lo conv shape', res_lo.shape)
-        if filt_len > 2:
-            padr += (2 * filt_len - 3) // 2
-            padl += (2 * filt_len - 3) // 2
-        if c_pos < len(coeffs) - 2:
-            pred_len = res_lo.shape[-1] - (padl + padr)
-            nex_len = coeffs[c_pos + 2].shape[-1]
-            if nex_len != pred_len:
-                padl += 1
-                pred_len = res_lo.shape[-1] - padl
-                # assert nex_len == pred_len, 'padding error, please open an issue on github '
-        if padl == 0:
-            res_lo = res_lo[..., padr:]
-        else:
-            res_lo = res_lo[..., padr:-padl]
-        # print('res_lo shape', res_lo.shape)
+        res_lo = fwt_unpad(res_lo, filt_len, c_pos, coeffs)
     return res_lo
 
 
-def fwt_pad(data, wavelet, mode='reflect'):
+def fwt_unpad(res_lo, filt_len, c_pos, coeffs):
+    padr = 0
+    padl = 0
+    # print('res_lo conv shape', res_lo.shape)
+    if filt_len > 2:
+        padr += (2 * filt_len - 3) // 2
+        padl += (2 * filt_len - 3) // 2
+    if c_pos < len(coeffs) - 2:
+        pred_len = res_lo.shape[-1] - (padl + padr)
+        nex_len = coeffs[c_pos + 2].shape[-1]
+        if nex_len != pred_len:
+            padl += 1
+            pred_len = res_lo.shape[-1] - padl
+            # assert nex_len == pred_len, 'padding error, please open an issue on github '
+    if padl == 0:
+        res_lo = res_lo[..., padr:]
+    else:
+        res_lo = res_lo[..., padr:-padl]
+    return res_lo
+
+def fwt_pad(data, filt_len, mode='reflect'):
     # pad to we see all filter positions and pywt compatability.
     # convolution output length:
     # see https://arxiv.org/pdf/1603.07285.pdf section 2.3:
@@ -103,7 +132,6 @@ def fwt_pad(data, wavelet, mode='reflect'):
     #    = floor((data_len + filt_len - 1)/2)
     # (data_len + total_pad - filt_len) + 2 = data_len + filt_len - 1
     # total_pad = 2*filt_len - 3 
-    filt_len = len(wavelet.dec_lo)
     padr = 0
     padl = 0
     if filt_len > 2:

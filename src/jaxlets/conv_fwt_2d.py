@@ -38,7 +38,7 @@ def wavedec2(data: np.array, wavelet: JaxWavelet, level: int = None) -> list:
     result_lst = []
     res_ll = data
     for _ in range(level):
-        res_ll = fwt_pad2d(res_ll, wavelet)
+        res_ll = fwt_pad2d(res_ll, len(wavelet.dec_lo))
         res = jax.lax.conv_general_dilated(
             lhs=res_ll,  # lhs = NCHw image tensor
             rhs=dec_filt,  # rhs = OIHw conv kernel tensor
@@ -116,8 +116,7 @@ def construct_2d_filt(lo, hi):
     return filt
 
 
-def fwt_pad2d(data: np.array, wavelet, mode='reflect') -> np.array:
-    filt_len = len(wavelet.dec_lo)
+def fwt_pad2d(data: np.array, filt_len: int, mode='reflect') -> np.array:
     padr = 0
     padl = 0
     padt = 0
