@@ -13,7 +13,7 @@ class WaveletPacket(collections.UserDict):
     def __init__(self, data: np.array, wavelet, mode: str='reflect'):
         """Create a wavelet packet decomposition object
         Args:
-            data (np.array): The input data array.
+            data (np.array): The input data array of shape [batch, channels, time].
             wavelet (pywt.Wavelet or JaxWavelet): The wavelet used for the decomposition.
             mode ([str]): The desired padding method
         """        
@@ -61,7 +61,6 @@ class WaveletPacket(collections.UserDict):
             # scales = pywt.dwt_max_level(data.shape[-1], filt_len)
             level = dwt_max_level(data.shape[-1], filt_len)
         self.recursive_dwt(data, filt, mode, level=0, max_level=level, path='')
-
 
 
 
@@ -123,7 +122,7 @@ if __name__ == '__main__':
     plt.show()
 
 
-    
+
     # plt.imshow(np.log(np.abs(viz)+0.01))
     # plt.show()
     # print(wp['aa'].data)
