@@ -49,11 +49,8 @@ Usage Example
     t = np.linspace(0, 10, 5001)
     wavelet = pywt.Wavelet('db4')
     w = signal.chirp(t, f0=.00001, f1=20, t1=10, method='linear')
-    plt.plot(t, w)
-    plt.title("Linear Chirp, f(0)=6, f(10)=1")
-    plt.xlabel('t (sec)')
-    plt.show()
-    wp = jaxlets.WaveletPacket(data=w,
+
+    wp = WaveletPacket(data=w,
                                wavelet=wavelet,
                                mode='reflect')
     nodes = wp.get_level(7)
@@ -61,7 +58,16 @@ Usage Example
     for node in nodes:
         np_lst.append(wp[node])
     viz = np.stack(np_lst)
-    plt.imshow(viz[:20, :])
+
+    fig, axs = plt.subplots(2)
+    axs[0].plot(t, w)
+    axs[0].set_title("Linear Chirp, f(0)=6, f(10)=1")
+    axs[0].set_xlabel('t (sec)')
+
+    axs[1].set_title("Wavelet analysis")
+    axs[1].imshow(viz[:20, :])
+    axs[1].set_xlabel('time')
+    axs[1].set_ylabel('frequency')
     plt.show()
 
 
