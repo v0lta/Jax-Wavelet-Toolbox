@@ -42,6 +42,7 @@ Usage Example
 .. code-block:: python
 
     import pywt
+    import jax.numpy as np
     import jaxlets
     import matplotlib.pyplot as plt
     import scipy.signal as signal
