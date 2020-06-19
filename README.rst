@@ -72,6 +72,7 @@ Usage Example
 
 In the above example the increasing frequency of a chirp signal is visualized
 using wavelet packets, the expected output is shown below: 
+
 ![Alt Text](analysis.png)
 
 Testing
