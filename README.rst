@@ -61,7 +61,7 @@ Usage Example
 
     fig, axs = plt.subplots(2)
     axs[0].plot(t, w)
-    axs[0].set_title("Linear Chirp, f(0)=6, f(10)=1")
+    axs[0].set_title("Linear Chirp, f(0)=.00001, f(10)=20")
     axs[0].set_xlabel('t (sec)')
 
     axs[1].set_title("Wavelet analysis")
