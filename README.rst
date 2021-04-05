@@ -93,12 +93,3 @@ Goals
 -----
 - In the spirit of jax the aim is to be 100% pywt compatible. Whenever possible, interfaces should be the same
   results identical.
-
-Coming up
----------
-- Interface improvements
-- Extended jit support.
-
-Feedback
---------
-This is an early release, if you have questions, suggestions or run into issues, please open an issue.
