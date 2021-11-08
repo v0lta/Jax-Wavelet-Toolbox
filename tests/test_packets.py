@@ -13,7 +13,7 @@ from jaxlets.packets import WaveletPacket
 
 def packets_lorenz(wavelet, level=2, mode='reflect'):
     # ---- Test wavelet analysis and synthesis on lorenz signal. -----
-    lorenz = generate_lorenz()[:, 0]
+    lorenz = generate_lorenz(tmax=.99)[:, 0]
     jwp = WaveletPacket(lorenz, wavelet, mode=mode)
     nodes = jwp.get_level(level)
     jnp_lst = []
@@ -31,18 +31,16 @@ def packets_lorenz(wavelet, level=2, mode='reflect'):
     res = np.stack(np_lst)
 
     err =  np.mean(np.abs(jres - res))
-    assert err < 1e-4
+    print("wavelet: {}, level: {}, error: {:2.2e}".format(wavelet.name, level, err))
+    assert np.allclose(jres, res, atol=1e-5, rtol=1e-4)
 
 
-def test_haar():
-    wavelet = pywt.Wavelet('haar')
-    packets_lorenz(wavelet, level=2)
+def test():
+    for wavelet_str in ('haar', 'db2', 'db3'):
+        for level in (2, 4):
+            wavelet = pywt.Wavelet(wavelet_str)
+            packets_lorenz(wavelet, level=level)
 
-def test_db2():
-    wavelet = pywt.Wavelet('db2')
-    packets_lorenz(wavelet, level=2)
 
-def test_db4():
-    wavelet = pywt.Wavelet('db4')
-    packets_lorenz(wavelet, level=5)
-
+if __name__ == '__main__':
+    test()
