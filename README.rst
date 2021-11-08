@@ -37,7 +37,7 @@ using the `jax_cpu` extra. This means you have to use development mode and insta
 
 
 Transform Example:
-""""""""""""""
+------------------
 
 .. code-block:: python
 
@@ -57,8 +57,8 @@ Transform Example:
   print(jwt.waverec(jwt.wavedec(data, wavelet, mode='zero', level=2), wavelet))
 
 
-Packet-Transform Example
--------------
+Packet-Transform Example:
+-------------------------
 
 .. code-block:: python
 

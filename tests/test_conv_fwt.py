@@ -54,33 +54,5 @@ def test():
             fwt_ifwt_lorenz(wavelet, mode=boundary)
 
 
-def test_haar_fwt_ifwt_lorenz():
-    # ---- Test haar wavelet analysis and synthesis on lorenz signal. -----
-    wavelet = pywt.Wavelet('haar')
-    fwt_ifwt_lorenz(wavelet)
-
-
-def test_db3_fwt_ifwt_lorenz():
-    # ---- Test db3 wavelet analysis and synthesis on lorenz signal. -----
-    wavelet = pywt.Wavelet('db3')
-    fwt_ifwt_lorenz(wavelet)
-
-
-def test_db4_fwt_ifwt_lorenz():
-    # ---- Test db4 wavelet analysis and synthesis on lorenz signal. -----
-    wavelet = pywt.Wavelet('db4')
-    fwt_ifwt_lorenz(wavelet)
-
-
-def test_db8_fwt_ifwt_lorenz():
-    # ---- Test db8 wavelet analysis and synthesis on lorenz signal. -----
-    wavelet = pywt.Wavelet('db8')
-    fwt_ifwt_lorenz(wavelet)
-
-def test_db8_fwt_ifwt_lorenz_symmetric():
-    # ---- Test db8 wavelet analysis and synthesis on lorenz signal. -----
-    wavelet = pywt.Wavelet('db8')
-    fwt_ifwt_lorenz(wavelet, mode='symmetric')
-
 if __name__ == '__main__':
     test()
