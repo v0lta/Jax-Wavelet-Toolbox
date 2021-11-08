@@ -13,16 +13,16 @@ import jax.numpy as np
 import pywt
 
 from .conv_fwt import get_filter_arrays
-from .utils import JaxWavelet, flatten_2d_coeff_lst
+from .utils import Wavelet, flatten_2d_coeff_lst
 
 
-def wavedec2(data: np.array, wavelet: JaxWavelet, level: int = None) -> list:
+def wavedec2(data: np.array, wavelet: Wavelet, level: int = None) -> list:
     """Compute the two dimensional wavelet analysis transform on the last two dimensions 
        of the input data array.
     Args:
         data (np.array): Jax array containing the data to be transformed. Assumed shape:
                          [batch size, channels, hight, width].
-        wavelet (JaxWavelet): A namedtouple containing the filters for the transformation.
+        wavelet (Wavelet): A namedtouple containing the filters for the transformation.
         level (int, optional): The max level to be used, if not set as many levels as possible
                                will be used. Defaults to None.
     Returns:
@@ -53,12 +53,12 @@ def wavedec2(data: np.array, wavelet: JaxWavelet, level: int = None) -> list:
     return result_lst
 
 
-def waverec2(coeffs: list, wavelet: JaxWavelet) -> np.array:
+def waverec2(coeffs: list, wavelet: Wavelet) -> np.array:
     """ This function implements the two dimensional synthesis wavelet transfrom,
        it is used to reconstruct the original input image from the wavelet coefficients.
     Args:
         coeffs (list): The input coefficients, typically the output of wavedec2.
-        wavelet (JaxWavelet): The named touple contining the filters used to compute the analysis transform.
+        wavelet (Wavelet): The named touple contining the filters used to compute the analysis transform.
 
     Returns:
         np.array: Reconstruction of the original input data array of shape [batch, channel, height, width].
@@ -152,7 +152,7 @@ def main(output, level: Optional[int]):
     face = face[:, 128:(512 + 128), 256:(512 + 256)]
     face_exd = np.expand_dims(np.array(face), 1)
     wavelet = pywt.Wavelet('haar')
-    jax_wavelet = JaxWavelet(wavelet.dec_lo, wavelet.dec_hi, wavelet.rec_lo, wavelet.rec_hi)
+    jax_wavelet = Wavelet(wavelet.dec_lo, wavelet.dec_hi, wavelet.rec_lo, wavelet.rec_hi)
 
     print(f'Using level: {level}')
     coeff2d_pywt = pywt.wavedec2(face, wavelet, mode='reflect', level=level)

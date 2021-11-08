@@ -10,10 +10,10 @@ import jax.numpy as np
 import pywt
 
 from .lorenz import generate_lorenz
-from .utils import JaxWavelet
+from .utils import Wavelet
 
 
-def dwt(data: np.array, wavelet: JaxWavelet, mode='reflect'):
+def dwt(data: np.array, wavelet: Wavelet, mode='reflect'):
     dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True)
     filt = np.stack([dec_lo, dec_hi], 0)
     res_lo = fwt_pad(data, len(wavelet.dec_lo), mode)
@@ -26,7 +26,7 @@ def dwt(data: np.array, wavelet: JaxWavelet, mode='reflect'):
     return res_lo, res_hi 
 
 
-def idwt(coeff_lst: list, wavelet: JaxWavelet):
+def idwt(coeff_lst: list, wavelet: Wavelet):
     _, _, rec_lo, rec_hi = get_filter_arrays(wavelet, flip=True)
     filt_len = rec_lo.shape[-1]
     filt = np.stack([rec_lo, rec_hi], 1)
@@ -38,11 +38,11 @@ def idwt(coeff_lst: list, wavelet: JaxWavelet):
     return rec
 
 
-def wavedec(data: np.array, wavelet: JaxWavelet, level: int = None, mode='reflect') -> list:
+def wavedec(data: np.array, wavelet: Wavelet, level: int = None, mode='reflect') -> list:
     """Computes the one dimensional analysis wavelet transform of the last dimension.
     Args:
         data (np.array): Input data array of shape [batch, channels, time]
-        wavelet (JaxWavelet): The named touple containing the wavelet filter arrays.
+        wavelet (Wavelet): The named touple containing the wavelet filter arrays.
         level (int, optional): Max scale level to be used, of none as many levels as possible are
                                used. Defaults to None.
         mode: The padding used to extend the input signal. Default: reflect.
@@ -73,8 +73,7 @@ def wavedec(data: np.array, wavelet: JaxWavelet, level: int = None, mode='reflec
     return result_lst
 
 
-@jax.jit
-def waverec(coeffs: list, wavelet: JaxWavelet) -> np.array:
+def waverec(coeffs: list, wavelet: Wavelet) -> np.array:
     """ The one dimensional wavelet synthesis transform reconstructs the original
         signal given the wavelet coefficients.
     Args:
@@ -170,7 +169,6 @@ def get_filter_arrays(wavelet, flip):
     return dec_lo, dec_hi, rec_lo, rec_hi
 
 
-@jax.jit
 def dwt_max_level(data_len: int, filt_len: int) -> int:
     return np.floor(np.log2(data_len / (filt_len - 1.))).astype(np.int32)
 
@@ -185,20 +183,18 @@ def main(output):
     import matplotlib.pyplot as plt
 
     wavelet = pywt.Wavelet('haar')
-    jax_wavelet = JaxWavelet(wavelet.dec_lo, wavelet.dec_hi,
-                             wavelet.rec_lo, wavelet.rec_hi)
     # ---- Test haar wavelet analysis and synthesis on lorenz signal. -----
     lorenz = np.transpose(np.expand_dims(generate_lorenz()[:, 0], -1), [1, 0])
     data = np.expand_dims(lorenz, 0)
 
-    coeff = wavedec(data, jax_wavelet)
+    coeff = wavedec(data, wavelet)
     cat_coeff = np.concatenate(coeff, axis=-1)
     pywt_coeff = pywt.wavedec(lorenz, wavelet, mode='reflect')
     pywt_cat_coeff = np.concatenate(pywt_coeff, axis=-1)
     err = np.mean(np.abs(cat_coeff - pywt_cat_coeff))
     print('coefficient', err)
 
-    rest_data = waverec(coeff, jax_wavelet)
+    rest_data = waverec(coeff, wavelet)
     err = np.mean(np.abs(rest_data - data))
     plt.plot(rest_data[0, 0, :])
     plt.plot(data[0, 0, :])

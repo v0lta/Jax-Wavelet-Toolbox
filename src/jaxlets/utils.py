@@ -7,7 +7,7 @@ __all__ = [
     'flatten_2d_coeff_lst',
 ]
 
-JaxWavelet = namedtuple('JaxWavelet', ['dec_lo', 'dec_hi', 'rec_lo', 'rec_hi'])
+Wavelet = namedtuple('Wavelet', ['dec_lo', 'dec_hi', 'rec_lo', 'rec_hi'])
 
 
 def flatten_2d_coeff_lst(coeff_lst_2d, flatten_arrays=True):
