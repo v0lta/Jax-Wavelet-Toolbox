@@ -26,7 +26,6 @@ def dwt(data: np.array, wavelet: JaxWavelet, mode='reflect'):
     return res_lo, res_hi 
 
 
-@jax.jit
 def idwt(coeff_lst: list, wavelet: JaxWavelet):
     _, _, rec_lo, rec_hi = get_filter_arrays(wavelet, flip=True)
     filt_len = rec_lo.shape[-1]

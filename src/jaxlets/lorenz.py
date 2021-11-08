@@ -4,15 +4,12 @@
 # Created on Thu Jun 11 2020
 # Copyright (c) 2020 Moritz Wolter
 #
-
 import os
 
 import click
-import jax
 import jax.numpy as np
 
 
-@jax.jit
 def generate_lorenz(
     a=10.,
     b=28.,
