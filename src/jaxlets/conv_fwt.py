@@ -38,17 +38,25 @@ def idwt(coeff_lst: list, wavelet: Wavelet):
     return rec
 
 
-def wavedec(data: np.array, wavelet: Wavelet, level: int = None, mode='reflect') -> list:
+def wavedec(data: np.array, wavelet: Wavelet, level: int = None, mode: str='reflect') -> list:
     """Computes the one dimensional analysis wavelet transform of the last dimension.
     Args:
         data (np.array): Input data array of shape [batch, channels, time]
-        wavelet (Wavelet): The named touple containing the wavelet filter arrays.
+        wavelet (Wavelet): The named tuple containing the wavelet filter arrays.
         level (int, optional): Max scale level to be used, of none as many levels as possible are
                                used. Defaults to None.
         mode: The padding used to extend the input signal. Default: reflect.
     Returns:
         list: List containing the wavelet coefficients.
     """
+    if len(data.shape) == 1:
+        data = np.expand_dims(np.expand_dims(data, 0), 0)
+
+    if mode == 'zero':
+        # translate pywt to numpy.
+        mode = 'constant'
+
+    print("mode: {}".format(mode))
     dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True)
     filt_len = dec_lo.shape[-1]
     filt = np.stack([dec_lo, dec_hi], 0)
