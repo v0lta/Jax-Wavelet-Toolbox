@@ -56,7 +56,6 @@ def wavedec(data: np.array, wavelet: Wavelet, level: int = None, mode: str='refl
         # translate pywt to numpy.
         mode = 'constant'
 
-    print("mode: {}".format(mode))
     dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True)
     filt_len = dec_lo.shape[-1]
     filt = np.stack([dec_lo, dec_hi], 0)
