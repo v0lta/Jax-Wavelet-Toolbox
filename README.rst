@@ -1,14 +1,26 @@
-Jax-Wavelet-Toolbox
-=======
+*************************
+Jax-Wavelet-Toolbox (jwt)
+*************************
+
+
+.. image:: https://github.com/v0lta/Jax-Wavelet-Toolbox/actions/workflows/tests.yml/badge.svg 
+    :target: https://github.com/v0lta/Jax-Wavelet-Toolbox/actions/workflows/tests.yml
+    :alt: GitHub Actions
+
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/psf/black
+    :alt: Black code style
+
+
 Differentiable and GPU enabled fast wavelet transforms in JAX. 
 
 Features
---------
+""""""""
 - 1d forward and backward fwt are implemented in `src/jaxlets/conv_fwt.py`.
 - 2d forward and backard fwt methods are part of the `src/jaxlets/conv_fwt_2d.py` module.
 
 Installation
-------------
+""""""""""""
 Head to https://github.com/google/jax#installation and follow the procedure described there, then do the 
 following to install the code in development mode:
 
@@ -37,7 +49,7 @@ using the `jax_cpu` extra. This means you have to use development mode and insta
 
 
 Transform Example:
-------------------
+""""""""""""""""""
 
 .. code-block:: python
 
@@ -58,7 +70,7 @@ Transform Example:
 
 
 Testing
--------
+"""""""
 Unit tests are handled by ``tox``. Clone the repository and run it with the following:
 
 .. code-block:: sh
@@ -69,6 +81,6 @@ Unit tests are handled by ``tox``. Clone the repository and run it with the foll
     $ tox
 
 Goals
------
+"""""
 - In the spirit of jax the aim is to be 100% pywt compatible. Whenever possible, interfaces should be the same
   results identical.
