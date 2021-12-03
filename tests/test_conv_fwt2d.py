@@ -4,16 +4,16 @@ import jax.numpy as np
 import pywt
 import scipy
 
-from jaxlets.conv_fwt_2d import wavedec2, waverec2
-from jaxlets.utils import flatten_2d_coeff_lst
+from src.jwt.conv_fwt_2d import wavedec2, waverec2
+from src.jwt.utils import flatten_2d_coeff_lst
 
 
 def run_2dtest(wavelet, level=None):
     face = np.transpose(scipy.misc.face(), [2, 0, 1]).astype(np.float32)
-    face = face[:, 128:(512 + 128), 256:(512 + 256)]
+    face = face[:, 128 : (512 + 128), 256 : (512 + 256)]
     face_exd = np.expand_dims(np.array(face), 1)
 
-    coeff2d_pywt = pywt.wavedec2(face, wavelet, mode='reflect', level=level)
+    coeff2d_pywt = pywt.wavedec2(face, wavelet, mode="reflect", level=level)
     coeff2d = wavedec2(face_exd, wavelet, level=level)
     # test pywt compatability
     flat_lst = np.concatenate(flatten_2d_coeff_lst(coeff2d_pywt), -1)
@@ -29,33 +29,33 @@ def run_2dtest(wavelet, level=None):
     assert err < 5e-4
 
 
-def test_2d_haar_l1(wavelet=pywt.Wavelet('haar')):
+def test_2d_haar_l1(wavelet=pywt.Wavelet("haar")):
     run_2dtest(wavelet, level=1)
 
 
-def test_2d_haar_l2(wavelet=pywt.Wavelet('haar')):
+def test_2d_haar_l2(wavelet=pywt.Wavelet("haar")):
     run_2dtest(wavelet, level=2)
 
 
-def test_2d_haar_l3(wavelet=pywt.Wavelet('haar')):
+def test_2d_haar_l3(wavelet=pywt.Wavelet("haar")):
     run_2dtest(wavelet, level=3)
 
 
-def test_2d_haar_lmax(wavelet=pywt.Wavelet('haar')):
+def test_2d_haar_lmax(wavelet=pywt.Wavelet("haar")):
     run_2dtest(wavelet, level=None)
 
 
-def test_2d_db2(wavelet=pywt.Wavelet('db2')):
+def test_2d_db2(wavelet=pywt.Wavelet("db2")):
     run_2dtest(wavelet)
 
 
-def test_2d_db3(wavelet=pywt.Wavelet('db3')):
+def test_2d_db3(wavelet=pywt.Wavelet("db3")):
     run_2dtest(wavelet)
 
 
-def test_2d_db4(wavelet=pywt.Wavelet('db4')):
+def test_2d_db4(wavelet=pywt.Wavelet("db4")):
     run_2dtest(wavelet)
 
 
-def test_2d_sym5(wavelet=pywt.Wavelet('sym5')):
+def test_2d_sym5(wavelet=pywt.Wavelet("sym5")):
     run_2dtest(wavelet)

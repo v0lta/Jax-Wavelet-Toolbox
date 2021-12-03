@@ -1,57 +1,76 @@
+"""Compute wavelet packets using jwt."""
+
 #
 # Created on Fri Jun 19 2020
 # Copyright (c) 2020 Moritz Wolter
 #
+import collections
+
 import jax
 import jax.numpy as np
-import collections
-from jaxlets.conv_fwt import dwt_max_level, get_filter_arrays, fwt_pad
+
+from .conv_fwt import dwt_max_level, fwt_pad, get_filter_arrays
 
 
 class WaveletPacket(collections.UserDict):
+    """A wavelet packet tree."""
 
-    def __init__(self, data: np.array, wavelet, mode: str='reflect'):
-        """Create a wavelet packet decomposition object
+    def __init__(self, data: np.array, wavelet, mode: str = "reflect"):
+        """Create a wavelet packet decomposition object.
+
         Args:
             data (np.array): The input data array of shape [time].
             wavelet (pywt.Wavelet or JaxWavelet): The wavelet used for the decomposition.
             mode ([str]): The desired padding method
-        """        
+        """
         self.input_data = np.expand_dims(np.expand_dims(data, 0), 0)
         self.wavelet = wavelet
-        self.mode = mode 
+        self.mode = mode
         self.nodes = {}
         self.data = None
         self._wavepacketdec(self.input_data, wavelet, mode=mode)
 
-    def get_level(self, level):
-        return self.get_graycode_order(level)
+    def get_level(self, level: int) -> list:
+        """Return the graycodes for a given level.
 
-    def get_graycode_order(self, level, x='a', y='d'):
+        Args:
+            level (int): The required depth of the tree.
+
+        Returns:
+            list: A list with the node names.
+        """
+
+        return self._get_graycode_order(level)
+
+    def _get_graycode_order(self, level, x="a", y="d"):
         graycode_order = [x, y]
         for i in range(level - 1):
-            graycode_order = [x + path for path in graycode_order] + \
-                            [y + path for path in graycode_order[::-1]]
+            graycode_order = [x + path for path in graycode_order] + [
+                y + path for path in graycode_order[::-1]
+            ]
         return graycode_order
 
-
-    def recursive_dwt(self, data, filt, mode , level, max_level, path):
+    def recursive_dwt(self, data, filt, mode, level, max_level, path):
         self.data[path] = np.squeeze(data)
         if level < max_level:
             data = fwt_pad(data, filt_len=filt.shape[-1])
             res = jax.lax.conv_general_dilated(
                 lhs=data,  # lhs = NCH image tensor
                 rhs=filt,  # rhs = OIH conv kernel tensor
-                padding='VALID', window_strides=[2, ],
-                dimension_numbers=('NCH', 'OIH', 'NCH'))
+                padding="VALID",
+                window_strides=[
+                    2,
+                ],
+                dimension_numbers=("NCH", "OIH", "NCH"),
+            )
             res_lo, res_hi = np.split(res, 2, 1)
-            return self.recursive_dwt(res_lo, filt, mode, level+1, max_level, path + 'a'), \
-                   self.recursive_dwt(res_hi, filt, mode, level+1, max_level, path + 'd')
+            return self.recursive_dwt(
+                res_lo, filt, mode, level + 1, max_level, path + "a"
+            ), self.recursive_dwt(res_hi, filt, mode, level + 1, max_level, path + "d")
         else:
             self.data[path] = np.squeeze(data)
 
-
-    def _wavepacketdec(self, data, wavelet, level=None, mode='reflect'):
+    def _wavepacketdec(self, data, wavelet, level=None, mode="reflect"):
         self.data = {}
         dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True)
         filt_len = dec_lo.shape[-1]
@@ -60,19 +79,20 @@ class WaveletPacket(collections.UserDict):
         if level is None:
             # scales = pywt.dwt_max_level(data.shape[-1], filt_len)
             level = dwt_max_level(data.shape[-1], filt_len)
-        self.recursive_dwt(data, filt, mode, level=0, max_level=level, path='')
+        self.recursive_dwt(data, filt, mode, level=0, max_level=level, path="")
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     import pywt
     import numpy as nnp
     import matplotlib.pyplot as plt
     import scipy.signal as signal
     import os
+
     os.environ["DISPLAY"] = ":1"
     import matplotlib
-    matplotlib.use('Qt5Agg')
+
+    matplotlib.use("Qt5Agg")
 
     # t = [1,   2, 3,  4,  5,  6,  7]
     # w = [56., 40., 8., 24., 48., 40., 16.]
@@ -100,19 +120,18 @@ if __name__ == '__main__':
     # print('err', np.mean(np.abs(res - viz)))
     # print('stop')
 
-
     t = np.linspace(0, 10, 5001)
-    wavelet = pywt.Wavelet('db4')
-    w = signal.chirp(t, f0=.00001, f1=20, t1=10, method='linear')
+    wavelet = pywt.Wavelet("db4")
+    w = signal.chirp(t, f0=0.00001, f1=20, t1=10, method="linear")
 
     plt.plot(t, w)
     plt.title("Linear Chirp, f(0)=6, f(10)=1")
-    plt.xlabel('t (sec)')
+    plt.xlabel("t (sec)")
     plt.show()
 
-    wp = WaveletPacket(data=np.expand_dims(np.expand_dims(w, 0), 0),
-                       wavelet=wavelet,
-                       mode='reflect')
+    wp = WaveletPacket(
+        data=np.expand_dims(np.expand_dims(w, 0), 0), wavelet=wavelet, mode="reflect"
+    )
     nodes = wp.get_level(7)
     np_lst = []
     for node in nodes:
@@ -120,7 +139,6 @@ if __name__ == '__main__':
     viz = np.stack(np_lst)
     plt.imshow(viz[:20, :])
     plt.show()
-
 
     # wp = pywt.WaveletPacket(data=w, wavelet=wavelet,
     #                         mode='reflect')
@@ -131,8 +149,7 @@ if __name__ == '__main__':
     # viz = np.stack(np_lst)
     # plt.imshow(viz[:20, :])
     # plt.show()
-    print('stop')
-
+    print("stop")
 
     # plt.imshow(np.log(np.abs(viz)+0.01))
     # plt.show()
@@ -140,7 +157,6 @@ if __name__ == '__main__':
     # print(wp['ad'].data)
     # print(wp['dd'].data)
     # print(wp['da'].data)
-
 
     # x = np.linspace(0, 1, num=512)
     # data = np.sin(250 * np.pi * x**2)

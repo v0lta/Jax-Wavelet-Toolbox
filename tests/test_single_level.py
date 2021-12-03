@@ -6,13 +6,13 @@
 import pywt
 import jax.numpy as np
 
-from src.jaxlets.conv_fwt import dwt, idwt
-from src.jaxlets.lorenz import generate_lorenz
+from src.jwt.conv_fwt import dwt, idwt
+from src.jwt._lorenz import generate_lorenz
 
 
-def dwt_idwt_lorenz(wavelet, mode='reflect'):
+def dwt_idwt_lorenz(wavelet, mode="reflect"):
     # ---- Test single level wavelet analysis and synthesis on lorenz signal. -----
-    lorenz = np.transpose(np.expand_dims(generate_lorenz(tmax=.99)[:, 0], -1), [1, 0])
+    lorenz = np.transpose(np.expand_dims(generate_lorenz(tmax=0.99)[:, 0], -1), [1, 0])
     data = np.expand_dims(lorenz, 0)
     coeff = dwt(data, wavelet=wavelet, mode=mode)
     pywt_coeff = pywt.dwt(lorenz, wavelet, mode=mode)
@@ -28,11 +28,11 @@ def dwt_idwt_lorenz(wavelet, mode='reflect'):
 
 
 def test():
-    for wavelet_str in ['haar', 'db2', 'db4', 'db8']:
-        for boundary in ['reflect', 'symmetric']:
+    for wavelet_str in ["haar", "db2", "db4", "db8"]:
+        for boundary in ["reflect", "symmetric"]:
             wavelet = pywt.Wavelet(wavelet_str)
             dwt_idwt_lorenz(wavelet, mode=boundary)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test()

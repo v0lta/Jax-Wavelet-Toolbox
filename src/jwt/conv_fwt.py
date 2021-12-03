@@ -9,21 +9,25 @@ import jax
 import jax.numpy as np
 import pywt
 
-from .lorenz import generate_lorenz
+from ._lorenz import generate_lorenz
 from .utils import Wavelet
 
 
-def dwt(data: np.array, wavelet: Wavelet, mode='reflect'):
+def dwt(data: np.array, wavelet: Wavelet, mode="reflect"):
     dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True)
     filt = np.stack([dec_lo, dec_hi], 0)
     res_lo = fwt_pad(data, len(wavelet.dec_lo), mode)
     res = jax.lax.conv_general_dilated(
         lhs=res_lo,  # lhs = NCH image tensor
         rhs=filt,  # rhs = OIH conv kernel tensor
-        padding='VALID', window_strides=[2, ],
-        dimension_numbers=('NCH', 'OIH', 'NCH'))
+        padding="VALID",
+        window_strides=[
+            2,
+        ],
+        dimension_numbers=("NCH", "OIH", "NCH"),
+    )
     res_lo, res_hi = np.split(res, 2, 1)
-    return res_lo, res_hi 
+    return res_lo, res_hi
 
 
 def idwt(coeff_lst: list, wavelet: Wavelet):
@@ -31,14 +35,22 @@ def idwt(coeff_lst: list, wavelet: Wavelet):
     filt_len = rec_lo.shape[-1]
     filt = np.stack([rec_lo, rec_hi], 1)
     res_lo = np.concatenate([coeff_lst[0], coeff_lst[1]], 1)
-    rec = jax.lax.conv_transpose(lhs=res_lo, rhs=filt, padding='VALID',
-                                 strides=[2, ],
-                                 dimension_numbers=('NCH', 'OIH', 'NCH'))
+    rec = jax.lax.conv_transpose(
+        lhs=res_lo,
+        rhs=filt,
+        padding="VALID",
+        strides=[
+            2,
+        ],
+        dimension_numbers=("NCH", "OIH", "NCH"),
+    )
     rec = fwt_unpad(rec, filt_len, 0, coeff_lst)
     return rec
 
 
-def wavedec(data: np.array, wavelet: Wavelet, level: int = None, mode: str='reflect') -> list:
+def wavedec(
+    data: np.array, wavelet: Wavelet, level: int = None, mode: str = "reflect"
+) -> list:
     """Computes the one dimensional analysis wavelet transform of the last dimension.
     Args:
         data (np.array): Input data array of shape [batch, channels, time]
@@ -52,9 +64,9 @@ def wavedec(data: np.array, wavelet: Wavelet, level: int = None, mode: str='refl
     if len(data.shape) == 1:
         data = np.expand_dims(np.expand_dims(data, 0), 0)
 
-    if mode == 'zero':
+    if mode == "zero":
         # translate pywt to numpy.
-        mode = 'constant'
+        mode = "constant"
 
     dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True)
     filt_len = dec_lo.shape[-1]
@@ -71,8 +83,12 @@ def wavedec(data: np.array, wavelet: Wavelet, level: int = None, mode: str='refl
         res = jax.lax.conv_general_dilated(
             lhs=res_lo,  # lhs = NCH image tensor
             rhs=filt,  # rhs = OIH conv kernel tensor
-            padding='VALID', window_strides=[2, ],
-            dimension_numbers=('NCH', 'OIH', 'NCH'))
+            padding="VALID",
+            window_strides=[
+                2,
+            ],
+            dimension_numbers=("NCH", "OIH", "NCH"),
+        )
         res_lo, res_hi = np.split(res, 2, 1)
         result_lst.append(res_hi)
     result_lst.append(res_lo)
@@ -81,7 +97,7 @@ def wavedec(data: np.array, wavelet: Wavelet, level: int = None, mode: str='refl
 
 
 def waverec(coeffs: list, wavelet: Wavelet) -> np.array:
-    """ The one dimensional wavelet synthesis transform reconstructs the original
+    """The one dimensional wavelet synthesis transform reconstructs the original
         signal given the wavelet coefficients.
     Args:
         coeffs (list): Wavelet coefficients, typically produced by the wavedec function.
@@ -99,9 +115,15 @@ def waverec(coeffs: list, wavelet: Wavelet) -> np.array:
     for c_pos, res_hi in enumerate(coeffs[1:]):
         # print('shapes', res_lo.shape, res_hi.shape)
         res_lo = np.concatenate([res_lo, res_hi], 1)
-        res_lo = jax.lax.conv_transpose(lhs=res_lo, rhs=filt, padding='VALID',
-                                        strides=[2, ],
-                                        dimension_numbers=('NCH', 'OIH', 'NCH'))
+        res_lo = jax.lax.conv_transpose(
+            lhs=res_lo,
+            rhs=filt,
+            padding="VALID",
+            strides=[
+                2,
+            ],
+            dimension_numbers=("NCH", "OIH", "NCH"),
+        )
         res_lo = fwt_unpad(res_lo, filt_len, c_pos, coeffs)
     return res_lo
 
@@ -126,17 +148,18 @@ def fwt_unpad(res_lo, filt_len, c_pos, coeffs):
         res_lo = res_lo[..., padr:-padl]
     return res_lo
 
-def fwt_pad(data, filt_len, mode='reflect'):
+
+def fwt_pad(data, filt_len, mode="reflect"):
     # pad to we see all filter positions and pywt compatability.
     # convolution output length:
     # see https://arxiv.org/pdf/1603.07285.pdf section 2.3:
     # floor([data_len - filt_len]/2) + 1
-    # should equal pywt output length 
+    # should equal pywt output length
     # floor((data_len + filt_len - 1)/2)
     # => floor([data_len + total_pad - filt_len]/2) + 1
     #    = floor((data_len + filt_len - 1)/2)
     # (data_len + total_pad - filt_len) + 2 = data_len + filt_len - 1
-    # total_pad = 2*filt_len - 3 
+    # total_pad = 2*filt_len - 3
     padr = 0
     padl = 0
     if filt_len > 2:
@@ -177,11 +200,11 @@ def get_filter_arrays(wavelet, flip):
 
 
 def dwt_max_level(data_len: int, filt_len: int) -> int:
-    return np.floor(np.log2(data_len / (filt_len - 1.))).astype(np.int32)
+    return np.floor(np.log2(data_len / (filt_len - 1.0))).astype(np.int32)
 
 
 @click.command()
-@click.option('-o', '--output')
+@click.option("-o", "--output")
 def main(output):
     # import os
     # os.environ["DISPLAY"] = ":1"
@@ -189,17 +212,17 @@ def main(output):
     # matplotlib.use('Qt5Agg')
     import matplotlib.pyplot as plt
 
-    wavelet = pywt.Wavelet('haar')
+    wavelet = pywt.Wavelet("haar")
     # ---- Test haar wavelet analysis and synthesis on lorenz signal. -----
     lorenz = np.transpose(np.expand_dims(generate_lorenz()[:, 0], -1), [1, 0])
     data = np.expand_dims(lorenz, 0)
 
     coeff = wavedec(data, wavelet)
     cat_coeff = np.concatenate(coeff, axis=-1)
-    pywt_coeff = pywt.wavedec(lorenz, wavelet, mode='reflect')
+    pywt_coeff = pywt.wavedec(lorenz, wavelet, mode="reflect")
     pywt_cat_coeff = np.concatenate(pywt_coeff, axis=-1)
     err = np.mean(np.abs(cat_coeff - pywt_cat_coeff))
-    print('coefficient', err)
+    print("coefficient", err)
 
     rest_data = waverec(coeff, wavelet)
     err = np.mean(np.abs(rest_data - data))
@@ -209,8 +232,8 @@ def main(output):
         plt.show()
     else:
         plt.savefig(output)
-    print(err, 'done')
+    print(err, "done")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
