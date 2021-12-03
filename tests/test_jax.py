@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+"""Runs the example from https://github.com/google/jax#automatic-differentiation-with-grad ."""
 
 #
 # Created on Thu Jun 11 2020
@@ -11,6 +11,8 @@ from jax import grad
 
 
 def test_jax():
+    """Test if jax is correctly installed."""
+
     def tanh(x):  # Define a function
         y = np.exp(-2.0 * x)
         return (1.0 - y) / (1.0 + y)

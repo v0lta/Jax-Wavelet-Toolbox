@@ -1,3 +1,5 @@
+"""Convolution based fast wavelet transforms."""
+
 # -*- coding: utf-8 -*-
 
 # Created on Thu Jun 11 2020
@@ -13,10 +15,24 @@ from ._lorenz import generate_lorenz
 from .utils import Wavelet
 
 
-def dwt(data: np.array, wavelet: Wavelet, mode="reflect"):
+def dwt(data: np.array, wavelet: Wavelet, mode="reflect") -> tuple:
+    """Single level discrete analysis wavelet transform.
+
+    Args:
+        data (np.array): The input data array
+        wavelet (Wavelet): The wavelet to use. The fields
+            "dec_lo", "dec_hi", "rec_lo" and "rec_hi" must be defined.
+        mode (str): The desired way to pad. Defaults to "reflect".
+
+    Returns:
+        tuple: The low and high-pass filtered coefficients,
+            res_lo and res_hi.
+
+    # TODO: add the shapes.
+    """
     dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True)
     filt = np.stack([dec_lo, dec_hi], 0)
-    res_lo = fwt_pad(data, len(wavelet.dec_lo), mode)
+    res_lo = _fwt_pad(data, len(wavelet.dec_lo), mode)
     res = jax.lax.conv_general_dilated(
         lhs=res_lo,  # lhs = NCH image tensor
         rhs=filt,  # rhs = OIH conv kernel tensor
@@ -30,7 +46,18 @@ def dwt(data: np.array, wavelet: Wavelet, mode="reflect"):
     return res_lo, res_hi
 
 
-def idwt(coeff_lst: list, wavelet: Wavelet):
+def idwt(coeff_lst: list, wavelet: Wavelet) -> np.array:
+    """Single level synthesis transform.
+
+    Args:
+        coeff_lst (list): A list of wavelet coefficients.
+        wavelet (Wavelet): The wavelet used in the analysis transform.
+            Jwt follows pywt convention, the fields
+            "dec_lo", "dec_hi", "rec_lo" and "rec_hi" must be defined.
+
+    Returns:
+        np.array: A reconstruction of the original input.
+    """
     _, _, rec_lo, rec_hi = get_filter_arrays(wavelet, flip=True)
     filt_len = rec_lo.shape[-1]
     filt = np.stack([rec_lo, rec_hi], 1)
@@ -44,20 +71,22 @@ def idwt(coeff_lst: list, wavelet: Wavelet):
         ],
         dimension_numbers=("NCH", "OIH", "NCH"),
     )
-    rec = fwt_unpad(rec, filt_len, 0, coeff_lst)
+    rec = _fwt_unpad(rec, filt_len, 0, coeff_lst)
     return rec
 
 
 def wavedec(
     data: np.array, wavelet: Wavelet, level: int = None, mode: str = "reflect"
 ) -> list:
-    """Computes the one dimensional analysis wavelet transform of the last dimension.
+    """Compute the one dimensional analysis wavelet transform of the last dimension.
+
     Args:
         data (np.array): Input data array of shape [batch, channels, time]
         wavelet (Wavelet): The named tuple containing the wavelet filter arrays.
-        level (int, optional): Max scale level to be used, of none as many levels as possible are
-                               used. Defaults to None.
+        level (int): Max scale level to be used, of none as many levels as possible are
+                     used. Defaults to None.
         mode: The padding used to extend the input signal. Default: reflect.
+
     Returns:
         list: List containing the wavelet coefficients.
     """
@@ -79,7 +108,7 @@ def wavedec(
     result_lst = []
     res_lo = data
     for _ in range(level):
-        res_lo = fwt_pad(res_lo, len(wavelet.dec_lo), mode=mode)
+        res_lo = _fwt_pad(res_lo, len(wavelet.dec_lo), mode=mode)
         res = jax.lax.conv_general_dilated(
             lhs=res_lo,  # lhs = NCH image tensor
             rhs=filt,  # rhs = OIH conv kernel tensor
@@ -97,12 +126,13 @@ def wavedec(
 
 
 def waverec(coeffs: list, wavelet: Wavelet) -> np.array:
-    """The one dimensional wavelet synthesis transform reconstructs the original
-        signal given the wavelet coefficients.
+    """Reconstruct the original signal in one dimension.
+
     Args:
         coeffs (list): Wavelet coefficients, typically produced by the wavedec function.
-        wavelet (JaxWavelet): The named tuple containing the wavelet filters used to evaluate
+        wavelet (Wavelet): The named tuple containing the wavelet filters used to evaluate
                               the decomposition.
+
     Returns:
         np.array: Reconstruction of the original data.
     """
@@ -124,14 +154,13 @@ def waverec(coeffs: list, wavelet: Wavelet) -> np.array:
             ],
             dimension_numbers=("NCH", "OIH", "NCH"),
         )
-        res_lo = fwt_unpad(res_lo, filt_len, c_pos, coeffs)
+        res_lo = _fwt_unpad(res_lo, filt_len, c_pos, coeffs)
     return res_lo
 
 
-def fwt_unpad(res_lo, filt_len, c_pos, coeffs):
+def _fwt_unpad(res_lo, filt_len, c_pos, coeffs):
     padr = 0
     padl = 0
-    # print('res_lo conv shape', res_lo.shape)
     if filt_len > 2:
         padr += (2 * filt_len - 3) // 2
         padl += (2 * filt_len - 3) // 2
@@ -149,7 +178,17 @@ def fwt_unpad(res_lo, filt_len, c_pos, coeffs):
     return res_lo
 
 
-def fwt_pad(data, filt_len, mode="reflect"):
+def _fwt_pad(data: np.array, filt_len: int, mode: str = "reflect") -> np.array:
+    """Pad an input to ensure our fwts are invertible.
+
+    Args:
+        data (np.array): The input array.
+        filt_len (int): The length of the wavelet filters
+        mode (str): How to pad. Defaults to "reflect".
+
+    Returns:
+        np.array: A padded version of the input data array.
+    """
     # pad to we see all filter positions and pywt compatability.
     # convolution output length:
     # see https://arxiv.org/pdf/1603.07285.pdf section 2.3:
@@ -175,7 +214,18 @@ def fwt_pad(data, filt_len, mode="reflect"):
     return data
 
 
-def get_filter_arrays(wavelet, flip):
+def get_filter_arrays(wavelet: Wavelet, flip: bool) -> tuple:
+    """Extract the filter coefficients from an input wavelet object.
+
+    Args:
+        wavelet (Wavelet): A pywt-style input wavelet.
+        flip (bool): If true flip the input coefficients.
+
+    Returns:
+        tuple: The dec_lo, dec_hi, rec_lo and rec_hi
+            filter coefficients as jax arrays.
+    """
+
     def create_array(filter):
         if flip:
             if type(filter) is np.array:
@@ -200,12 +250,22 @@ def get_filter_arrays(wavelet, flip):
 
 
 def dwt_max_level(data_len: int, filt_len: int) -> int:
+    """Compute maximum number of possible levels.
+
+    Args:
+        data_len (int): Length of the input data.
+        filt_len (int): Length of the wavelet filters.
+
+    Returns:
+        int: The number of possible levels.
+    """
     return np.floor(np.log2(data_len / (filt_len - 1.0))).astype(np.int32)
 
 
 @click.command()
 @click.option("-o", "--output")
 def main(output):
+    """Run a test example."""
     # import os
     # os.environ["DISPLAY"] = ":1"
     # import matplotlib

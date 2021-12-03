@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-
+"""Two dimensional convolution based fast wavelet transforms."""
 #
 # Created on Thu Jun 12 2020
 # Copyright (c) 2020 Moritz Wolter
@@ -17,20 +16,21 @@ from .utils import Wavelet, flatten_2d_coeff_lst
 
 
 def wavedec2(data: np.array, wavelet: Wavelet, level: int = None) -> list:
-    """Compute the two dimensional wavelet analysis transform on the last two dimensions
-       of the input data array.
+    """Compute the two dimensional wavelet analysis transform on the last two dimensions of the input data array.
+
     Args:
         data (np.array): Jax array containing the data to be transformed. Assumed shape:
                          [batch size, channels, hight, width].
         wavelet (Wavelet): A namedtouple containing the filters for the transformation.
-        level (int, optional): The max level to be used, if not set as many levels as possible
+        level (int): The max level to be used, if not set as many levels as possible
                                will be used. Defaults to None.
+
     Returns:
         list: The wavelet coefficients in a nested list.
     """
     dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True)
     dec_filt = construct_2d_filt(lo=dec_lo, hi=dec_hi)
-    filt_len = dec_lo.shape[-1]
+    # filt_len = dec_lo.shape[-1]
 
     if level is None:
         level = pywt.dwtn_max_level(
@@ -40,7 +40,7 @@ def wavedec2(data: np.array, wavelet: Wavelet, level: int = None) -> list:
     result_lst = []
     res_ll = data
     for _ in range(level):
-        res_ll = fwt_pad2d(res_ll, len(wavelet.dec_lo))
+        res_ll = _fwt_pad2d(res_ll, len(wavelet.dec_lo))
         res = jax.lax.conv_general_dilated(
             lhs=res_ll,  # lhs = NCHw image tensor
             rhs=dec_filt,  # rhs = OIHw conv kernel tensor
@@ -57,8 +57,10 @@ def wavedec2(data: np.array, wavelet: Wavelet, level: int = None) -> list:
 
 
 def waverec2(coeffs: list, wavelet: Wavelet) -> np.array:
-    """This function implements the two dimensional synthesis wavelet transfrom,
-       it is used to reconstruct the original input image from the wavelet coefficients.
+    """Compute a two dimensional synthesis wavelet transfrom.
+
+       Use it to reconstruct the original input image from the wavelet coefficients.
+
     Args:
         coeffs (list): The input coefficients, typically the output of wavedec2.
         wavelet (Wavelet): The named touple contining the filters used to compute the analysis transform.
@@ -128,7 +130,7 @@ def construct_2d_filt(lo, hi):
     return filt
 
 
-def fwt_pad2d(data: np.array, filt_len: int, mode="reflect") -> np.array:
+def _fwt_pad2d(data: np.array, filt_len: int, mode="reflect") -> np.array:
     padr = 0
     padl = 0
     padt = 0
@@ -154,6 +156,7 @@ def fwt_pad2d(data: np.array, filt_len: int, mode="reflect") -> np.array:
 @click.option("-o", "--output")
 @click.option("--level", type=int)
 def main(output, level: Optional[int]):
+    """Run some toy examples."""
     import matplotlib.pyplot as plt
     import scipy.misc
 

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+"""Convolution fast wavelet transform test code."""
 
 #
 # Created on Thu Jun 11 2020
@@ -7,13 +7,12 @@
 
 import jax.numpy as np
 import pywt
-
-from src.jwt.conv_fwt import wavedec, waverec
 from src.jwt._lorenz import generate_lorenz
+from src.jwt.conv_fwt import wavedec, waverec
 
 
 def test_haar_fwt_ifwt_16():
-    # ---- Test harr wavelet analysis and synthesis on 16 sample signal. -----
+    """Test Haar wavelet analysis and synthesis on 16 sample signal."""
     wavelet = pywt.Wavelet("haar")
     data = np.array(
         [
@@ -47,8 +46,8 @@ def test_haar_fwt_ifwt_16():
     assert err < 1e-4
 
 
-def fwt_ifwt_lorenz(wavelet, mode="reflect"):
-    # ---- Test wavelet analysis and synthesis on lorenz signal. -----
+def fwt_ifwt_lorenz(wavelet, mode: str = "reflect"):
+    """Test wavelet analysis and synthesis on lorenz signal."""
     lorenz = np.transpose(np.expand_dims(generate_lorenz(tmax=1.27)[:, 0], -1), [1, 0])
     data = np.expand_dims(lorenz, 0)
     coeff = wavedec(data, wavelet, mode=mode)
@@ -72,7 +71,8 @@ def fwt_ifwt_lorenz(wavelet, mode="reflect"):
     assert np.allclose(rec_data, data, atol=1e-5)
 
 
-def test():
+def test_conv_fwt():
+    """Run all tests."""
     for wavelet_str in ("haar", "db2"):
         for boundary in ["constant", "symmetric"]:
             wavelet = pywt.Wavelet(wavelet_str)
@@ -80,4 +80,4 @@ def test():
 
 
 if __name__ == "__main__":
-    test()
+    test_conv_fwt()

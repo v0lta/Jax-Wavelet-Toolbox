@@ -1,3 +1,4 @@
+"""Test the wavelet packet code."""
 #
 # Created on Fri Jun 19 2020
 # Copyright (c) 2020 Moritz Wolter
@@ -10,8 +11,8 @@ from src.jwt._lorenz import generate_lorenz
 from src.jwt.packets import WaveletPacket
 
 
-def packets_lorenz(wavelet, level=2, mode="reflect"):
-    # ---- Test wavelet analysis and synthesis on lorenz signal. -----
+def run_packets_lorenz(wavelet, level=2, mode="reflect"):
+    """Test wavelet analysis and synthesis on lorenz signal."""
     lorenz = generate_lorenz(tmax=0.99)[:, 0]
     jwp = WaveletPacket(lorenz, wavelet, mode=mode)
     nodes = jwp.get_level(level)
@@ -33,12 +34,13 @@ def packets_lorenz(wavelet, level=2, mode="reflect"):
     assert np.allclose(jres, res, atol=1e-5, rtol=1e-4)
 
 
-def test():
+def test_packets():
+    """Run all tests."""
     for wavelet_str in ("haar", "db2", "db3"):
         for level in (2, 4):
             wavelet = pywt.Wavelet(wavelet_str)
-            packets_lorenz(wavelet, level=level)
+            run_packets_lorenz(wavelet, level=level)
 
 
 if __name__ == "__main__":
-    test()
+    test_packets()

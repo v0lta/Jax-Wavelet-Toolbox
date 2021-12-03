@@ -9,7 +9,7 @@ import collections
 import jax
 import jax.numpy as np
 
-from .conv_fwt import dwt_max_level, fwt_pad, get_filter_arrays
+from .conv_fwt import _fwt_pad, dwt_max_level, get_filter_arrays
 
 
 class WaveletPacket(collections.UserDict):
@@ -21,7 +21,7 @@ class WaveletPacket(collections.UserDict):
         Args:
             data (np.array): The input data array of shape [time].
             wavelet (pywt.Wavelet or JaxWavelet): The wavelet used for the decomposition.
-            mode ([str]): The desired padding method
+            mode (str): The desired padding method
         """
         self.input_data = np.expand_dims(np.expand_dims(data, 0), 0)
         self.wavelet = wavelet
@@ -39,21 +39,20 @@ class WaveletPacket(collections.UserDict):
         Returns:
             list: A list with the node names.
         """
-
         return self._get_graycode_order(level)
 
     def _get_graycode_order(self, level, x="a", y="d"):
         graycode_order = [x, y]
-        for i in range(level - 1):
+        for _ in range(level - 1):
             graycode_order = [x + path for path in graycode_order] + [
                 y + path for path in graycode_order[::-1]
             ]
         return graycode_order
 
-    def recursive_dwt(self, data, filt, mode, level, max_level, path):
+    def _recursive_dwt(self, data, filt, mode, level, max_level, path):
         self.data[path] = np.squeeze(data)
         if level < max_level:
-            data = fwt_pad(data, filt_len=filt.shape[-1])
+            data = _fwt_pad(data, filt_len=filt.shape[-1])
             res = jax.lax.conv_general_dilated(
                 lhs=data,  # lhs = NCH image tensor
                 rhs=filt,  # rhs = OIH conv kernel tensor
@@ -64,9 +63,9 @@ class WaveletPacket(collections.UserDict):
                 dimension_numbers=("NCH", "OIH", "NCH"),
             )
             res_lo, res_hi = np.split(res, 2, 1)
-            return self.recursive_dwt(
+            return self._recursive_dwt(
                 res_lo, filt, mode, level + 1, max_level, path + "a"
-            ), self.recursive_dwt(res_hi, filt, mode, level + 1, max_level, path + "d")
+            ), self._recursive_dwt(res_hi, filt, mode, level + 1, max_level, path + "d")
         else:
             self.data[path] = np.squeeze(data)
 
@@ -79,12 +78,13 @@ class WaveletPacket(collections.UserDict):
         if level is None:
             # scales = pywt.dwt_max_level(data.shape[-1], filt_len)
             level = dwt_max_level(data.shape[-1], filt_len)
-        self.recursive_dwt(data, filt, mode, level=0, max_level=level, path="")
+        self._recursive_dwt(data, filt, mode, level=0, max_level=level, path="")
 
 
 if __name__ == "__main__":
     import pywt
-    import numpy as nnp
+
+    # import numpy as nnp
     import matplotlib.pyplot as plt
     import scipy.signal as signal
     import os
