@@ -16,7 +16,7 @@ Jax-Wavelet-Toolbox (jaxwt)
     :alt: PyPI - Project
 
 .. image:: https://img.shields.io/pypi/l/jaxwt
-    :target: https://github.com/v0lta/Jax-Wavelet-Toolbox/blob/main/LICENSE
+    :target: https://github.com/v0lta/Jax-Wavelet-Toolbox/blob/master/LICENSE
     :alt: PyPI - License
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
