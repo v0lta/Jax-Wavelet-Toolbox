@@ -1,6 +1,6 @@
-*************************
+***************************
 Jax-Wavelet-Toolbox (jaxwt)
-*************************
+***************************
 
 
 .. image:: https://github.com/v0lta/Jax-Wavelet-Toolbox/actions/workflows/tests.yml/badge.svg 
