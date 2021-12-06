@@ -64,6 +64,8 @@ Goals
 64-Bit floating point numbers
 """""""""""""""""""""""""""""
 To allow 64-bit precision numbers, a jax config flag must be set as shown below: 
+
 .. code-block:: python
+
     from jax.config import config
     config.update("jax_enable_x64", True)
