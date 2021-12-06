@@ -7,6 +7,18 @@ Jax-Wavelet-Toolbox (jaxwt)
     :target: https://github.com/v0lta/Jax-Wavelet-Toolbox/actions/workflows/tests.yml
     :alt: GitHub Actions
 
+.. image:: https://img.shields.io/pypi/pyversions/jaxwt
+    :target: https://pypi.org/project/jaxwt/
+    :alt: PyPI Versions
+
+.. image:: https://img.shields.io/pypi/v/jaxwt
+    :target: https://pypi.org/project/jaxwt/
+    :alt: PyPI - Project
+
+.. image:: https://img.shields.io/pypi/l/jaxwt
+    :target: https://github.com/v0lta/Jax-Wavelet-Toolbox/blob/main/LICENSE
+    :alt: PyPI - License
+
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/psf/black
     :alt: Black code style
