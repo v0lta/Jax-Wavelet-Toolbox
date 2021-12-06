@@ -13,7 +13,7 @@ from src.jwt.packets import WaveletPacket
 
 def run_packets_lorenz(wavelet, level=2, mode="reflect"):
     """Test wavelet analysis and synthesis on lorenz signal."""
-    lorenz = generate_lorenz(tmax=0.99)[:, 0]
+    lorenz = generate_lorenz(tmax=0.99)[:, 0].astype(np.float64)
     jwp = WaveletPacket(lorenz, wavelet, mode=mode)
     nodes = jwp.get_level(level)
     jnp_lst = []
@@ -31,7 +31,7 @@ def run_packets_lorenz(wavelet, level=2, mode="reflect"):
 
     err = np.mean(np.abs(jres - res))
     print("wavelet: {}, level: {}, error: {:2.2e}".format(wavelet.name, level, err))
-    assert np.allclose(jres, res, atol=1e-5, rtol=1e-4)
+    assert np.allclose(jres, res)
 
 
 def test_packets():

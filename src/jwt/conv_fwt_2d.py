@@ -4,15 +4,16 @@
 # Copyright (c) 2020 Moritz Wolter
 #
 
-from typing import Optional
 
-import click
 import jax
 import jax.numpy as np
 import pywt
+from jax.config import config
 
 from .conv_fwt import get_filter_arrays
-from .utils import Wavelet, flatten_2d_coeff_lst
+from .utils import Wavelet
+
+config.update("jax_enable_x64", True)
 
 
 def wavedec2(data: np.array, wavelet: Wavelet, level: int = None) -> list:
@@ -40,7 +41,7 @@ def wavedec2(data: np.array, wavelet: Wavelet, level: int = None) -> list:
     result_lst = []
     res_ll = data
     for _ in range(level):
-        res_ll = _fwt_pad2d(res_ll, len(wavelet.dec_lo))
+        res_ll = _fwt_pad2d(res_ll, len(wavelet))
         res = jax.lax.conv_general_dilated(
             lhs=res_ll,  # lhs = NCHw image tensor
             rhs=dec_filt,  # rhs = OIHw conv kernel tensor
@@ -48,7 +49,6 @@ def wavedec2(data: np.array, wavelet: Wavelet, level: int = None) -> list:
             window_strides=[2, 2],
             dimension_numbers=("NCHW", "OIHW", "NCHW"),
         )
-
         res_ll, res_lh, res_hl, res_hh = np.split(res, 4, 1)
         result_lst.append((res_lh, res_hl, res_hh))
     result_lst.append(res_ll)
@@ -63,12 +63,12 @@ def waverec2(coeffs: list, wavelet: Wavelet) -> np.array:
 
     Args:
         coeffs (list): The input coefficients, typically the output of wavedec2.
-        wavelet (Wavelet): The named touple contining the filters used to compute the analysis transform.
+        wavelet (Wavelet): The named tuple contining the filters used to compute the analysis transform.
 
     Returns:
         np.array: Reconstruction of the original input data array of shape [batch, channel, height, width].
     """
-    _, _, rec_lo, rec_hi = get_filter_arrays(wavelet, flip=True)
+    _, _, rec_lo, rec_hi = get_filter_arrays(wavelet, flip=True, dtype=coeffs[0].dtype)
     filt_len = rec_lo.shape[-1]
     rec_filt = construct_2d_filt(lo=rec_lo, hi=rec_hi)
     rec_filt = np.transpose(rec_filt, [1, 0, 2, 3])
@@ -150,51 +150,3 @@ def _fwt_pad2d(data: np.array, filt_len: int, mode="reflect") -> np.array:
 
     data = np.pad(data, ((0, 0), (0, 0), (padt, padb), (padl, padr)), mode)
     return data
-
-
-@click.command()
-@click.option("-o", "--output")
-@click.option("--level", type=int)
-def main(output, level: Optional[int]):
-    """Run some toy examples."""
-    import matplotlib.pyplot as plt
-    import scipy.misc
-
-    # os.environ["DISPLAY"] = ":1"
-    # os.environ["CUDA_VISIBLE_DEVICES"] = ""
-    # matplotlib.use('Qt5Agg')
-    face = np.transpose(scipy.misc.face(), [2, 0, 1]).astype(np.float32)
-    face = face[:, 128 : (512 + 128), 256 : (512 + 256)]
-    face_exd = np.expand_dims(np.array(face), 1)
-    wavelet = pywt.Wavelet("haar")
-    jax_wavelet = Wavelet(
-        wavelet.dec_lo, wavelet.dec_hi, wavelet.rec_lo, wavelet.rec_hi
-    )
-
-    print(f"Using level: {level}")
-    coeff2d_pywt = pywt.wavedec2(face, wavelet, mode="reflect", level=level)
-    coeff2d = wavedec2(face_exd, jax_wavelet, level=level)
-    recss2d = waverec2(coeff2d, jax_wavelet)
-
-    flat_lst = np.concatenate(flatten_2d_coeff_lst(coeff2d_pywt), -1)
-    flat_lst2 = np.concatenate(flatten_2d_coeff_lst(coeff2d), -1)
-    errc = np.mean(np.abs(flat_lst - flat_lst2))
-    print("coefficient error", errc)
-    print("done")
-
-    print("err pywt", np.mean(np.abs(pywt.waverec2(coeff2d, wavelet) - face_exd)))
-    print("err", np.mean(np.abs(recss2d - face_exd)))
-    fig, axes = plt.subplots(nrows=1, ncols=2)
-    axes[0].imshow(
-        np.transpose(recss2d[:, 0, :, :], [1, 2, 0]) / np.max(np.abs(recss2d))
-    )
-    errimg = np.abs(recss2d - face_exd)
-    axes[1].imshow(np.transpose(errimg[:, 0, :, :], [1, 2, 0]) / np.max(np.abs(errimg)))
-    if output is None:
-        plt.show()
-    else:
-        plt.savefig(output)
-
-
-if __name__ == "__main__":
-    main()

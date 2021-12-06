@@ -16,37 +16,12 @@ Differentiable and GPU enabled fast wavelet transforms in JAX.
 
 Features
 """"""""
-- 1d forward and backward fwt are implemented in `src/jaxlets/conv_fwt.py`.
-- 2d forward and backard fwt methods are part of the `src/jaxlets/conv_fwt_2d.py` module.
+- 1d analysis and synthesis transforms are implemented in `src/jaxlets/conv_fwt.py`.
+- 2d analysis and synthesis transforms are part of the `src/jaxlets/conv_fwt_2d.py` module.
 
 Installation
 """"""""""""
-Head to https://github.com/google/jax#installation and follow the procedure described there, then do the 
-following to install the code in development mode:
-
-.. code-block:: sh
-
-    $ git clone https://github.com/v0lta/jaxlets
-    $ cd jaxlets
-    $ pip install -e .
-
-If you want it ready to go, do the following:
-
-.. code-block:: sh
-
-    $ git clone https://github.com/v0lta/jaxlets
-    $ cd jaxlets
-    $ pip install git+https://github.com/v0lta/jaxlets.git
-
-If you aren't able to follow the JAX installation instructions, you can install it in CPU-only mode
-using the `jax_cpu` extra. This means you have to use development mode and install like this:
-
-.. code-block:: sh
-
-    $ git clone https://github.com/v0lta/jaxlets
-    $ cd jaxlets
-    $ pip install -e .[jax_cpu]
-
+Head to https://github.com/google/jax#installation and follow the procedure described there.
 
 Transform Example:
 """"""""""""""""""
@@ -76,11 +51,19 @@ Unit tests are handled by ``tox``. Clone the repository and run it with the foll
 .. code-block:: sh
 
     $ pip install tox
-    $ git clone https://github.com/v0lta/jaxlets
-    $ cd jaxlets
+    $ git clone https://github.com/v0lta/Jax-Wavelet-Toolbox
+    $ cd Jax-Wavelet-Toolbox
     $ tox
 
 Goals
 """""
 - In the spirit of jax the aim is to be 100% pywt compatible. Whenever possible, interfaces should be the same
   results identical.
+
+
+64-Bit floating point numbers
+"""""""""""""""""""""""""""""
+To allow 64-bit precision numbers, a jax config flag must be set as shown below: 
+.. code-block:: python
+    from jax.config import config
+    config.update("jax_enable_x64", True)

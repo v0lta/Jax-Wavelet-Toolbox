@@ -6,12 +6,10 @@
 # Copyright (c) 2020 Moritz Wolter
 #
 
-import click
 import jax
 import jax.numpy as np
 import pywt
 
-from ._lorenz import generate_lorenz
 from .utils import Wavelet
 
 
@@ -85,7 +83,8 @@ def wavedec(
         wavelet (Wavelet): The named tuple containing the wavelet filter arrays.
         level (int): Max scale level to be used, of none as many levels as possible are
                      used. Defaults to None.
-        mode: The padding used to extend the input signal. Default: reflect.
+        mode: The padding used to extend the input signal. Choose reflect or symmetric.
+            Defaults to reflect.
 
     Returns:
         list: List containing the wavelet coefficients.
@@ -97,13 +96,12 @@ def wavedec(
         # translate pywt to numpy.
         mode = "constant"
 
-    dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True)
+    dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True, dtype=data.dtype)
     filt_len = dec_lo.shape[-1]
     filt = np.stack([dec_lo, dec_hi], 0)
 
     if level is None:
-        # scales = pywt.dwt_max_level(data.shape[-1], filt_len)
-        level = dwt_max_level(data.shape[-1], filt_len)
+        level = pywt.dwt_max_level(data.shape[-1], filt_len)
 
     result_lst = []
     res_lo = data
@@ -137,7 +135,7 @@ def waverec(coeffs: list, wavelet: Wavelet) -> np.array:
         np.array: Reconstruction of the original data.
     """
     # lax's transpose conv requires filter flips in contrast to pytorch.
-    _, _, rec_lo, rec_hi = get_filter_arrays(wavelet, flip=True)
+    _, _, rec_lo, rec_hi = get_filter_arrays(wavelet, flip=True, dtype=coeffs[0].dtype)
     filt_len = rec_lo.shape[-1]
     filt = np.stack([rec_lo, rec_hi], 1)
 
@@ -199,12 +197,9 @@ def _fwt_pad(data: np.array, filt_len: int, mode: str = "reflect") -> np.array:
     #    = floor((data_len + filt_len - 1)/2)
     # (data_len + total_pad - filt_len) + 2 = data_len + filt_len - 1
     # total_pad = 2*filt_len - 3
-    padr = 0
-    padl = 0
-    if filt_len > 2:
-        # we pad half of the total requried padding on each side.
-        padr += (2 * filt_len - 3) // 2
-        padl += (2 * filt_len - 3) // 2
+
+    padr = (2 * filt_len - 3) // 2
+    padl = (2 * filt_len - 3) // 2
 
     # pad to even singal length.
     if data.shape[-1] % 2 != 0:
@@ -214,12 +209,15 @@ def _fwt_pad(data: np.array, filt_len: int, mode: str = "reflect") -> np.array:
     return data
 
 
-def get_filter_arrays(wavelet: Wavelet, flip: bool) -> tuple:
+def get_filter_arrays(
+    wavelet: Wavelet, flip: bool, dtype: np.dtype = np.float64
+) -> tuple:
     """Extract the filter coefficients from an input wavelet object.
 
     Args:
         wavelet (Wavelet): A pywt-style input wavelet.
         flip (bool): If true flip the input coefficients.
+        dtype: The desired precision. Defaults to np.float64 .
 
     Returns:
         tuple: The dec_lo, dec_hi, rec_lo and rec_hi
@@ -242,58 +240,8 @@ def get_filter_arrays(wavelet: Wavelet, flip: bool) -> tuple:
         dec_lo, dec_hi, rec_lo, rec_hi = wavelet.filter_bank
     else:
         dec_lo, dec_hi, rec_lo, rec_hi = wavelet
-    dec_lo = create_array(dec_lo)
-    dec_hi = create_array(dec_hi)
-    rec_lo = create_array(rec_lo)
-    rec_hi = create_array(rec_hi)
+    dec_lo = create_array(dec_lo).astype(dtype)
+    dec_hi = create_array(dec_hi).astype(dtype)
+    rec_lo = create_array(rec_lo).astype(dtype)
+    rec_hi = create_array(rec_hi).astype(dtype)
     return dec_lo, dec_hi, rec_lo, rec_hi
-
-
-def dwt_max_level(data_len: int, filt_len: int) -> int:
-    """Compute maximum number of possible levels.
-
-    Args:
-        data_len (int): Length of the input data.
-        filt_len (int): Length of the wavelet filters.
-
-    Returns:
-        int: The number of possible levels.
-    """
-    return np.floor(np.log2(data_len / (filt_len - 1.0))).astype(np.int32)
-
-
-@click.command()
-@click.option("-o", "--output")
-def main(output):
-    """Run a test example."""
-    # import os
-    # os.environ["DISPLAY"] = ":1"
-    # import matplotlib
-    # matplotlib.use('Qt5Agg')
-    import matplotlib.pyplot as plt
-
-    wavelet = pywt.Wavelet("haar")
-    # ---- Test haar wavelet analysis and synthesis on lorenz signal. -----
-    lorenz = np.transpose(np.expand_dims(generate_lorenz()[:, 0], -1), [1, 0])
-    data = np.expand_dims(lorenz, 0)
-
-    coeff = wavedec(data, wavelet)
-    cat_coeff = np.concatenate(coeff, axis=-1)
-    pywt_coeff = pywt.wavedec(lorenz, wavelet, mode="reflect")
-    pywt_cat_coeff = np.concatenate(pywt_coeff, axis=-1)
-    err = np.mean(np.abs(cat_coeff - pywt_cat_coeff))
-    print("coefficient", err)
-
-    rest_data = waverec(coeff, wavelet)
-    err = np.mean(np.abs(rest_data - data))
-    plt.plot(rest_data[0, 0, :])
-    plt.plot(data[0, 0, :])
-    if output is None:
-        plt.show()
-    else:
-        plt.savefig(output)
-    print(err, "done")
-
-
-if __name__ == "__main__":
-    main()

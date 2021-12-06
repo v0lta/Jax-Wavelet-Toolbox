@@ -5,13 +5,18 @@
 
 import jax.numpy as np
 import pywt
+from jax.config import config
 from src.jwt._lorenz import generate_lorenz
 from src.jwt.conv_fwt import dwt, idwt
+
+config.update("jax_enable_x64", True)
 
 
 def dwt_idwt_lorenz(wavelet, mode="reflect"):
     """Test single level wavelet analysis and synthesis on lorenz signal."""
-    lorenz = np.transpose(np.expand_dims(generate_lorenz(tmax=0.99)[:, 0], -1), [1, 0])
+    lorenz = np.transpose(
+        np.expand_dims(generate_lorenz(tmax=0.99)[:, 0], -1), [1, 0]
+    ).astype(np.float64)
     data = np.expand_dims(lorenz, 0)
     coeff = dwt(data, wavelet=wavelet, mode=mode)
     pywt_coeff = pywt.dwt(lorenz, wavelet, mode=mode)
@@ -19,7 +24,7 @@ def dwt_idwt_lorenz(wavelet, mode="reflect"):
     pywt_cat_coeff = np.concatenate(pywt_coeff, axis=-1)
     err = np.mean(np.abs(cat_coeff - pywt_cat_coeff))
     print("coeff error {}, {}: {}".format(wavelet.name, mode, err))
-    assert np.allclose(cat_coeff, pywt_cat_coeff, atol=1e-5)
+    assert np.allclose(cat_coeff, pywt_cat_coeff)
     rest_data = idwt(coeff, wavelet)
     err = np.mean(np.abs(rest_data - data))
     print("rec error   {}, {}: {}".format(wavelet.name, mode, err))
