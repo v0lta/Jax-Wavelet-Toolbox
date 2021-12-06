@@ -1,5 +1,5 @@
 *************************
-Jax-Wavelet-Toolbox (jwt)
+Jax-Wavelet-Toolbox (jaxwt)
 *************************
 
 
@@ -21,7 +21,8 @@ Features
 
 Installation
 """"""""""""
-Head to https://github.com/google/jax#installation and follow the procedure described there.
+To install jax, head over to https://github.com/google/jax#installation and follow the procedure described there.
+Afterwards type ```pip install jaxwt``` to install the Jax-Wavelet-Toolbox.
 
 Transform Example:
 """"""""""""""""""
@@ -31,17 +32,17 @@ Transform Example:
   import pywt
   import numpy as np;
   import jax.numpy as jnp
-  import src.jaxwt as jaxwt
+  import jaxwt as jwt
   # generate an input of even length.
   data = jnp.array([0., 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 1, 0])
   wavelet = pywt.Wavelet('haar')
   
   # compare the forward fwt coefficients
   print(pywt.wavedec(np.array(data), wavelet, mode='zero', level=2))
-  print(jaxwt.wavedec(data, wavelet, mode='zero', level=2))
+  print(jwt.wavedec(data, wavelet, mode='zero', level=2))
   
   # invert the fwt.
-  print(jaxwt.waverec(jwt.wavedec(data, wavelet, mode='zero', level=2), wavelet))
+  print(jwt.waverec(jwt.wavedec(data, wavelet, mode='zero', level=2), wavelet))
 
 
 Testing
