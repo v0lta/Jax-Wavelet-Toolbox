@@ -28,7 +28,7 @@ exclude =
     .cache,
     .eggs,
     data.
-    src/jwt/__init__.py
+    src/jaxwt/__init__.py
 max-line-length = 120
 max-complexity = 20
 import-order-style = pycharm

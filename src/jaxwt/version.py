@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
 """Version information for :mod:`jwt`.
+
 Run with ``python -m jwt.version``
 """
 
