@@ -7,8 +7,8 @@
 import jax.numpy as np
 import numpy as nnp
 import pywt
-from src.jwt._lorenz import generate_lorenz
-from src.jwt.packets import WaveletPacket
+from src.jaxwt._lorenz import generate_lorenz
+from src.jaxwt.packets import WaveletPacket
 
 
 def run_packets_lorenz(wavelet, level=2, mode="reflect"):

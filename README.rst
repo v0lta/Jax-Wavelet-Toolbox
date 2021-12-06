@@ -31,17 +31,17 @@ Transform Example:
   import pywt
   import numpy as np;
   import jax.numpy as jnp
-  import src.jwt as jwt
+  import src.jaxwt as jaxwt
   # generate an input of even length.
   data = jnp.array([0., 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 1, 0])
   wavelet = pywt.Wavelet('haar')
   
   # compare the forward fwt coefficients
   print(pywt.wavedec(np.array(data), wavelet, mode='zero', level=2))
-  print(jwt.wavedec(data, wavelet, mode='zero', level=2))
+  print(jaxwt.wavedec(data, wavelet, mode='zero', level=2))
   
   # invert the fwt.
-  print(jwt.waverec(jwt.wavedec(data, wavelet, mode='zero', level=2), wavelet))
+  print(jaxwt.waverec(jwt.wavedec(data, wavelet, mode='zero', level=2), wavelet))
 
 
 Testing

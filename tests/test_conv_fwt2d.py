@@ -3,8 +3,8 @@ import jax.numpy as np
 import pywt
 import scipy
 from jax.config import config
-from src.jwt.conv_fwt_2d import wavedec2, waverec2
-from src.jwt.utils import flatten_2d_coeff_lst
+from src.jaxwt.conv_fwt_2d import wavedec2, waverec2
+from src.jaxwt.utils import flatten_2d_coeff_lst
 
 config.update("jax_enable_x64", True)
 

@@ -6,8 +6,8 @@
 import jax.numpy as np
 import pywt
 from jax.config import config
-from src.jwt._lorenz import generate_lorenz
-from src.jwt.conv_fwt import dwt, idwt
+from src.jaxwt._lorenz import generate_lorenz
+from src.jaxwt.conv_fwt import dwt, idwt
 
 config.update("jax_enable_x64", True)
 
