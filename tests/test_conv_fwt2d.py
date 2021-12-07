@@ -14,10 +14,9 @@ def run_2dtest(wavelet: str, level: int, size: tuple):
     wavelet = pywt.Wavelet(wavelet)
     face = np.transpose(scipy.misc.face(), [2, 0, 1]).astype(np.float64)
     face = face[:, 128 : (128 + size[0]), 256 : (256 + size[1])]
-    face_extended = np.expand_dims(np.array(face), 1)
 
     coeff2d_pywt = pywt.wavedec2(face, wavelet, mode="reflect", level=level)
-    coeff2d = wavedec2(face_extended, wavelet, level=level)
+    coeff2d = wavedec2(face, wavelet, level=level)
     # test pywt compatability
     pywt_flat_list = np.concatenate(flatten_2d_coeff_lst(coeff2d_pywt), -1)
     jwt_flat_list = np.concatenate(flatten_2d_coeff_lst(coeff2d), -1)
@@ -26,13 +25,13 @@ def run_2dtest(wavelet: str, level: int, size: tuple):
 
     # test invertability
     reconstruction_2d = waverec2(coeff2d, wavelet)[..., : size[0], : size[1]]
-    err = np.max(np.abs(reconstruction_2d - face_extended))
+    err = np.max(np.abs(reconstruction_2d - face))
     print(
         "{}, {}, {}, coefficients: {:2.2e}, reconstruction, {:2.2e}".format(
             wavelet.name, str(level).center(4), size, errc, err
         )
     )
-    assert np.allclose(reconstruction_2d, face_extended)
+    assert np.allclose(reconstruction_2d, face)
 
 
 def test_2d():
