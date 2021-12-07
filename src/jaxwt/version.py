@@ -16,7 +16,7 @@ VERSION = "0.0.5-dev"
 
 
 def get_git_hash() -> str:
-    """Get the :mod:`jwt` git hash."""
+    """Get the :mod:`jaxwt` git hash."""
     with open(os.devnull, "w") as devnull:
         try:
             ret = check_output(  # noqa: S603,S607
@@ -31,7 +31,7 @@ def get_git_hash() -> str:
 
 
 def get_version(with_git_hash: bool = False):
-    """Get the :mod:`jwt` version string, including a git hash."""
+    """Get the :mod:`jaxwt` version string, including a git hash."""
     return f"{VERSION}-{get_git_hash()}" if with_git_hash else VERSION
 
 

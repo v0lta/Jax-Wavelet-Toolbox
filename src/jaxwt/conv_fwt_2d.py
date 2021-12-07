@@ -148,8 +148,16 @@ def waverec2(coeffs: list, wavelet: Wavelet) -> np.array:
     return res_ll.squeeze(1)
 
 
-def construct_2d_filt(lo, hi):
-    """Construct 2d filters from 1d inputs."""
+def construct_2d_filt(lo: np.array, hi: np.array) -> np.array:
+    """Construct 2d filters from 1d inputs using outer products.
+
+    Args:
+        lo (np.array): 1d lowpass input filter of size [1, length].
+        hi (np.array): 1d highpass input filter of size [1, length].
+
+    Returns
+        np.array: 2d filter arrays of shape [4, 1, length, length].
+    """
     ll = np.outer(lo, lo)
     lh = np.outer(hi, lo)
     hl = np.outer(lo, hi)
