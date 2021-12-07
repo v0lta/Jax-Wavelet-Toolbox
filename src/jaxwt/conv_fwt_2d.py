@@ -16,26 +16,38 @@ from .utils import Wavelet
 config.update("jax_enable_x64", True)
 
 
-def wavedec2(data: np.array, wavelet: Wavelet, level: int = None) -> list:
+def wavedec2(
+    data: np.array, wavelet: Wavelet, level: int = None, mode: str = "reflect"
+) -> list:
     """Compute the two dimensional wavelet analysis transform on the last two dimensions of the input data array.
 
     Args:
         data (np.array): Jax array containing the data to be transformed. Assumed shape:
-                         [batch size, channels, hight, width].
+                         [batch size, hight, width].
         wavelet (Wavelet): A namedtouple containing the filters for the transformation.
         level (int): The max level to be used, if not set as many levels as possible
                                will be used. Defaults to None.
+        mode (str): The desired padding mode. Choose reflect or symmetric.
+            Defaults to reflect.
 
     Returns:
         list: The wavelet coefficients in a nested list.
             The coefficients are in pywt order. That is:
-            [cAn, (cHn, cVn, cDn), … (cH1, cV1, cD1)] .
+            [cAn, (cHn, cVn, cDn), … (cH1, cV1, cD1)].
             A denotes approximation, H horizontal, V vertical
             and D diagonal coefficients.
+
+    Examples:
+        >>> import pywt, scipy.misc
+        >>> import jaxwt as jwt
+        >>> import jax.numpy as np
+        >>> face = np.expand_dims(np.transpose(
+                scipy.misc.face(), [2, 0, 1]), 0).astype(np.float64)
+        >>> jwt.wavedec2(face, pywt.Wavelet("haar"), level=2, mode="reflect")
     """
+    data = np.expand_dims(data, 1)
     dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True)
     dec_filt = construct_2d_filt(lo=dec_lo, hi=dec_hi)
-    # filt_len = dec_lo.shape[-1]
 
     if level is None:
         level = pywt.dwtn_max_level(
@@ -45,7 +57,7 @@ def wavedec2(data: np.array, wavelet: Wavelet, level: int = None) -> list:
     result_lst = []
     res_ll = data
     for _ in range(level):
-        res_ll = _fwt_pad2d(res_ll, len(wavelet))
+        res_ll = _fwt_pad2d(res_ll, len(wavelet), mode=mode)
         res = jax.lax.conv_general_dilated(
             lhs=res_ll,  # lhs = NCHw image tensor
             rhs=dec_filt,  # rhs = OIHw conv kernel tensor
@@ -54,8 +66,8 @@ def wavedec2(data: np.array, wavelet: Wavelet, level: int = None) -> list:
             dimension_numbers=("NCHW", "OIHW", "NCHW"),
         )
         res_ll, res_lh, res_hl, res_hh = np.split(res, 4, 1)
-        result_lst.append((res_lh, res_hl, res_hh))
-    result_lst.append(res_ll)
+        result_lst.append(tuple(r.squeeze(1) for r in (res_lh, res_hl, res_hh)))
+    result_lst.append(res_ll.squeeze(1))
     result_lst.reverse()
     return result_lst
 
@@ -70,15 +82,26 @@ def waverec2(coeffs: list, wavelet: Wavelet) -> np.array:
         wavelet (Wavelet): The named tuple contining the filters used to compute the analysis transform.
 
     Returns:
-        np.array: Reconstruction of the original input data array of shape [batch, channel, height, width].
+        np.array: Reconstruction of the original input data array of shape [batch, height, width].
+
+
+    Example:
+        >>> import pywt, scipy.misc
+        >>> import jaxwt as jwt
+        >>> import jax.numpy as np
+        >>> face = np.expand_dims(np.transpose(
+                scipy.misc.face(), [2, 0, 1]), 0).astype(np.float64)
+        >>> transformed = jwt.wavedec2(face, pywt.Wavelet("haar"), level=2, mode="reflect")
+        >>> jwt.waverec2(transformed, pywt.Wavelet("haar"))
     """
     _, _, rec_lo, rec_hi = get_filter_arrays(wavelet, flip=True, dtype=coeffs[0].dtype)
     filt_len = rec_lo.shape[-1]
     rec_filt = construct_2d_filt(lo=rec_lo, hi=rec_hi)
     rec_filt = np.transpose(rec_filt, [1, 0, 2, 3])
 
-    res_ll = coeffs[0]
+    res_ll = np.expand_dims(coeffs[0], 1)
     for c_pos, res_lh_hl_hh in enumerate(coeffs[1:]):
+        res_lh_hl_hh = tuple(np.expand_dims(r, 1) for r in res_lh_hl_hh)
         res_ll = np.concatenate(
             [res_ll, res_lh_hl_hh[0], res_lh_hl_hh[1], res_lh_hl_hh[2]], 1
         )
@@ -120,7 +143,7 @@ def waverec2(coeffs: list, wavelet: Wavelet) -> np.array:
             res_ll = res_ll[..., padl:]
         if padr > 0:
             res_ll = res_ll[..., :-padr]
-    return res_ll
+    return res_ll.squeeze(1)
 
 
 def construct_2d_filt(lo, hi):
