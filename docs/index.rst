@@ -12,10 +12,3 @@ Welcome to Jax Wavelet Toolbox's documentation!
 
    readme_link
    modules
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
