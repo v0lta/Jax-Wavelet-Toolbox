@@ -13,66 +13,6 @@ import pywt
 from .utils import Wavelet
 
 
-def dwt(data: np.array, wavelet: Wavelet, mode="reflect") -> tuple:
-    """Single level discrete analysis wavelet transform.
-
-    Args:
-        data (np.array): The input data array
-        wavelet (Wavelet): The wavelet to use. The fields
-            "dec_lo", "dec_hi", "rec_lo" and "rec_hi" must be defined.
-        mode (str): The desired way to pad. Defaults to "reflect".
-
-    Returns:
-        tuple: The low and high-pass filtered coefficients,
-            res_lo and res_hi.
-
-    # TODO: add the shapes.
-    """
-    dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True)
-    filt = np.stack([dec_lo, dec_hi], 0)
-    res_lo = _fwt_pad(data, len(wavelet.dec_lo), mode)
-    res = jax.lax.conv_general_dilated(
-        lhs=res_lo,  # lhs = NCH image tensor
-        rhs=filt,  # rhs = OIH conv kernel tensor
-        padding="VALID",
-        window_strides=[
-            2,
-        ],
-        dimension_numbers=("NCH", "OIH", "NCH"),
-    )
-    res_lo, res_hi = np.split(res, 2, 1)
-    return res_lo, res_hi
-
-
-def idwt(coeff_lst: list, wavelet: Wavelet) -> np.array:
-    """Single level synthesis transform.
-
-    Args:
-        coeff_lst (list): A list of wavelet coefficients.
-        wavelet (Wavelet): The wavelet used in the analysis transform.
-            Jwt follows pywt convention, the fields
-            "dec_lo", "dec_hi", "rec_lo" and "rec_hi" must be defined.
-
-    Returns:
-        np.array: A reconstruction of the original input.
-    """
-    _, _, rec_lo, rec_hi = get_filter_arrays(wavelet, flip=True)
-    filt_len = rec_lo.shape[-1]
-    filt = np.stack([rec_lo, rec_hi], 1)
-    res_lo = np.concatenate([coeff_lst[0], coeff_lst[1]], 1)
-    rec = jax.lax.conv_transpose(
-        lhs=res_lo,
-        rhs=filt,
-        padding="VALID",
-        strides=[
-            2,
-        ],
-        dimension_numbers=("NCH", "OIH", "NCH"),
-    )
-    rec = _fwt_unpad(rec, filt_len, 0, coeff_lst)
-    return rec
-
-
 def wavedec(
     data: np.array, wavelet: Wavelet, level: int = None, mode: str = "reflect"
 ) -> list:
@@ -108,7 +48,7 @@ def wavedec(
         # translate pywt to numpy.
         mode = "constant"
 
-    dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True, dtype=data.dtype)
+    dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True, dtype=data.dtype)
     filt_len = dec_lo.shape[-1]
     filt = np.stack([dec_lo, dec_hi], 0)
 
@@ -157,7 +97,7 @@ def waverec(coeffs: list, wavelet: Wavelet) -> np.array:
         >>> jwt.waverec(transformed, pywt.Wavelet('haar'))
     """
     # lax's transpose conv requires filter flips in contrast to pytorch.
-    _, _, rec_lo, rec_hi = get_filter_arrays(wavelet, flip=True, dtype=coeffs[0].dtype)
+    _, _, rec_lo, rec_hi = _get_filter_arrays(wavelet, flip=True, dtype=coeffs[0].dtype)
     filt_len = rec_lo.shape[-1]
     filt = np.stack([rec_lo, rec_hi], 1)
 
@@ -231,7 +171,7 @@ def _fwt_pad(data: np.array, filt_len: int, mode: str = "reflect") -> np.array:
     return data
 
 
-def get_filter_arrays(
+def _get_filter_arrays(
     wavelet: Wavelet, flip: bool, dtype: np.dtype = np.float64
 ) -> tuple:
     """Extract the filter coefficients from an input wavelet object.

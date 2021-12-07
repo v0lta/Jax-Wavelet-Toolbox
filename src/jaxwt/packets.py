@@ -10,7 +10,7 @@ import jax
 import jax.numpy as np
 import pywt
 
-from .conv_fwt import _fwt_pad, get_filter_arrays
+from .conv_fwt import _fwt_pad, _get_filter_arrays
 
 
 class WaveletPacket(collections.UserDict):
@@ -72,7 +72,7 @@ class WaveletPacket(collections.UserDict):
 
     def _wavepacketdec(self, data, wavelet, level=None, mode="reflect"):
         self.data = {}
-        dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True)
+        dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True)
         filt_len = dec_lo.shape[-1]
         filt = np.stack([dec_lo, dec_hi], 0)
 

@@ -10,7 +10,7 @@ import jax.numpy as np
 import pywt
 from jax.config import config
 
-from .conv_fwt import get_filter_arrays
+from .conv_fwt import _get_filter_arrays
 from .utils import Wavelet
 
 config.update("jax_enable_x64", True)
@@ -46,8 +46,12 @@ def wavedec2(
         >>> jwt.wavedec2(face, pywt.Wavelet("haar"), level=2, mode="reflect")
     """
     data = np.expand_dims(data, 1)
-    dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True)
+    dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True)
     dec_filt = construct_2d_filt(lo=dec_lo, hi=dec_hi)
+
+    if mode == "zero":
+        # translate pywt to numpy.
+        mode = "constant"
 
     if level is None:
         level = pywt.dwtn_max_level(
@@ -94,7 +98,7 @@ def waverec2(coeffs: list, wavelet: Wavelet) -> np.array:
         >>> transformed = jwt.wavedec2(face, pywt.Wavelet("haar"), level=2, mode="reflect")
         >>> jwt.waverec2(transformed, pywt.Wavelet("haar"))
     """
-    _, _, rec_lo, rec_hi = get_filter_arrays(wavelet, flip=True, dtype=coeffs[0].dtype)
+    _, _, rec_lo, rec_hi = _get_filter_arrays(wavelet, flip=True, dtype=coeffs[0].dtype)
     filt_len = rec_lo.shape[-1]
     rec_filt = construct_2d_filt(lo=rec_lo, hi=rec_hi)
     rec_filt = np.transpose(rec_filt, [1, 0, 2, 3])

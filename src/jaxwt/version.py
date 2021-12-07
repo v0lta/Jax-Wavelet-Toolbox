@@ -1,6 +1,6 @@
 """Version information for :mod:`jwt`.
 
-Run with ``python -m jwt.version``
+Run with ``python -m jaxwt.version``
 """
 
 import os

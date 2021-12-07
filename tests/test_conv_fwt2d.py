@@ -9,14 +9,14 @@ from src.jaxwt.utils import flatten_2d_coeff_lst
 config.update("jax_enable_x64", True)
 
 
-def run_2dtest(wavelet: str, level: int, size: tuple):
+def run_2dtest(wavelet: str, level: int, size: tuple, mode: str):
     """Run a specific test."""
     wavelet = pywt.Wavelet(wavelet)
     face = np.transpose(scipy.misc.face(), [2, 0, 1]).astype(np.float64)
     face = face[:, 128 : (128 + size[0]), 256 : (256 + size[1])]
 
-    coeff2d_pywt = pywt.wavedec2(face, wavelet, mode="reflect", level=level)
-    coeff2d = wavedec2(face, wavelet, level=level)
+    coeff2d_pywt = pywt.wavedec2(face, wavelet, mode=mode, level=level)
+    coeff2d = wavedec2(face, wavelet, level=level, mode=mode)
     # test pywt compatability
     pywt_flat_list = np.concatenate(flatten_2d_coeff_lst(coeff2d_pywt), -1)
     jwt_flat_list = np.concatenate(flatten_2d_coeff_lst(coeff2d), -1)
@@ -36,10 +36,11 @@ def run_2dtest(wavelet: str, level: int, size: tuple):
 
 def test_2d():
     """Go through various test cases."""
-    for wavelet in ["haar", "db3", "db4", "sym2", "sym5"]:
-        for level in [1, 2, None]:
-            for size in [(65, 65), (64, 64), (47, 45), (45, 47), (32, 32)]:
-                run_2dtest(wavelet, level, size)
+    for mode in ['symmetric', 'reflect']:
+        for wavelet in ["haar", "db3", "sym2", "db4"]:
+            for level in [1, 2, None]:
+                for size in [(65, 65), (64, 64), (47, 45), (45, 47)]:
+                    run_2dtest(wavelet, level, size, mode)
 
 
 if __name__ == "__main__":

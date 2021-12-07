@@ -49,14 +49,14 @@ def test_haar_fwt_ifwt_16_float32():
     assert err < 1e-4
 
 
-def fwt_ifwt_lorenz(wavelet, mode: str = "reflect"):
+def fwt_ifwt_lorenz(wavelet, level: int = None, mode: str = "reflect"):
     """Test wavelet analysis and synthesis on lorenz signal."""
     lorenz = np.transpose(
         np.expand_dims(generate_lorenz(tmax=1.27)[:, 0], -1), [1, 0]
     ).astype(np.float64)
     data = np.expand_dims(lorenz, 0)
-    coeff = wavedec(data, wavelet, mode=mode)
-    pywt_coeff = pywt.wavedec(lorenz, wavelet, mode=mode)
+    coeff = wavedec(data, wavelet, mode=mode, level=level)
+    pywt_coeff = pywt.wavedec(lorenz, wavelet, mode=mode, level=level)
     jwt_cat_coeff = np.concatenate(coeff, axis=-1).squeeze()
     pywt_cat_coeff = np.concatenate(pywt_coeff, axis=-1).squeeze()
     err = np.mean(np.abs(jwt_cat_coeff - pywt_cat_coeff))
@@ -80,8 +80,9 @@ def test_conv_fwt():
     """Run all tests."""
     for wavelet_str in ("haar", "db2", "sym4"):
         for boundary in ["reflect", "symmetric"]:
-            wavelet = pywt.Wavelet(wavelet_str)
-            fwt_ifwt_lorenz(wavelet, mode=boundary)
+            for level in [1, 2, None]:
+                wavelet = pywt.Wavelet(wavelet_str)
+                fwt_ifwt_lorenz(wavelet, mode=boundary, level=level)
 
 
 if __name__ == "__main__":
