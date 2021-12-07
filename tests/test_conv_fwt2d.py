@@ -36,7 +36,7 @@ def run_2dtest(wavelet: str, level: int, size: tuple, mode: str):
 
 def test_2d():
     """Go through various test cases."""
-    for mode in ['symmetric', 'reflect']:
+    for mode in ["symmetric", "reflect"]:
         for wavelet in ["haar", "db3", "sym2", "db4"]:
             for level in [1, 2, None]:
                 for size in [(65, 65), (64, 64), (47, 45), (45, 47)]:
