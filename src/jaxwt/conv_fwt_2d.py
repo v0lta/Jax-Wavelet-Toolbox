@@ -41,8 +41,7 @@ def wavedec2(
         >>> import pywt, scipy.misc
         >>> import jaxwt as jwt
         >>> import jax.numpy as np
-        >>> face = np.expand_dims(np.transpose(
-                scipy.misc.face(), [2, 0, 1]), 0).astype(np.float64)
+        >>> face = np.transpose(scipy.misc.face(), [2, 0, 1]).astype(np.float64)
         >>> jwt.wavedec2(face, pywt.Wavelet("haar"), level=2, mode="reflect")
     """
     data = np.expand_dims(data, 1)
@@ -93,8 +92,7 @@ def waverec2(coeffs: list, wavelet: Wavelet) -> np.array:
         >>> import pywt, scipy.misc
         >>> import jaxwt as jwt
         >>> import jax.numpy as np
-        >>> face = np.expand_dims(np.transpose(
-                scipy.misc.face(), [2, 0, 1]), 0).astype(np.float64)
+        >>> face = np.transpose(scipy.misc.face(), [2, 0, 1]).astype(np.float64)
         >>> transformed = jwt.wavedec2(face, pywt.Wavelet("haar"), level=2, mode="reflect")
         >>> jwt.waverec2(transformed, pywt.Wavelet("haar"))
     """
