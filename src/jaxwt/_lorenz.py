@@ -3,9 +3,6 @@
 # Created on Thu Jun 11 2020
 # Copyright (c) 2020 Moritz Wolter
 #
-import os
-
-import click
 import jax.numpy as np
 
 default_x0 = np.array([2.0, 1.0, 3.0])
@@ -53,35 +50,3 @@ def generate_lorenz(
 
     x_sim = np.stack(x_lst)
     return x_sim
-
-
-@click.command()
-@click.option("-o", "--output")
-def main(output):
-    """Run a test example."""
-    print("Simulation of the lorenz equation.")
-    lorenz = generate_lorenz()
-    print(lorenz.shape)
-    # plt.plot(lorenz[:, 0])
-    # plt.show()
-
-    os.environ["DISPLAY"] = ":1"
-    import matplotlib.pyplot as plt
-
-    if output is None:
-        import matplotlib
-
-        matplotlib.use("Qt5Agg")
-
-    print("Backend", plt.get_backend())
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection="3d")
-    ax.plot(lorenz[:, 0], lorenz[:, 1], lorenz[:, 2])
-    if output is None:
-        plt.show()
-    else:
-        plt.savefig(output)
-
-
-if __name__ == "__main__":
-    main()
