@@ -91,6 +91,15 @@ def wavedec(
             The coefficients are in pywt order:
             [cA_n, cD_n, cD_n-1, …, cD2, cD1].
             A denotes approximation and D detail coefficients.
+
+    Examples:
+        >>> import pywt
+        >>> import jaxwt as jwt
+        >>> import jax.numpy as np
+        >>> # generate an input of even length.
+        >>> data = np.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
+        >>> jwt.wavedec(data, pywt.Wavelet('haar'),
+                        mode='reflect', level=2)
     """
     if len(data.shape) == 1:
         data = np.expand_dims(np.expand_dims(data, 0), 0)
@@ -136,6 +145,16 @@ def waverec(coeffs: list, wavelet: Wavelet) -> np.array:
 
     Returns:
         np.array: Reconstruction of the original data.
+
+    Examples:
+        >>> import pywt
+        >>> import jaxwt as jwt
+        >>> import jax.numpy as np
+        >>> # generate an input of even length.
+        >>> data = np.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
+        >>> transformed = jwt.wavedec(data, pywt.Wavelet('haar'),
+                          mode='reflect', level=2)
+        >>> jwt.waverec(transformed, pywt.Wavelet('haar'))
     """
     # lax's transpose conv requires filter flips in contrast to pytorch.
     _, _, rec_lo, rec_hi = get_filter_arrays(wavelet, flip=True, dtype=coeffs[0].dtype)
