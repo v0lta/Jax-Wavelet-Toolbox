@@ -41,6 +41,11 @@ Installation
 To install jax, head over to https://github.com/google/jax#installation and follow the procedure described there.
 Afterwards type ``pip install jaxwt`` to install the Jax-Wavelet-Toolbox.
 
+Documentation
+"""""""""""""
+The documentation is available at: https://jax-wavelet-toolbox.readthedocs.io .
+
+
 Transform Example:
 """"""""""""""""""
 
