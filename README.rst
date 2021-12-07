@@ -7,6 +7,10 @@ Jax Wavelet Toolbox (jaxwt)
     :target: https://github.com/v0lta/Jax-Wavelet-Toolbox/actions/workflows/tests.yml
     :alt: GitHub Actions
 
+.. image:: https://readthedocs.org/projects/jax-wavelet-toolbox/badge/?version=latest
+    :target: https://jax-wavelet-toolbox.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
 .. image:: https://img.shields.io/pypi/pyversions/jaxwt
     :target: https://pypi.org/project/jaxwt/
     :alt: PyPI Versions
