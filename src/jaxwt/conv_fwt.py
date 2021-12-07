@@ -88,6 +88,9 @@ def wavedec(
 
     Returns:
         list: List containing the wavelet coefficients.
+            The coefficients are in pywt order:  
+            [cA_n, cD_n, cD_n-1, …, cD2, cD1]. 
+            A denotes approximation and D detail coefficients.
     """
     if len(data.shape) == 1:
         data = np.expand_dims(np.expand_dims(data, 0), 0)

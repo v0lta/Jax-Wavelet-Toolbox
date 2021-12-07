@@ -28,6 +28,10 @@ def wavedec2(data: np.array, wavelet: Wavelet, level: int = None) -> list:
 
     Returns:
         list: The wavelet coefficients in a nested list.
+            The coefficients are in pywt order. That is:
+            [cAn, (cHn, cVn, cDn), … (cH1, cV1, cD1)] .
+            A denotes approximation, H horizontal, V vertical
+            and D diagonal coefficients.
     """
     dec_lo, dec_hi, _, _ = get_filter_arrays(wavelet, flip=True)
     dec_filt = construct_2d_filt(lo=dec_lo, hi=dec_hi)
