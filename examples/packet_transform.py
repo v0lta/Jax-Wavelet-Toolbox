@@ -1,6 +1,6 @@
 import pywt
 import jax.numpy as np
-from jaxlets.packets import WaveletPacket
+from jaxwt.packets import WaveletPacket
 import matplotlib.pyplot as plt
 import scipy.signal as signal
 
