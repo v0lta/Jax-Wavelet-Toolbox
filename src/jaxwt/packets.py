@@ -5,7 +5,7 @@
 # Copyright (c) 2020 Moritz Wolter
 #
 import collections
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 import jax
 import jax.numpy as jnp
@@ -15,7 +15,13 @@ from .conv_fwt import _fwt_pad, _get_filter_arrays
 from .utils import Wavelet
 
 
-class WaveletPacket(collections.UserDict[str, jnp.ndarray]):
+if TYPE_CHECKING:
+    BaseDict = collections.UserDict[str, jnp.ndarray]
+else:
+    BaseDict = collections.UserDict
+
+
+class WaveletPacket(BaseDict):
     """A wavelet packet tree."""
 
     def __init__(self, data: jnp.ndarray, wavelet: Wavelet, mode: str = "reflect"):
