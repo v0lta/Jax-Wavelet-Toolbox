@@ -3,10 +3,10 @@
 # Created on Thu Jun 12 2020
 # Copyright (c) 2020 Moritz Wolter
 #
-
+from typing import List, Optional, Tuple, Union
 
 import jax
-import jax.numpy as np
+import jax.numpy as jnp
 import pywt
 from jax.config import config
 
@@ -17,12 +17,15 @@ config.update("jax_enable_x64", True)
 
 
 def wavedec2(
-    data: np.array, wavelet: Wavelet, level: int = None, mode: str = "reflect"
-) -> list:
+    data: jnp.ndarray,
+    wavelet: Wavelet,
+    level: Optional[int] = None,
+    mode: str = "reflect",
+) -> List[Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]]]:
     """Compute the two dimensional wavelet analysis transform on the last two dimensions of the input data array.
 
     Args:
-        data (np.array): Jax array containing the data to be transformed. Assumed shape:
+        data (jnp.array): Jax array containing the data to be transformed. Assumed shape:
                          [batch size, hight, width].
         wavelet (Wavelet): A namedtouple containing the filters for the transformation.
         level (int): The max level to be used, if not set as many levels as possible
@@ -40,11 +43,11 @@ def wavedec2(
     Examples:
         >>> import pywt, scipy.misc
         >>> import jaxwt as jwt
-        >>> import jax.numpy as np
-        >>> face = np.transpose(scipy.misc.face(), [2, 0, 1]).astype(np.float64)
+        >>> import jax.numpy as jnp
+        >>> face = jnp.transpose(scipy.misc.face(), [2, 0, 1]).astype(jnp.float64)
         >>> jwt.wavedec2(face, pywt.Wavelet("haar"), level=2, mode="reflect")
     """
-    data = np.expand_dims(data, 1)
+    data = jnp.expand_dims(data, 1)
     dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True)
     dec_filt = construct_2d_filt(lo=dec_lo, hi=dec_hi)
 
@@ -57,7 +60,9 @@ def wavedec2(
             [data.shape[-1], data.shape[-2]], pywt.Wavelet("MyWavelet", wavelet)
         )
 
-    result_lst = []
+    result_lst: List[
+        Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]]
+    ] = []
     res_ll = data
     for _ in range(level):
         res_ll = _fwt_pad2d(res_ll, len(wavelet), mode=mode)
@@ -68,14 +73,17 @@ def wavedec2(
             window_strides=[2, 2],
             dimension_numbers=("NCHW", "OIHW", "NCHW"),
         )
-        res_ll, res_lh, res_hl, res_hh = np.split(res, 4, 1)
-        result_lst.append(tuple(r.squeeze(1) for r in (res_lh, res_hl, res_hh)))
+        res_ll, res_lh, res_hl, res_hh = jnp.split(res, 4, 1)
+        result_lst.append((res_lh.squeeze(1), res_hl.squeeze(1), res_hh.squeeze(1)))
     result_lst.append(res_ll.squeeze(1))
     result_lst.reverse()
     return result_lst
 
 
-def waverec2(coeffs: list, wavelet: Wavelet) -> np.array:
+def waverec2(
+    coeffs: List[Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]]],
+    wavelet: Wavelet,
+) -> jnp.ndarray:
     """Compute a two dimensional synthesis wavelet transfrom.
 
        Use it to reconstruct the original input image from the wavelet coefficients.
@@ -85,27 +93,40 @@ def waverec2(coeffs: list, wavelet: Wavelet) -> np.array:
         wavelet (Wavelet): The named tuple contining the filters used to compute the analysis transform.
 
     Returns:
-        np.array: Reconstruction of the original input data array of shape [batch, height, width].
+        jnp.array: Reconstruction of the original input data array of shape [batch, height, width].
 
+    Raises:
+        ValueError: If `coeffs` is not in the shape as it is returned from `wavedec2`.
 
     Example:
         >>> import pywt, scipy.misc
         >>> import jaxwt as jwt
-        >>> import jax.numpy as np
-        >>> face = np.transpose(scipy.misc.face(), [2, 0, 1]).astype(np.float64)
+        >>> import jax.numpy as jnp
+        >>> face = jnp.transpose(scipy.misc.face(), [2, 0, 1]).astype(jnp.float64)
         >>> transformed = jwt.wavedec2(face, pywt.Wavelet("haar"), level=2, mode="reflect")
         >>> jwt.waverec2(transformed, pywt.Wavelet("haar"))
+
+
     """
+    if not isinstance(coeffs[0], jnp.ndarray):
+        raise ValueError(
+            "First element of coeffs must be the approximation coefficient tensor."
+        )
     _, _, rec_lo, rec_hi = _get_filter_arrays(wavelet, flip=True, dtype=coeffs[0].dtype)
     filt_len = rec_lo.shape[-1]
     rec_filt = construct_2d_filt(lo=rec_lo, hi=rec_hi)
-    rec_filt = np.transpose(rec_filt, [1, 0, 2, 3])
+    rec_filt = jnp.transpose(rec_filt, [1, 0, 2, 3])
 
-    res_ll = np.expand_dims(coeffs[0], 1)
+    res_ll = jnp.expand_dims(coeffs[0], 1)
     for c_pos, res_lh_hl_hh in enumerate(coeffs[1:]):
-        res_lh_hl_hh = tuple(np.expand_dims(r, 1) for r in res_lh_hl_hh)
-        res_ll = np.concatenate(
-            [res_ll, res_lh_hl_hh[0], res_lh_hl_hh[1], res_lh_hl_hh[2]], 1
+        res_ll = jnp.concatenate(
+            [
+                res_ll,
+                jnp.expand_dims(res_lh_hl_hh[0], 1),
+                jnp.expand_dims(res_lh_hl_hh[1], 1),
+                jnp.expand_dims(res_lh_hl_hh[2], 1),
+            ],
+            1,
         )
         res_ll = jax.lax.conv_transpose(
             lhs=res_ll,
@@ -148,26 +169,26 @@ def waverec2(coeffs: list, wavelet: Wavelet) -> np.array:
     return res_ll.squeeze(1)
 
 
-def construct_2d_filt(lo: np.array, hi: np.array) -> np.array:
+def construct_2d_filt(lo: jnp.ndarray, hi: jnp.ndarray) -> jnp.ndarray:
     """Construct 2d filters from 1d inputs using outer products.
 
     Args:
-        lo (np.array): 1d lowpass input filter of size [1, length].
-        hi (np.array): 1d highpass input filter of size [1, length].
+        lo (jnp.array): 1d lowpass input filter of size [1, length].
+        hi (jnp.array): 1d highpass input filter of size [1, length].
 
     Returns
-        np.array: 2d filter arrays of shape [4, 1, length, length].
+        jnp.array: 2d filter arrays of shape [4, 1, length, length].
     """
-    ll = np.outer(lo, lo)
-    lh = np.outer(hi, lo)
-    hl = np.outer(lo, hi)
-    hh = np.outer(hi, hi)
-    filt = np.stack([ll, lh, hl, hh], 0)
-    filt = np.expand_dims(filt, 1)
+    ll = jnp.outer(lo, lo)
+    lh = jnp.outer(hi, lo)
+    hl = jnp.outer(lo, hi)
+    hh = jnp.outer(hi, hi)
+    filt = jnp.stack([ll, lh, hl, hh], 0)
+    filt = jnp.expand_dims(filt, 1)
     return filt
 
 
-def _fwt_pad2d(data: np.array, filt_len: int, mode="reflect") -> np.array:
+def _fwt_pad2d(data: jnp.ndarray, filt_len: int, mode: str = "reflect") -> jnp.ndarray:
     padr = 0
     padl = 0
     padt = 0
@@ -185,5 +206,5 @@ def _fwt_pad2d(data: np.array, filt_len: int, mode="reflect") -> np.array:
     if data.shape[-2] % 2 != 0:
         padb += 1
 
-    data = np.pad(data, ((0, 0), (0, 0), (padt, padb), (padl, padr)), mode)
+    data = jnp.pad(data, ((0, 0), (0, 0), (padt, padb), (padl, padr)), mode)
     return data

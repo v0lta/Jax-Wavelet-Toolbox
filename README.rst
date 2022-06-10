@@ -27,6 +27,9 @@ Jax Wavelet Toolbox (jaxwt)
     :target: https://github.com/psf/black
     :alt: Black code style
 
+.. image:: https://static.pepy.tech/personalized-badge/jaxwt?period=total&units=international_system&left_color=black&right_color=orange&left_text=Downloads
+    :target: https://pepy.tech/project/jaxwt
+    :alt: PyPi - downloads
 
 
 Differentiable and GPU enabled fast wavelet transforms in JAX. 
@@ -39,7 +42,7 @@ Features
 Installation
 """"""""""""
 To install jax, head over to https://github.com/google/jax#installation and follow the procedure described there.
-Afterwards type ``pip install jaxwt`` to install the Jax-Wavelet-Toolbox.
+Afterwards type ``pip install jaxwt`` to install the Jax-Wavelet-Toolbox. You can uninstall it later by typing ``pip uninstall jaxwt``.
 
 Documentation
 """""""""""""
@@ -47,7 +50,7 @@ The documentation is available at: https://jax-wavelet-toolbox.readthedocs.io .
 
 
 Transform Examples:
-""""""""""""""""""
+"""""""""""""""""""
 
 One-dimensional fast wavelet transform:
 
@@ -85,14 +88,14 @@ Two-dimensional fast wavelet transform:
 
 Testing
 """""""
-Unit tests are handled by ``tox``. Clone the repository and run it with the following:
+Unit tests are handled by ``nox``. Clone the repository and run it with the following:
 
 .. code-block:: sh
 
-    $ pip install tox
+    $ pip install nox
     $ git clone https://github.com/v0lta/Jax-Wavelet-Toolbox
     $ cd Jax-Wavelet-Toolbox
-    $ tox
+    $ nox -s test
 
 Goals
 """""

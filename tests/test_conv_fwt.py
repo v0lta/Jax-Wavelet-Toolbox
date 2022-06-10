@@ -6,8 +6,10 @@
 #
 
 import jax.numpy as np
+import pytest
 import pywt
 from jax.config import config
+
 from src.jaxwt._lorenz import generate_lorenz
 from src.jaxwt.conv_fwt import wavedec, waverec
 
@@ -38,19 +40,21 @@ def test_haar_fwt_ifwt_16_float32():
         ]
     ).astype(np.float32)
     data = np.expand_dims(np.expand_dims(data, 0), 0)
-    coeffs = pywt.wavedec(data, wavelet, level=2)
-    coeffs2 = wavedec(data, wavelet, level=2)
-    cat_coeffs = np.concatenate(coeffs, -1)
-    cat_coeffs2 = np.concatenate(coeffs2, -1)
-    err = np.mean(np.abs(cat_coeffs - cat_coeffs2))
-    assert err < 1e-4
-    rest_data = waverec(coeffs2, wavelet)
-    err = np.mean(np.abs(rest_data - data))
-    assert err < 1e-4
+    coeffs_pywt = pywt.wavedec(data, wavelet, level=2)
+    coeffs_jaxwt = wavedec(data, wavelet, level=2)
+    cat_coeffs_pywt = np.concatenate(coeffs_pywt, -1)
+    cat_coeffs_jaxwt = np.concatenate(coeffs_jaxwt, -1)
+    assert np.allclose(cat_coeffs_pywt, cat_coeffs_jaxwt)
+    reconstructed_data = waverec(coeffs_jaxwt, wavelet)
+    assert np.allclose(reconstructed_data, data)
 
 
-def fwt_ifwt_lorenz(wavelet, level: int = None, mode: str = "reflect"):
+@pytest.mark.parametrize("wavelet", ["haar", "db2", "db3", "sym4"])
+@pytest.mark.parametrize("mode", ["reflect", "symmetric"])
+@pytest.mark.parametrize("level", [1, 2, None])
+def test_fwt_ifwt_lorenz(wavelet, level, mode):
     """Test wavelet analysis and synthesis on lorenz signal."""
+    wavelet = pywt.Wavelet(wavelet)
     lorenz = np.transpose(
         np.expand_dims(generate_lorenz(tmax=1.27)[:, 0], -1), [1, 0]
     ).astype(np.float64)
@@ -59,32 +63,6 @@ def fwt_ifwt_lorenz(wavelet, level: int = None, mode: str = "reflect"):
     pywt_coeff = pywt.wavedec(lorenz, wavelet, mode=mode, level=level)
     jwt_cat_coeff = np.concatenate(coeff, axis=-1).squeeze()
     pywt_cat_coeff = np.concatenate(pywt_coeff, axis=-1).squeeze()
-    err = np.mean(np.abs(jwt_cat_coeff - pywt_cat_coeff))
-    print(
-        "wavelet: {}, mode: {},    coefficient-error: {:2.2e}".format(
-            wavelet.name, mode, err
-        )
-    )
     assert np.allclose(jwt_cat_coeff, pywt_cat_coeff)
     rec_data = waverec(coeff, wavelet)
-    err = np.mean(np.abs(rec_data - data))
-    print(
-        "wavelet: {}, mode: {}, reconstruction-error: {:2.2e}".format(
-            wavelet.name, mode, err
-        )
-    )
     assert np.allclose(rec_data, data)
-
-
-def test_conv_fwt():
-    """Run all tests."""
-    for wavelet_str in ("haar", "db2", "sym4"):
-        for boundary in ["reflect", "symmetric"]:
-            for level in [1, 2, None]:
-                wavelet = pywt.Wavelet(wavelet_str)
-                fwt_ifwt_lorenz(wavelet, mode=boundary, level=level)
-
-
-if __name__ == "__main__":
-    test_haar_fwt_ifwt_16_float32()
-    test_conv_fwt()

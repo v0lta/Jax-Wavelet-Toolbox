@@ -14,8 +14,8 @@ def generate_lorenz(
     c: float = 8.0 / 3.0,
     dt: float = 0.01,
     tmax: float = 5.11,
-    x0: np.array = default_x0,
-):
+    x0: np.ndarray = default_x0,
+) -> np.ndarray:
     """Generate test data using the lorenz-system.
 
     The implementation follows the description at:
@@ -36,7 +36,7 @@ def generate_lorenz(
     steps = tmax / dt
     x_lst = []
 
-    def compute_dx_dt(x):
+    def compute_dx_dt(x: np.ndarray) -> np.ndarray:
         dx0dt = a * (x[1] - x[0])
         dx1dt = x[0] * (b - x[2]) - x[1]
         dx2dt = x[0] * x[1] - c * x[2]
