@@ -5,7 +5,7 @@
 # Created on Thu Jun 11 2020
 # Copyright (c) 2020 Moritz Wolter
 #
-from typing import Any, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -178,7 +178,7 @@ def _fwt_pad(data: jnp.ndarray, filt_len: int, mode: str = "reflect") -> jnp.nda
 
 
 def _get_filter_arrays(
-    wavelet: Wavelet, flip: bool, dtype: jnp.dtype[Any] = jnp.float64
+    wavelet: Wavelet, flip: bool, dtype: jnp.dtype = jnp.float64  # type: ignore
 ) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
     """Extract the filter coefficients from an input wavelet object.
 
