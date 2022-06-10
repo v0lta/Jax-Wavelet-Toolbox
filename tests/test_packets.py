@@ -4,18 +4,18 @@
 # Copyright (c) 2020 Moritz Wolter
 #
 
-import pytest
 import jax.numpy as np
 import numpy as nnp
+import pytest
 import pywt
+
 from src.jaxwt._lorenz import generate_lorenz
 from src.jaxwt.packets import WaveletPacket
 
 
-
 @pytest.mark.parametrize("wavelet", ("haar", "db2", "db3"))
 @pytest.mark.parametrize("level", (2, 4))
-def test_packets_lorenz(wavelet, level, mode='reflect'):
+def test_packets_lorenz(wavelet, level, mode="reflect"):
     """Test wavelet analysis and synthesis on lorenz signal."""
     wavelet = pywt.Wavelet(wavelet)
     lorenz = generate_lorenz(tmax=0.99)[:, 0].astype(np.float64)
@@ -34,4 +34,3 @@ def test_packets_lorenz(wavelet, level, mode='reflect'):
         np_lst.append(wp[node].data)
     res = np.stack(np_lst)
     assert np.allclose(jres, res)
-

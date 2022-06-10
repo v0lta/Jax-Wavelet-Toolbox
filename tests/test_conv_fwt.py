@@ -5,10 +5,11 @@
 # Copyright (c) 2020 Moritz Wolter
 #
 
-import pytest
 import jax.numpy as np
+import pytest
 import pywt
 from jax.config import config
+
 from src.jaxwt._lorenz import generate_lorenz
 from src.jaxwt.conv_fwt import wavedec, waverec
 

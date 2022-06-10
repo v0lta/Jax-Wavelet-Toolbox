@@ -17,10 +17,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: pip install tox
+        run: pip install nox
       - name: Test with pytest
         run:
-          tox -e py
+          nox -s test
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -36,4 +36,4 @@ jobs:
       - name: Install dependencies
         run: pip install tox
       - name: Run flake8
-        run: tox -e flake8
+        run: nox -s lint

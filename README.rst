@@ -42,7 +42,7 @@ Features
 Installation
 """"""""""""
 To install jax, head over to https://github.com/google/jax#installation and follow the procedure described there.
-Afterwards type ``pip install jaxwt`` to install the Jax-Wavelet-Toolbox. You can uninstall it later by typing ```pip uninstall jaxwt```.
+Afterwards type ``pip install jaxwt`` to install the Jax-Wavelet-Toolbox. You can uninstall it later by typing ``pip uninstall jaxwt``.
 
 Documentation
 """""""""""""
