@@ -1,5 +1,4 @@
-"""Jax compatible cwt code.
-"""
+"""Jax compatible cwt code."""
 from typing import Tuple, Union
 
 import numpy as np
