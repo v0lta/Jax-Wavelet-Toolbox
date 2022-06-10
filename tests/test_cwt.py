@@ -49,9 +49,9 @@ def test_cwt(
 @pytest.mark.parametrize("wavelet", continuous_wavelets)
 def test_cwt_batched(wavelet):
     """Test batched transforms."""
-    sig = jnp.array(np.random.randn(10, 200))
-    widths = jnp.arange(1, 30)
+    sig = np.random.randn(10, 200)
+    widths = np.arange(1, 30)
     cwtmatr, freqs = pywt.cwt(sig, widths, wavelet)
-    cwtmatr_pt, freqs_pt = cwt(sig, widths, wavelet)
-    assert jnp.allclose(cwtmatr_pt.numpy(), cwtmatr)
-    assert jnp.allclose(freqs, freqs_pt)
+    cwtmatr_jax, freqs_jax = cwt(jnp.array(sig), widths, wavelet)
+    assert jnp.allclose(cwtmatr_jax, cwtmatr)
+    assert jnp.allclose(freqs, freqs_jax)
