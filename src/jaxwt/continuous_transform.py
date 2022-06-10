@@ -1,6 +1,4 @@
 """Jax compatible cwt code.
-
-Based on https://github.com/PyWavelets/pywt/blob/master/pywt/_cwt.py
 """
 from typing import Tuple, Union
 
@@ -47,21 +45,21 @@ def cwt(
             period).
 
     Raises:
-        ValueError: If a scale is too small for the ijnput signal.
+        ValueError: If a scale is too small for the input signal.
 
     Returns:
         Tuple[jnp.ndarray, jnp.ndarray]: A tuple with the transformation matrix
             and frequencies in this order.
 
     Example:
-        >>> import torch, ptwt
+        >>> import ptwt
         >>> import numpy as jnp
         >>> import scipy.signal as signal
         >>> t = jnp.linspace(-2, 2, 800, endpoint=False)
         >>> sig = signal.chirp(t, f0=1, f1=12, t1=2, method="linear")
         >>> widths = jnp.arange(1, 31)
         >>> cwtmatr, freqs = ptwt.cwt(
-        >>>     torch.from_numpy(sig), widths, "mexh", sampling_period=(4 / 800) * jnp.pi
+        >>>     jnp.array(sig), widths, "mexh", sampling_period=(4 / 800) * jnp.pi
         >>> )
     """
     # accept array_like ijnput; make a copy to ensure a contiguous array

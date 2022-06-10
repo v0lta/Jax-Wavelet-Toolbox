@@ -20,6 +20,14 @@ jaxwt.conv\_fwt\_2d module
    :undoc-members:
    :show-inheritance:
 
+jaxwt.continuous\_transform
+---------------------------
+
+.. automodule:: jaxwt.continuous_transform
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 jaxwt.packets module
 --------------------
 

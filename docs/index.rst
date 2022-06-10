@@ -13,7 +13,7 @@ Use the jaxwt package link below to jump to the documentation of all functions.
    :maxdepth: 2
    :caption: Contents:
 
-   modules
+   jaxwt
 
 
 Indices and tables

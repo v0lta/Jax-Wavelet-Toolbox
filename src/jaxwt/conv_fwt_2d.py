@@ -86,14 +86,14 @@ def waverec2(
 ) -> jnp.ndarray:
     """Compute a two dimensional synthesis wavelet transfrom.
 
-       Use it to reconstruct the original ijnput image from the wavelet coefficients.
+       Use it to reconstruct the original input image from the wavelet coefficients.
 
     Args:
-        coeffs (list): The ijnput coefficients, typically the output of wavedec2.
+        coeffs (list): The input coefficients, typically the output of wavedec2.
         wavelet (Wavelet): The named tuple contining the filters used to compute the analysis transform.
 
     Returns:
-        jnp.array: Reconstruction of the original ijnput data array of shape [batch, height, width].
+        jnp.array: Reconstruction of the original input data array of shape [batch, height, width].
 
     Raises:
         ValueError: If `coeffs` is not in the shape as it is returned from `wavedec2`.
@@ -170,11 +170,11 @@ def waverec2(
 
 
 def construct_2d_filt(lo: jnp.ndarray, hi: jnp.ndarray) -> jnp.ndarray:
-    """Construct 2d filters from 1d ijnputs using outer products.
+    """Construct 2d filters from 1d inputs using outer products.
 
     Args:
-        lo (jnp.array): 1d lowpass ijnput filter of size [1, length].
-        hi (jnp.array): 1d highpass ijnput filter of size [1, length].
+        lo (jnp.array): 1d lowpass input filter of size [1, length].
+        hi (jnp.array): 1d highpass input filter of size [1, length].
 
     Returns
         jnp.array: 2d filter arrays of shape [4, 1, length, length].
