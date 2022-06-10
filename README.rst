@@ -32,19 +32,19 @@ Jax Wavelet Toolbox (jaxwt)
     :alt: PyPi - downloads
 
 
-Differentiable and GPU enabled fast wavelet transforms in JAX. 
+Differentiable and GPU-enabled fast wavelet transforms in JAX. 
 
 Features
 """"""""
 - 1d analysis and synthesis transforms are implemented in `src/jaxlets/conv_fwt.py`.
-- 2d analysis and synthesis transforms are part of the `src/jaxlets/conv_fwt_2d.py` module.
+- 2d analysis and synthesis transform are part of the `src/jaxlets/conv_fwt_2d.py` module.
 - `cwt`-function supports 1d continuous wavelet transforms.
-- The `WaveletPacket` object support 1d wavelet packet transforms.
+- The `WaveletPacket` object supports 1d wavelet packet transforms.
 
 Installation
 """"""""""""
-To install jax, head over to https://github.com/google/jax#installation and follow the procedure described there.
-Afterwards type ``pip install jaxwt`` to install the Jax-Wavelet-Toolbox. You can uninstall it later by typing ``pip uninstall jaxwt``.
+To install Jax, head over to https://github.com/google/jax#installation and follow the procedure described there.
+Afterward, type ``pip install jaxwt`` to install the Jax-Wavelet-Toolbox. You can uninstall it later by typing ``pip uninstall jaxwt``.
 
 Documentation
 """""""""""""
@@ -101,13 +101,13 @@ Unit tests are handled by ``nox``. Clone the repository and run it with the foll
 
 Goals
 """""
-- In the spirit of jax the aim is to be 100% pywt compatible. Whenever possible, interfaces should be the same
+- In the spirit of Jax the aim is to be 100% pywt compatible. Whenever possible, interfaces should be the same
   results identical.
 
 
 64-Bit floating point numbers
 """""""""""""""""""""""""""""
-To allow 64-bit precision numbers, a jax config flag must be set as shown below: 
+To allow 64-bit precision numbers, a Jax config flag must be set as shown below: 
 
 .. code-block:: python
 
