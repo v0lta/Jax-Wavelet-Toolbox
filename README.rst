@@ -27,7 +27,7 @@ Jax Wavelet Toolbox (jaxwt)
     :target: https://github.com/psf/black
     :alt: Black code style
 
-.. image:: https://static.pepy.tech/personalized-badge/jaxwt?period=total&units=international_system&left_color=black&right_color=orange&left_text=Downloads
+.. image:: https://static.pepy.tech/personalized-badge/jaxwt?period=month&units=international_system&left_color=grey&right_color=orange&left_text=Downloads
     :target: https://pepy.tech/project/jaxwt
     :alt: PyPi - downloads
 
