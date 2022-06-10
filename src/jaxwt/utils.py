@@ -4,7 +4,7 @@
 from collections import namedtuple
 from typing import List, Tuple, Union
 
-import jax.numpy as np
+import jax.numpy as jnp
 
 __all__ = ["flatten_2d_coeff_lst"]
 
@@ -12,9 +12,11 @@ Wavelet = namedtuple("Wavelet", ["dec_lo", "dec_hi", "rec_lo", "rec_hi"])
 
 
 def flatten_2d_coeff_lst(
-    coeff_list_2d: List[Union[np.ndarray, Tuple[np.ndarray, np.ndarray, np.ndarray]]],
+    coeff_list_2d: List[
+        Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]]
+    ],
     flatten_arrays: bool = True,
-) -> List[np.ndarray]:
+) -> List[jnp.ndarray]:
     """Flattens a list of array tuples into a single list.
 
     Args:

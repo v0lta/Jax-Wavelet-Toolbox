@@ -8,22 +8,22 @@
 from typing import Any, List, Optional, Tuple, Union
 
 import jax
-import jax.numpy as np
+import jax.numpy as jnp
 import pywt
 
 from .utils import Wavelet
 
 
 def wavedec(
-    data: np.ndarray,
+    data: jnp.ndarray,
     wavelet: Wavelet,
     level: Optional[int] = None,
     mode: str = "reflect",
-) -> List[np.ndarray]:
+) -> List[jnp.ndarray]:
     """Compute the one dimensional analysis wavelet transform of the last dimension.
 
     Args:
-        data (np.array): Input data array of shape [batch, channels, time]
+        data (jnp.array): Input data array of shape [batch, channels, time]
         wavelet (Wavelet): The named tuple containing the wavelet filter arrays.
         level (int): Max scale level to be used, of none as many levels as possible are
                      used. Defaults to None.
@@ -41,12 +41,12 @@ def wavedec(
         >>> import jaxwt as jwt
         >>> import jax.numpy as np
         >>> # generate an input of even length.
-        >>> data = np.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
+        >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
         >>> jwt.wavedec(data, pywt.Wavelet('haar'),
                         mode='reflect', level=2)
     """
     if len(data.shape) == 1:
-        data = np.expand_dims(np.expand_dims(data, 0), 0)
+        data = jnp.expand_dims(jnp.expand_dims(data, 0), 0)
 
     if mode == "zero":
         # translate pywt to numpy.
@@ -54,7 +54,7 @@ def wavedec(
 
     dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True, dtype=data.dtype)
     filt_len = dec_lo.shape[-1]
-    filt = np.stack([dec_lo, dec_hi], 0)
+    filt = jnp.stack([dec_lo, dec_hi], 0)
 
     if level is None:
         level = pywt.dwt_max_level(data.shape[-1], filt_len)
@@ -72,14 +72,14 @@ def wavedec(
             ],
             dimension_numbers=("NCH", "OIH", "NCH"),
         )
-        res_lo, res_hi = np.split(res, 2, 1)
+        res_lo, res_hi = jnp.split(res, 2, 1)
         result_lst.append(res_hi)
     result_lst.append(res_lo)
     result_lst.reverse()
     return result_lst
 
 
-def waverec(coeffs: List[np.ndarray], wavelet: Wavelet) -> np.ndarray:
+def waverec(coeffs: List[jnp.ndarray], wavelet: Wavelet) -> jnp.ndarray:
     """Reconstruct the original signal in one dimension.
 
     Args:
@@ -88,14 +88,14 @@ def waverec(coeffs: List[np.ndarray], wavelet: Wavelet) -> np.ndarray:
                               the decomposition.
 
     Returns:
-        np.array: Reconstruction of the original data.
+        jnp.array: Reconstruction of the original data.
 
     Examples:
         >>> import pywt
         >>> import jaxwt as jwt
         >>> import jax.numpy as np
         >>> # generate an input of even length.
-        >>> data = np.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
+        >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
         >>> transformed = jwt.wavedec(data, pywt.Wavelet('haar'),
                           mode='reflect', level=2)
         >>> jwt.waverec(transformed, pywt.Wavelet('haar'))
@@ -103,12 +103,12 @@ def waverec(coeffs: List[np.ndarray], wavelet: Wavelet) -> np.ndarray:
     # lax's transpose conv requires filter flips in contrast to pytorch.
     _, _, rec_lo, rec_hi = _get_filter_arrays(wavelet, flip=True, dtype=coeffs[0].dtype)
     filt_len = rec_lo.shape[-1]
-    filt = np.stack([rec_lo, rec_hi], 1)
+    filt = jnp.stack([rec_lo, rec_hi], 1)
 
     res_lo = coeffs[0]
     for c_pos, res_hi in enumerate(coeffs[1:]):
         # print('shapes', res_lo.shape, res_hi.shape)
-        res_lo = np.concatenate([res_lo, res_hi], 1)
+        res_lo = jnp.concatenate([res_lo, res_hi], 1)
         res_lo = jax.lax.conv_transpose(
             lhs=res_lo,
             rhs=filt,
@@ -123,8 +123,8 @@ def waverec(coeffs: List[np.ndarray], wavelet: Wavelet) -> np.ndarray:
 
 
 def _fwt_unpad(
-    res_lo: np.ndarray, filt_len: int, c_pos: int, coeffs: List[np.ndarray]
-) -> np.ndarray:
+    res_lo: jnp.ndarray, filt_len: int, c_pos: int, coeffs: List[jnp.ndarray]
+) -> jnp.ndarray:
     padr = 0
     padl = 0
     if filt_len > 2:
@@ -144,16 +144,16 @@ def _fwt_unpad(
     return res_lo
 
 
-def _fwt_pad(data: np.ndarray, filt_len: int, mode: str = "reflect") -> np.ndarray:
+def _fwt_pad(data: jnp.ndarray, filt_len: int, mode: str = "reflect") -> jnp.ndarray:
     """Pad an input to ensure our fwts are invertible.
 
     Args:
-        data (np.array): The input array.
+        data (jnp.array): The input array.
         filt_len (int): The length of the wavelet filters
         mode (str): How to pad. Defaults to "reflect".
 
     Returns:
-        np.array: A padded version of the input data array.
+        jnp.array: A padded version of the input data array.
     """
     # pad to we see all filter positions and pywt compatability.
     # convolution output length:
@@ -173,36 +173,36 @@ def _fwt_pad(data: np.ndarray, filt_len: int, mode: str = "reflect") -> np.ndarr
     if data.shape[-1] % 2 != 0:
         padr += 1
 
-    data = np.pad(data, ((0, 0), (0, 0), (padl, padr)), mode)
+    data = jnp.pad(data, ((0, 0), (0, 0), (padl, padr)), mode)
     return data
 
 
 def _get_filter_arrays(
-    wavelet: Wavelet, flip: bool, dtype: np.dtype[Any] = np.float64
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    wavelet: Wavelet, flip: bool, dtype: jnp.dtype[Any] = jnp.float64
+) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
     """Extract the filter coefficients from an input wavelet object.
 
     Args:
         wavelet (Wavelet): A pywt-style input wavelet.
         flip (bool): If true flip the input coefficients.
-        dtype: The desired precision. Defaults to np.float64 .
+        dtype: The desired precision. Defaults to jnp.float64 .
 
     Returns:
         tuple: The dec_lo, dec_hi, rec_lo and rec_hi
             filter coefficients as jax arrays.
     """
 
-    def create_array(filter: Union[List[float], np.ndarray]) -> np.ndarray:
+    def create_array(filter: Union[List[float], jnp.ndarray]) -> jnp.ndarray:
         if flip:
-            if type(filter) is np.ndarray:
-                return np.expand_dims(np.flip(filter), 0)
+            if type(filter) is jnp.ndarray:
+                return jnp.expand_dims(jnp.flip(filter), 0)
             else:
-                return np.expand_dims(np.array(filter[::-1]), 0)
+                return jnp.expand_dims(jnp.array(filter[::-1]), 0)
         else:
-            if type(filter) is np.ndarray:
-                return np.expand_dims(filter, 0)
+            if type(filter) is jnp.ndarray:
+                return jnp.expand_dims(filter, 0)
             else:
-                return np.expand_dims(np.array(filter), 0)
+                return jnp.expand_dims(jnp.array(filter), 0)
 
     if isinstance(wavelet, str):
         wavelet = pywt.Wavelet(wavelet)
