@@ -88,14 +88,14 @@ Two-dimensional fast wavelet transform:
 
 Testing
 """""""
-Unit tests are handled by ``tox``. Clone the repository and run it with the following:
+Unit tests are handled by ``nox``. Clone the repository and run it with the following:
 
 .. code-block:: sh
 
-    $ pip install tox
+    $ pip install nox
     $ git clone https://github.com/v0lta/Jax-Wavelet-Toolbox
     $ cd Jax-Wavelet-Toolbox
-    $ tox
+    $ nox -s test
 
 Goals
 """""

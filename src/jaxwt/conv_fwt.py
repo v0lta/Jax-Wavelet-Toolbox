@@ -5,6 +5,7 @@
 # Created on Thu Jun 11 2020
 # Copyright (c) 2020 Moritz Wolter
 #
+from typing import Any, List, Optional, Tuple, Union
 
 import jax
 import jax.numpy as np
@@ -14,8 +15,11 @@ from .utils import Wavelet
 
 
 def wavedec(
-    data: np.array, wavelet: Wavelet, level: int = None, mode: str = "reflect"
-) -> list:
+    data: np.ndarray,
+    wavelet: Wavelet,
+    level: Optional[int] = None,
+    mode: str = "reflect",
+) -> List[np.ndarray]:
     """Compute the one dimensional analysis wavelet transform of the last dimension.
 
     Args:
@@ -75,7 +79,7 @@ def wavedec(
     return result_lst
 
 
-def waverec(coeffs: list, wavelet: Wavelet) -> np.array:
+def waverec(coeffs: List[np.ndarray], wavelet: Wavelet) -> np.ndarray:
     """Reconstruct the original signal in one dimension.
 
     Args:
@@ -118,7 +122,9 @@ def waverec(coeffs: list, wavelet: Wavelet) -> np.array:
     return res_lo
 
 
-def _fwt_unpad(res_lo, filt_len, c_pos, coeffs):
+def _fwt_unpad(
+    res_lo: np.ndarray, filt_len: int, c_pos: int, coeffs: List[np.ndarray]
+) -> np.ndarray:
     padr = 0
     padl = 0
     if filt_len > 2:
@@ -138,7 +144,7 @@ def _fwt_unpad(res_lo, filt_len, c_pos, coeffs):
     return res_lo
 
 
-def _fwt_pad(data: np.array, filt_len: int, mode: str = "reflect") -> np.array:
+def _fwt_pad(data: np.ndarray, filt_len: int, mode: str = "reflect") -> np.ndarray:
     """Pad an input to ensure our fwts are invertible.
 
     Args:
@@ -172,8 +178,8 @@ def _fwt_pad(data: np.array, filt_len: int, mode: str = "reflect") -> np.array:
 
 
 def _get_filter_arrays(
-    wavelet: Wavelet, flip: bool, dtype: np.dtype = np.float64
-) -> tuple:
+    wavelet: Wavelet, flip: bool, dtype: np.dtype[Any] = np.float64
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Extract the filter coefficients from an input wavelet object.
 
     Args:
@@ -186,19 +192,21 @@ def _get_filter_arrays(
             filter coefficients as jax arrays.
     """
 
-    def create_array(filter):
+    def create_array(filter: Union[List[float], np.ndarray]) -> np.ndarray:
         if flip:
-            if type(filter) is np.array:
+            if type(filter) is np.ndarray:
                 return np.expand_dims(np.flip(filter), 0)
             else:
                 return np.expand_dims(np.array(filter[::-1]), 0)
         else:
-            if type(filter) is np.array:
+            if type(filter) is np.ndarray:
                 return np.expand_dims(filter, 0)
             else:
                 return np.expand_dims(np.array(filter), 0)
 
-    if type(wavelet) is pywt.Wavelet:
+    if isinstance(wavelet, str):
+        wavelet = pywt.Wavelet(wavelet)
+    elif type(wavelet) is pywt.Wavelet:
         dec_lo, dec_hi, rec_lo, rec_hi = wavelet.filter_bank
     else:
         dec_lo, dec_hi, rec_lo, rec_hi = wavelet

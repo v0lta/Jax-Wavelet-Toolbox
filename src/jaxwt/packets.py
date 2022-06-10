@@ -5,33 +5,33 @@
 # Copyright (c) 2020 Moritz Wolter
 #
 import collections
+from typing import List, Optional
 
 import jax
 import jax.numpy as np
 import pywt
 
 from .conv_fwt import _fwt_pad, _get_filter_arrays
+from .utils import Wavelet
 
 
-class WaveletPacket(collections.UserDict):
+class WaveletPacket(collections.UserDict[str, np.ndarray]):
     """A wavelet packet tree."""
 
-    def __init__(self, data: np.array, wavelet, mode: str = "reflect"):
+    def __init__(self, data: np.ndarray, wavelet: Wavelet, mode: str = "reflect"):
         """Create a wavelet packet decomposition object.
 
         Args:
             data (np.array): The input data array of shape [time].
-            wavelet (pywt.Wavelet or JaxWavelet): The wavelet used for the decomposition.
+            wavelet (Wavelet): The wavelet used for the decomposition.
             mode (str): The desired padding method
         """
         self.input_data = np.expand_dims(np.expand_dims(data, 0), 0)
         self.wavelet = wavelet
         self.mode = mode
-        self.nodes = {}
-        self.data = None
         self._wavepacketdec(self.input_data, wavelet, mode=mode)
 
-    def get_level(self, level: int) -> list:
+    def get_level(self, level: int) -> List[str]:
         """Return the graycodes for a given level.
 
         Args:
@@ -42,7 +42,7 @@ class WaveletPacket(collections.UserDict):
         """
         return self._get_graycode_order(level)
 
-    def _get_graycode_order(self, level, x="a", y="d"):
+    def _get_graycode_order(self, level: int, x: str = "a", y: str = "d") -> List[str]:
         graycode_order = [x, y]
         for _ in range(level - 1):
             graycode_order = [x + path for path in graycode_order] + [
@@ -50,7 +50,15 @@ class WaveletPacket(collections.UserDict):
             ]
         return graycode_order
 
-    def _recursive_dwt(self, data, filt, mode, level, max_level, path):
+    def _recursive_dwt(
+        self,
+        data: np.ndarray,
+        filt: np.ndarray,
+        mode: str,
+        level: int,
+        max_level: int,
+        path: str,
+    ) -> None:
         self.data[path] = np.squeeze(data)
         if level < max_level:
             data = _fwt_pad(data, filt_len=filt.shape[-1])
@@ -64,13 +72,18 @@ class WaveletPacket(collections.UserDict):
                 dimension_numbers=("NCH", "OIH", "NCH"),
             )
             res_lo, res_hi = np.split(res, 2, 1)
-            return self._recursive_dwt(
-                res_lo, filt, mode, level + 1, max_level, path + "a"
-            ), self._recursive_dwt(res_hi, filt, mode, level + 1, max_level, path + "d")
+            self._recursive_dwt(res_lo, filt, mode, level + 1, max_level, path + "a")
+            self._recursive_dwt(res_hi, filt, mode, level + 1, max_level, path + "d")
         else:
             self.data[path] = np.squeeze(data)
 
-    def _wavepacketdec(self, data, wavelet, level=None, mode="reflect"):
+    def _wavepacketdec(
+        self,
+        data: np.ndarray,
+        wavelet: Wavelet,
+        level: Optional[int] = None,
+        mode: str = "reflect",
+    ) -> None:
         self.data = {}
         dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True)
         filt_len = dec_lo.shape[-1]

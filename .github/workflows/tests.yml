@@ -37,3 +37,5 @@ jobs:
         run: pip install nox
       - name: Run flake8
         run: nox -s lint
+      - name: Run mypy
+        run: nox -s typing

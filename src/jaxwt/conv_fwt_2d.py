@@ -3,7 +3,7 @@
 # Created on Thu Jun 12 2020
 # Copyright (c) 2020 Moritz Wolter
 #
-
+from typing import List, Optional, Tuple, Union
 
 import jax
 import jax.numpy as np
@@ -17,8 +17,11 @@ config.update("jax_enable_x64", True)
 
 
 def wavedec2(
-    data: np.array, wavelet: Wavelet, level: int = None, mode: str = "reflect"
-) -> list:
+    data: np.ndarray,
+    wavelet: Wavelet,
+    level: Optional[int] = None,
+    mode: str = "reflect",
+) -> List[Union[np.ndarray, Tuple[np.ndarray, np.ndarray, np.ndarray]]]:
     """Compute the two dimensional wavelet analysis transform on the last two dimensions of the input data array.
 
     Args:
@@ -57,7 +60,7 @@ def wavedec2(
             [data.shape[-1], data.shape[-2]], pywt.Wavelet("MyWavelet", wavelet)
         )
 
-    result_lst = []
+    result_lst: List[Union[np.ndarray, Tuple[np.ndarray, np.ndarray, np.ndarray]]] = []
     res_ll = data
     for _ in range(level):
         res_ll = _fwt_pad2d(res_ll, len(wavelet), mode=mode)
@@ -69,13 +72,16 @@ def wavedec2(
             dimension_numbers=("NCHW", "OIHW", "NCHW"),
         )
         res_ll, res_lh, res_hl, res_hh = np.split(res, 4, 1)
-        result_lst.append(tuple(r.squeeze(1) for r in (res_lh, res_hl, res_hh)))
+        result_lst.append((res_lh.squeeze(1), res_hl.squeeze(1), res_hh.squeeze(1)))
     result_lst.append(res_ll.squeeze(1))
     result_lst.reverse()
     return result_lst
 
 
-def waverec2(coeffs: list, wavelet: Wavelet) -> np.array:
+def waverec2(
+    coeffs: List[Union[np.ndarray, Tuple[np.ndarray, np.ndarray, np.ndarray]]],
+    wavelet: Wavelet,
+) -> np.ndarray:
     """Compute a two dimensional synthesis wavelet transfrom.
 
        Use it to reconstruct the original input image from the wavelet coefficients.
@@ -87,6 +93,8 @@ def waverec2(coeffs: list, wavelet: Wavelet) -> np.array:
     Returns:
         np.array: Reconstruction of the original input data array of shape [batch, height, width].
 
+    Raises:
+        ValueError: If `coeffs` is not in the shape as it is returned from `wavedec2`.
 
     Example:
         >>> import pywt, scipy.misc
@@ -95,7 +103,13 @@ def waverec2(coeffs: list, wavelet: Wavelet) -> np.array:
         >>> face = np.transpose(scipy.misc.face(), [2, 0, 1]).astype(np.float64)
         >>> transformed = jwt.wavedec2(face, pywt.Wavelet("haar"), level=2, mode="reflect")
         >>> jwt.waverec2(transformed, pywt.Wavelet("haar"))
+
+
     """
+    if not isinstance(coeffs[0], np.ndarray):
+        raise ValueError(
+            "First element of coeffs must be the approximation coefficient tensor."
+        )
     _, _, rec_lo, rec_hi = _get_filter_arrays(wavelet, flip=True, dtype=coeffs[0].dtype)
     filt_len = rec_lo.shape[-1]
     rec_filt = construct_2d_filt(lo=rec_lo, hi=rec_hi)
@@ -103,9 +117,14 @@ def waverec2(coeffs: list, wavelet: Wavelet) -> np.array:
 
     res_ll = np.expand_dims(coeffs[0], 1)
     for c_pos, res_lh_hl_hh in enumerate(coeffs[1:]):
-        res_lh_hl_hh = tuple(np.expand_dims(r, 1) for r in res_lh_hl_hh)
         res_ll = np.concatenate(
-            [res_ll, res_lh_hl_hh[0], res_lh_hl_hh[1], res_lh_hl_hh[2]], 1
+            [
+                res_ll,
+                np.expand_dims(res_lh_hl_hh[0], 1),
+                np.expand_dims(res_lh_hl_hh[1], 1),
+                np.expand_dims(res_lh_hl_hh[2], 1),
+            ],
+            1,
         )
         res_ll = jax.lax.conv_transpose(
             lhs=res_ll,
@@ -148,7 +167,7 @@ def waverec2(coeffs: list, wavelet: Wavelet) -> np.array:
     return res_ll.squeeze(1)
 
 
-def construct_2d_filt(lo: np.array, hi: np.array) -> np.array:
+def construct_2d_filt(lo: np.ndarray, hi: np.ndarray) -> np.ndarray:
     """Construct 2d filters from 1d inputs using outer products.
 
     Args:
@@ -167,7 +186,7 @@ def construct_2d_filt(lo: np.array, hi: np.array) -> np.array:
     return filt
 
 
-def _fwt_pad2d(data: np.array, filt_len: int, mode="reflect") -> np.array:
+def _fwt_pad2d(data: np.ndarray, filt_len: int, mode: str = "reflect") -> np.ndarray:
     padr = 0
     padl = 0
     padt = 0
