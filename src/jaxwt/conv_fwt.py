@@ -48,10 +48,6 @@ def wavedec(
     if len(data.shape) == 1:
         data = jnp.expand_dims(jnp.expand_dims(data, 0), 0)
 
-    if mode == "zero":
-        # translate pywt to numpy.
-        mode = "constant"
-
     dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True, dtype=data.dtype)
     filt_len = dec_lo.shape[-1]
     filt = jnp.stack([dec_lo, dec_hi], 0)
@@ -165,6 +161,10 @@ def _fwt_pad(data: jnp.ndarray, filt_len: int, mode: str = "reflect") -> jnp.nda
     #    = floor((data_len + filt_len - 1)/2)
     # (data_len + total_pad - filt_len) + 2 = data_len + filt_len - 1
     # total_pad = 2*filt_len - 3
+
+    if mode == "zero":
+        # translate pywt to numpy.
+        mode = "constant"
 
     padr = (2 * filt_len - 3) // 2
     padl = (2 * filt_len - 3) // 2

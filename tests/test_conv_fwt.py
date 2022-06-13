@@ -50,13 +50,14 @@ def test_haar_fwt_ifwt_16_float32():
 
 
 @pytest.mark.parametrize("wavelet", ["haar", "db2", "db3", "sym4"])
-@pytest.mark.parametrize("mode", ["reflect", "symmetric"])
+@pytest.mark.parametrize("mode", ["reflect", "symmetric", "zero"])
+@pytest.mark.parametrize("tmax", [1.27, 1.26])
 @pytest.mark.parametrize("level", [1, 2, None])
-def test_fwt_ifwt_lorenz(wavelet, level, mode):
+def test_fwt_ifwt_lorenz(wavelet, level, mode, tmax):
     """Test wavelet analysis and synthesis on lorenz signal."""
     wavelet = pywt.Wavelet(wavelet)
     lorenz = np.transpose(
-        np.expand_dims(generate_lorenz(tmax=1.27)[:, 0], -1), [1, 0]
+        np.expand_dims(generate_lorenz(tmax=tmax)[:, 0], -1), [1, 0]
     ).astype(np.float64)
     data = np.expand_dims(lorenz, 0)
     coeff = wavedec(data, wavelet, mode=mode, level=level)
@@ -65,4 +66,4 @@ def test_fwt_ifwt_lorenz(wavelet, level, mode):
     pywt_cat_coeff = np.concatenate(pywt_coeff, axis=-1).squeeze()
     assert np.allclose(jwt_cat_coeff, pywt_cat_coeff)
     rec_data = waverec(coeff, wavelet)
-    assert np.allclose(rec_data, data)
+    assert np.allclose(rec_data[..., : data.shape[-1]], data)

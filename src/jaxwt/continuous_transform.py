@@ -1,8 +1,8 @@
 """Jax compatible cwt code."""
 from typing import Tuple, Union
 
-import numpy as np
 import jax.numpy as jnp
+import numpy as np
 from jax.numpy.fft import fft, ifft
 from pywt import ContinuousWavelet, DiscreteContinuousWavelet, Wavelet
 from pywt._functions import integrate_wavelet, scale2frequency

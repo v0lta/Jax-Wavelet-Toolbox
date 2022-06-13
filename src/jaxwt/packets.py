@@ -14,7 +14,6 @@ import pywt
 from .conv_fwt import _fwt_pad, _get_filter_arrays
 from .utils import Wavelet
 
-
 if TYPE_CHECKING:
     BaseDict = collections.UserDict[str, jnp.ndarray]
 else:
@@ -30,12 +29,13 @@ class WaveletPacket(BaseDict):
         Args:
             data (jnp.array): The input data array of shape [time].
             wavelet (Wavelet): The wavelet used for the decomposition.
-            mode (str): The desired padding method
+            mode (str): The desired padding method. Choose i.e.
+                "reflect", "symmetric" or "zero".
         """
         self.input_data = jnp.expand_dims(jnp.expand_dims(data, 0), 0)
         self.wavelet = wavelet
         self.mode = mode
-        self._wavepacketdec(self.input_data, wavelet, mode=mode)
+        self._wavepacketdec(self.input_data, wavelet)
 
     def get_level(self, level: int) -> List[str]:
         """Return the graycodes for a given level.
@@ -60,14 +60,13 @@ class WaveletPacket(BaseDict):
         self,
         data: jnp.ndarray,
         filt: jnp.ndarray,
-        mode: str,
         level: int,
         max_level: int,
         path: str,
     ) -> None:
         self.data[path] = jnp.squeeze(data)
         if level < max_level:
-            data = _fwt_pad(data, filt_len=filt.shape[-1])
+            data = _fwt_pad(data, filt_len=filt.shape[-1], mode=self.mode)
             res = jax.lax.conv_general_dilated(
                 lhs=data,  # lhs = NCH image tensor
                 rhs=filt,  # rhs = OIH conv kernel tensor
@@ -78,8 +77,8 @@ class WaveletPacket(BaseDict):
                 dimension_numbers=("NCH", "OIH", "NCH"),
             )
             res_lo, res_hi = jnp.split(res, 2, 1)
-            self._recursive_dwt(res_lo, filt, mode, level + 1, max_level, path + "a")
-            self._recursive_dwt(res_hi, filt, mode, level + 1, max_level, path + "d")
+            self._recursive_dwt(res_lo, filt, level + 1, max_level, path + "a")
+            self._recursive_dwt(res_hi, filt, level + 1, max_level, path + "d")
         else:
             self.data[path] = jnp.squeeze(data)
 
@@ -88,7 +87,6 @@ class WaveletPacket(BaseDict):
         data: jnp.ndarray,
         wavelet: Wavelet,
         level: Optional[int] = None,
-        mode: str = "reflect",
     ) -> None:
         self.data = {}
         dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True)
@@ -97,4 +95,4 @@ class WaveletPacket(BaseDict):
 
         if level is None:
             level = pywt.dwt_max_level(data.shape[-1], filt_len)
-        self._recursive_dwt(data, filt, mode, level=0, max_level=level, path="")
+        self._recursive_dwt(data, filt, level=0, max_level=level, path="")

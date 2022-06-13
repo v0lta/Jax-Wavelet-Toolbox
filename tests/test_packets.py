@@ -15,7 +15,8 @@ from src.jaxwt.packets import WaveletPacket
 
 @pytest.mark.parametrize("wavelet", ("haar", "db2", "db3"))
 @pytest.mark.parametrize("level", (2, 4))
-def test_packets_lorenz(wavelet, level, mode="reflect"):
+@pytest.mark.parametrize("mode", ("reflect", "symmetric", "zero"))
+def test_packets_lorenz(wavelet, level, mode):
     """Test wavelet analysis and synthesis on lorenz signal."""
     wavelet = pywt.Wavelet(wavelet)
     lorenz = generate_lorenz(tmax=0.99)[:, 0].astype(np.float64)
