@@ -5,7 +5,7 @@
 # Copyright (c) 2020 Moritz Wolter
 #
 import collections
-from typing import TYPE_CHECKING, List, Optional, Tuple, Dict, Union
+from typing import TYPE_CHECKING, List, Optional
 
 import jax
 import jax.numpy as jnp
@@ -24,8 +24,13 @@ else:
 class WaveletPacket(BaseDict):
     """A wavelet packet tree."""
 
-    def __init__(self, data: jnp.ndarray, wavelet: Wavelet, mode: str = "reflect",
-                 max_level: Optional[int] = None):
+    def __init__(
+        self,
+        data: jnp.ndarray,
+        wavelet: Wavelet,
+        mode: str = "reflect",
+        max_level: Optional[int] = None,
+    ):
         """Create a wavelet packet decomposition object.
 
         Args:
@@ -49,8 +54,9 @@ class WaveletPacket(BaseDict):
 
         if max_level is None:
             max_level = pywt.dwt_max_level(data.shape[-1], filt_len)
-        self._recursive_dwt(self.input_data, filt, level=0, max_level=max_level, path="")
-
+        self._recursive_dwt(
+            self.input_data, filt, level=0, max_level=max_level, path=""
+        )
 
     def get_level(self, level: int) -> List[str]:
         """Return the graycodes for a given level.
@@ -98,13 +104,16 @@ class WaveletPacket(BaseDict):
             self.data[path] = jnp.squeeze(data)
 
 
-
-
 class WaveletPacket2D(BaseDict):
     """A wavelet packet tree."""
 
-    def __init__(self, data: jnp.ndarray, wavelet: Wavelet, mode: str = "reflect",
-                 max_level: Optional[int] = None):
+    def __init__(
+        self,
+        data: jnp.ndarray,
+        wavelet: Wavelet,
+        mode: str = "reflect",
+        max_level: Optional[int] = None,
+    ):
         """Create a 2D-wavelet packet decomposition object.
 
         Args:
@@ -119,10 +128,10 @@ class WaveletPacket2D(BaseDict):
         self.data = {}
         self.max_level = max_level
         if max_level is None:
-            self.max_level = pywt.dwt_max_level(min(self.input_data.shape[-2:]),
-                                                self.wavelet.dec_len)
+            self.max_level = pywt.dwt_max_level(
+                min(self.input_data.shape[-2:]), self.wavelet.dec_len
+            )
         self._recursive_dwt2d(self.input_data, level=0, path="")
-
 
     def get_level(self, level: int) -> List[str]:
         """Return the graycodes for a given level.
@@ -152,7 +161,7 @@ class WaveletPacket2D(BaseDict):
         self.data[path] = jnp.squeeze(data)
         if level < self.max_level:
             result_a, (result_h, result_v, result_d) = wavedec2(
-              data, self.wavelet, 1, mode=self.mode 
+                data, self.wavelet, 1, mode=self.mode
             )
             # assert for type checking
             assert not isinstance(result_a, tuple)
@@ -161,6 +170,4 @@ class WaveletPacket2D(BaseDict):
             self._recursive_dwt2d(result_v, level + 1, path + "v")
             self._recursive_dwt2d(result_d, level + 1, path + "d")
         else:
-            self.data[path] = jnp.squeeze(data) # TODO: remove squeeze ?
-
-
+            self.data[path] = jnp.squeeze(data)  # TODO: remove squeeze ?
