@@ -121,6 +121,7 @@ class WaveletPacket2D(BaseDict):
             wavelet (Wavelet): The wavelet used for the decomposition.
             mode (str): The desired padding method. Choose i.e.
                 "reflect", "symmetric" or "zero". Defaults to "reflect".
+            max_level (int, optional): Choose the desired decomposition level.
         """
         self.input_data = data
         self.wavelet: pywt.Wavelet = _as_wavelet(wavelet)

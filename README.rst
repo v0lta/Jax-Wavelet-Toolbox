@@ -106,7 +106,7 @@ Goals
   results identical.
 
 
-64-Bit floating point numbers
+64-Bit floating-point numbers
 """""""""""""""""""""""""""""
 To allow 64-bit precision numbers, a Jax config flag must be set as shown below: 
 
