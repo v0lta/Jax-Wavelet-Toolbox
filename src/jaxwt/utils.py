@@ -44,14 +44,16 @@ def flatten_2d_coeff_lst(
     return flat_coeff_lst
 
 
-def _as_wavelet(wavelet: Union[Wavelet, str]) -> Wavelet:
+def _as_wavelet(wavelet: Union[Wavelet, str]) -> pywt.Wavelet:
     """Ensure the input argument to be a pywt wavelet compatible object.
+
     Args:
         wavelet (Wavelet or str): The input argument, which is either a
             pywt wavelet compatible object or a valid pywt wavelet name string.
+
     Returns:
-        Wavelet: the input wavelet object or the pywt wavelet object described by the
-            input str.
+        pywt.Wavelet: the input wavelet object or the pywt wavelet object
+            described by the input str.
     """
     if isinstance(wavelet, str):
         return pywt.Wavelet(wavelet)
