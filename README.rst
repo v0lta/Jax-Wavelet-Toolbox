@@ -39,7 +39,8 @@ Features
 - 1d analysis and synthesis transforms are implemented in ``src/jaxlets/conv_fwt.py``.
 - 2d analysis and synthesis transform are part of the ``src/jaxlets/conv_fwt_2d.py`` module.
 - ``cwt``-function supports 1d continuous wavelet transforms.
-- The ``WaveletPacket`` object supports 1d wavelet packet transforms.
+- The ``WaveletPacket`` object supports 1d wavelet packet analysis transforms.
+- ``WaveletPacket2d`` implements two-dimensional wavelet packet forward transforms.
 
 Installation
 """"""""""""
