@@ -6,9 +6,9 @@
 #
 
 import jax.numpy as jnp
+import numpy as np
 import pytest
 import pywt
-import numpy as np
 from jax.config import config
 
 from src.jaxwt._lorenz import generate_lorenz
@@ -75,9 +75,11 @@ def test_fwt_ifwt_lorenz(wavelet, level, mode, tmax):
 @pytest.mark.parametrize("batch_size", [1, 3])
 @pytest.mark.parametrize("level", [2, None])
 def test_batch_fwt_ifwt(wavelet, mode, batch_size, level):
+    """Test the batched version of the fwt."""
     wavelet = pywt.Wavelet(wavelet)
     random_dat = jnp.array(np.random.randn(batch_size, 100))
     coeff = wavedec(random_dat, wavelet, mode=mode, level=level)
     rec_data = waverec(coeff, wavelet)
-    assert jnp.allclose(np.squeeze(rec_data[..., : random_dat.shape[-1]], 1),
-                        random_dat)
+    assert jnp.allclose(
+        np.squeeze(rec_data[..., : random_dat.shape[-1]], 1), random_dat
+    )
