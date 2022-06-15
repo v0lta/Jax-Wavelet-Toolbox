@@ -46,7 +46,11 @@ def wavedec(
                         mode='reflect', level=2)
     """
     if len(data.shape) == 1:
+        # add channel and batch dimension.
         data = jnp.expand_dims(jnp.expand_dims(data, 0), 0)
+    if len(data.shape) == 2:
+        # add the channel dimension.
+        data = jnp.expand_dims(data, 1)
 
     dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True, dtype=data.dtype)
     filt_len = dec_lo.shape[-1]

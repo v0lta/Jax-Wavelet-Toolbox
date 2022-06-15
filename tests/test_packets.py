@@ -15,7 +15,7 @@ from src.jaxwt.packets import WaveletPacket, WaveletPacket2D
 
 
 # TODO: add more input shapes. and level none
-@pytest.mark.parametrize("input_shape", ((2, 256), (3, 255)))
+@pytest.mark.parametrize("input_shape", ((2, 256), (3, 255), (1,244)))
 @pytest.mark.parametrize("wavelet", ("haar", "db2", "db3"))
 @pytest.mark.parametrize("level", (2, 4))
 @pytest.mark.parametrize("mode", ("reflect", "symmetric", "zero"))
@@ -40,7 +40,7 @@ def test_packets_1d(input_shape, wavelet, level, mode):
     assert np.allclose(jres, res)
 
 
-@pytest.mark.parametrize("input_shape", ((2, 32, 32), (3, 33, 33)))
+@pytest.mark.parametrize("input_shape", ((2, 32, 32), (3, 33, 33), (1, 32, 33)))
 @pytest.mark.parametrize("wavelet", ("haar", "db2"))
 @pytest.mark.parametrize("level", (2, 3))
 @pytest.mark.parametrize("mode", ("reflect", "symmetric", "zero"))

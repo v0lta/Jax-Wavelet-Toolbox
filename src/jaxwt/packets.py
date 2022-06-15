@@ -85,7 +85,7 @@ class WaveletPacket(BaseDict):
         max_level: int,
         path: str,
     ) -> None:
-        self.data[path] = jnp.squeeze(data)
+        self.data[path] = jnp.squeeze(data, 1)
         if level < max_level:
             data = _fwt_pad(data, filt_len=filt.shape[-1], mode=self.mode)
             res = jax.lax.conv_general_dilated(
@@ -101,7 +101,7 @@ class WaveletPacket(BaseDict):
             self._recursive_dwt(res_lo, filt, level + 1, max_level, path + "a")
             self._recursive_dwt(res_hi, filt, level + 1, max_level, path + "d")
         else:
-            self.data[path] = jnp.squeeze(data)
+            self.data[path] = jnp.squeeze(data, 1)
 
 
 class WaveletPacket2D(BaseDict):
@@ -159,7 +159,7 @@ class WaveletPacket2D(BaseDict):
         level: int,
         path: str,
     ) -> None:
-        self.data[path] = jnp.squeeze(data)
+        self.data[path] = data
         if level < self.max_level:
             result_a, (result_h, result_v, result_d) = wavedec2(
                 data, self.wavelet, 1, mode=self.mode
@@ -171,4 +171,4 @@ class WaveletPacket2D(BaseDict):
             self._recursive_dwt2d(result_v, level + 1, path + "v")
             self._recursive_dwt2d(result_d, level + 1, path + "d")
         else:
-            self.data[path] = jnp.squeeze(data)  # TODO: remove squeeze ?
+            self.data[path] = data
