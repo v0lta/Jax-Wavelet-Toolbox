@@ -5,6 +5,7 @@ from collections import namedtuple
 from typing import List, Tuple, Union
 
 import jax.numpy as jnp
+import pywt
 
 __all__ = ["flatten_2d_coeff_lst"]
 
@@ -41,3 +42,18 @@ def flatten_2d_coeff_lst(
             else:
                 flat_coeff_lst.append(coeff)
     return flat_coeff_lst
+
+
+def _as_wavelet(wavelet: Union[Wavelet, str]) -> Wavelet:
+    """Ensure the input argument to be a pywt wavelet compatible object.
+    Args:
+        wavelet (Wavelet or str): The input argument, which is either a
+            pywt wavelet compatible object or a valid pywt wavelet name string.
+    Returns:
+        Wavelet: the input wavelet object or the pywt wavelet object described by the
+            input str.
+    """
+    if isinstance(wavelet, str):
+        return pywt.Wavelet(wavelet)
+    else:
+        return wavelet

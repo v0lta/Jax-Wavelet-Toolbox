@@ -5,7 +5,7 @@
 # Copyright (c) 2020 Moritz Wolter
 #
 import collections
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Union
 
 import jax
 import jax.numpy as jnp
@@ -13,7 +13,7 @@ import pywt
 
 from .conv_fwt import _fwt_pad, _get_filter_arrays
 from .conv_fwt_2d import wavedec2
-from .utils import Wavelet
+from .utils import Wavelet, _as_wavelet
 
 if TYPE_CHECKING:
     BaseDict = collections.UserDict[str, jnp.ndarray]
@@ -110,7 +110,7 @@ class WaveletPacket2D(BaseDict):
     def __init__(
         self,
         data: jnp.ndarray,
-        wavelet: Wavelet,
+        wavelet: Union[str, pywt.Wavelet],
         mode: str = "reflect",
         max_level: Optional[int] = None,
     ):
@@ -123,14 +123,15 @@ class WaveletPacket2D(BaseDict):
                 "reflect", "symmetric" or "zero". Defaults to "reflect".
         """
         self.input_data = data
-        self.wavelet = wavelet
+        self.wavelet: pywt.Wavelet = _as_wavelet(wavelet)
         self.mode = mode
         self.data = {}
-        self.max_level = max_level
         if max_level is None:
             self.max_level = pywt.dwt_max_level(
                 min(self.input_data.shape[-2:]), self.wavelet.dec_len
             )
+        else:
+            self.max_level = max_level
         self._recursive_dwt2d(self.input_data, level=0, path="")
 
     def get_level(self, level: int) -> List[str]:
