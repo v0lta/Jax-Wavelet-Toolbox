@@ -93,7 +93,7 @@ def waverec(coeffs: List[jnp.ndarray], wavelet: Wavelet) -> jnp.ndarray:
     Examples:
         >>> import pywt
         >>> import jaxwt as jwt
-        >>> import jax.numpy as np
+        >>> import jax.numpy as jnp
         >>> # generate an input of even length.
         >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
         >>> transformed = jwt.wavedec(data, pywt.Wavelet('haar'),
