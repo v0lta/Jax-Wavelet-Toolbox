@@ -114,3 +114,21 @@ To allow 64-bit precision numbers, a Jax config flag must be set as shown below:
 
     from jax.config import config
     config.update("jax_enable_x64", True)
+
+
+📖 Citation
+"""""""""""
+
+If you use this work in a scientific context, please cite:
+
+.. code-block::
+
+  @phdthesis{handle:20.500.11811/9245,
+    urn: https://nbn-resolving.org/urn:nbn:de:hbz:5-63361,
+    author = {{Moritz Wolter}},
+    title = {Frequency Domain Methods in Recurrent Neural Networks for Sequential Data Processing},
+    school = {Rheinische Friedrich-Wilhelms-Universität Bonn},
+    year = 2021,
+    month = jul,
+    url = {https://hdl.handle.net/20.500.11811/9245}
+  }
