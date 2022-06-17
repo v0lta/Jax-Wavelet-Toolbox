@@ -51,13 +51,13 @@ def cwt(
             and frequencies in this order.
 
     Example:
-        >>> import ptwt
-        >>> import numpy as jnp
+        >>> import jaxwt as jwt
+        >>> import jax.numpy as jnp
         >>> import scipy.signal as signal
         >>> t = jnp.linspace(-2, 2, 800, endpoint=False)
         >>> sig = signal.chirp(t, f0=1, f1=12, t1=2, method="linear")
         >>> widths = jnp.arange(1, 31)
-        >>> cwtmatr, freqs = ptwt.cwt(
+        >>> cwtmatr, freqs = jwt.cwt(
         >>>     jnp.array(sig), widths, "mexh", sampling_period=(4 / 800) * jnp.pi
         >>> )
     """

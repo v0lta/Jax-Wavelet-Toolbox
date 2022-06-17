@@ -30,7 +30,7 @@ def wavedec2(
         wavelet (Wavelet): A namedtouple containing the filters for the transformation.
         level (int): The max level to be used, if not set as many levels as possible
                                will be used. Defaults to None.
-        mode (str): The desired padding mode. Choose reflect or symmetric.
+        mode (str): The desired padding mode. Choose reflect, symmetric or zero.
             Defaults to reflect.
 
     Returns:
