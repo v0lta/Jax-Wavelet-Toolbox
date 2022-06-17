@@ -27,7 +27,7 @@ def wavedec(
         wavelet (Wavelet): The named tuple containing the wavelet filter arrays.
         level (int): Max scale level to be used, of none as many levels as possible are
                      used. Defaults to None.
-        mode: The padding used to extend the input signal. Choose reflect or symmetric.
+        mode: The padding used to extend the input signal. Choose reflect, symmetric or zero.
             Defaults to reflect.
 
     Returns:
@@ -39,7 +39,7 @@ def wavedec(
     Examples:
         >>> import pywt
         >>> import jaxwt as jwt
-        >>> import jax.numpy as np
+        >>> import jax.numpy as jnp
         >>> # generate an input of even length.
         >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
         >>> jwt.wavedec(data, pywt.Wavelet('haar'),
