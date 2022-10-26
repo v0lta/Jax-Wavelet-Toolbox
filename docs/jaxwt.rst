@@ -52,10 +52,3 @@ jaxwt.version module
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
-
-.. automodule:: jaxwt
-   :members:
-   :undoc-members:
-   :show-inheritance:
