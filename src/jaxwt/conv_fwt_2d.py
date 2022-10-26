@@ -25,7 +25,7 @@ def wavedec2(
     """Compute the two dimensional wavelet analysis transform on the last two dimensions of the input data array.
 
     Args:
-        data (jnp.array): Jax array containing the data to be transformed. Assumed shape:
+        data (jnp.ndarray): Jax array containing the data to be transformed. Assumed shape:
                          [batch size, hight, width].
         wavelet (Wavelet): A namedtouple containing the filters for the transformation.
         level (int): The max level to be used, if not set as many levels as possible

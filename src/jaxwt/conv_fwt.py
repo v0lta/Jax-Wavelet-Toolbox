@@ -23,7 +23,7 @@ def wavedec(
     """Compute the one dimensional analysis wavelet transform of the last dimension.
 
     Args:
-        data (jnp.array): Input data array of shape [batch, time].
+        data (jnp.ndarray): Input data array of shape [batch, time].
         wavelet (Wavelet): The named tuple containing the wavelet filter arrays.
         level (int): Max scale level to be used, of none as many levels as possible are
                      used. Defaults to None.
@@ -154,7 +154,7 @@ def _fwt_pad(data: jnp.ndarray, filt_len: int, mode: str = "reflect") -> jnp.nda
     """Pad an input to ensure our fwts are invertible.
 
     Args:
-        data (jnp.array): The input array.
+        data (jnp.ndarray): The input array.
         filt_len (int): The length of the wavelet filters
         mode (str): How to pad. Defaults to "reflect".
 

@@ -35,7 +35,7 @@ class WaveletPacket(BaseDict):
         """Create a wavelet packet decomposition object.
 
         Args:
-            data (jnp.array): The input data array of shape [batch_size, time].
+            data (jnp.ndarray): The input data array of shape [batch_size, time].
             wavelet (Wavelet): The wavelet used for the decomposition.
             mode (str): The desired padding method. Choose i.e.
                 "reflect", "symmetric" or "zero". Defaults to "reflect".
@@ -155,7 +155,7 @@ class WaveletPacket2D(BaseDict):
         https://github.com/v0lta/Jax-Wavelet-Toolbox/tree/packet-patch/examples/deepfake_analysis
 
         Args:
-            data (jnp.array): The input data array of shape [batch_size, height, width].
+            data (jnp.ndarray): The input data array of shape [batch_size, height, width].
             wavelet (Wavelet): The wavelet used for the decomposition.
             mode (str): The desired padding method. Choose i.e.
                 "reflect", "symmetric" or "zero". Defaults to "reflect".
