@@ -11,7 +11,7 @@ import jax
 import jax.numpy as jnp
 import pywt
 
-from .conv_fwt import _fwt_pad, _get_filter_arrays
+from .conv_fwt import _fwt_pad, _get_filter_arrays, wavedec, waverec
 from .conv_fwt_2d import wavedec2
 from .utils import Wavelet, _as_wavelet
 
@@ -38,24 +38,47 @@ class WaveletPacket(BaseDict):
             wavelet (Wavelet): The wavelet used for the decomposition.
             mode (str): The desired padding method. Choose i.e.
                 "reflect", "symmetric" or "zero". Defaults to "reflect".
+
+        Example:
+            import pywt
+            import jax.numpy as jnp
+            from jaxwt import WaveletPacket
+            import matplotlib.pyplot as plt
+            import scipy.signal as signal
+            wavelet = pywt.Wavelet("db4")
+            t = jnp.linspace(0, 10, 5001)
+            w = signal.chirp(t, f0=0.00001,
+                             f1=20, t1=10, method="linear")
+            wp = WaveletPacket(data=w, wavelet=wavelet)
+            nodes = wp.get_level(7)
+            jnp_lst = []
+            for node in nodes:
+                jnp_lst.append(wp[node])
+            viz = jnp.concatenate(jnp_lst)
+
+            fig, axs = plt.subplots(2)
+            axs[0].plot(t, w)
+            axs[0].set_title("Linear Chirp, f(0)=.00001, f(10)=20")
+            axs[0].set_xlabel("t (sec)")
+            axs[1].set_title("Wavelet analysis")
+            axs[1].imshow(viz[:20, :])
+            axs[1].set_xlabel("time")
+            axs[1].set_ylabel("frequency")
+            plt.show()
         """
         if len(data.shape) == 1:
             self.input_data = jnp.expand_dims(jnp.expand_dims(data, 0), 0)
         elif len(data.shape) == 2:
             self.input_data = jnp.expand_dims(data, 1)
 
-        self.wavelet = wavelet
+        self.wavelet = _as_wavelet(wavelet)
         self.mode = mode
         self.data = {}
-
-        dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True)
-        filt_len = dec_lo.shape[-1]
-        filt = jnp.stack([dec_lo, dec_hi], 0)
-
+        self.max_level = max_level
         if max_level is None:
-            max_level = pywt.dwt_max_level(data.shape[-1], filt_len)
+            self.max_level = pywt.dwt_max_level(data.shape[-1], self.wavelet.dec_len)
         self._recursive_dwt(
-            self.input_data, filt, level=0, max_level=max_level, path=""
+            self.input_data, level=0, path=""
         )
 
     def get_level(self, level: int) -> List[str]:
@@ -75,33 +98,57 @@ class WaveletPacket(BaseDict):
             graycode_order = [x + path for path in graycode_order] + [
                 y + path for path in graycode_order[::-1]
             ]
-        return graycode_order
+        if level == 0:
+            return [""]
+        else:
+            return graycode_order
 
     def _recursive_dwt(
         self,
         data: jnp.ndarray,
-        filt: jnp.ndarray,
         level: int,
-        max_level: int,
         path: str,
     ) -> None:
         self.data[path] = jnp.squeeze(data, 1)
-        if level < max_level:
-            data = _fwt_pad(data, filt_len=filt.shape[-1], mode=self.mode)
-            res = jax.lax.conv_general_dilated(
-                lhs=data,  # lhs = NCH image tensor
-                rhs=filt,  # rhs = OIH conv kernel tensor
-                padding="VALID",
-                window_strides=[
-                    2,
-                ],
-                dimension_numbers=("NCH", "OIH", "NCH"),
-            )
-            res_lo, res_hi = jnp.split(res, 2, 1)
-            self._recursive_dwt(res_lo, filt, level + 1, max_level, path + "a")
-            self._recursive_dwt(res_hi, filt, level + 1, max_level, path + "d")
+        if level < self.max_level:
+            res_lo, res_hi = wavedec(data, self.wavelet, 1, mode=self.mode)
+            self._recursive_dwt(res_lo, level + 1, path + "a")
+            self._recursive_dwt(res_hi, level + 1, path + "d")
         else:
             self.data[path] = jnp.squeeze(data, 1)
+
+    def reconstruct(self) -> "WaveletPacket":
+        """Recursively reconstruct the input starting from the leaf nodes.
+
+        Reconstruction replaces the input-data originally assigned to this object.
+
+        Note:
+           Only changes to leaf node data impacts the results,
+           since changes in all other nodes will be replaced with
+           a reconstruction from the leafs.
+
+
+        Example:
+            >>> import jaxwt as jwt
+            >>> import jax
+            >>> input_data = jax.random.normal(jax.random.PRNGKey(0), (1, 24))
+            >>> jwp = jwt.WaveletPacket(input_data, "haar", max_level=2)
+            >>> jwp["a" * 2] *= 0
+            >>> jwp.reconstruct()
+            >>> print(jwp[""])
+        """
+        if self.max_level is None:
+            self.max_level = pywt.dwt_max_level(self[""].shape[-1], self.wavelet.dec_len)
+
+        for level in reversed(range(self.max_level)):
+            for node in self.get_level(level):
+                data_a = self[node + "a"]
+                data_b = self[node + "d"]
+                rec = waverec([data_a, data_b], self.wavelet)
+                self[node] = rec
+        return self
+
+
 
 
 class WaveletPacket2D(BaseDict):

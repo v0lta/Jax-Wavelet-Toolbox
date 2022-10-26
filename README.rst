@@ -102,13 +102,13 @@ Unit tests are handled by ``nox``. Clone the repository and run it with the foll
 
 Goals
 """""
-- In the spirit of Jax the aim is to be 100% pywt compatible. Whenever possible, interfaces should be the same
+- In the spirit of Jax, the aim is to be 100% pywt compatible. Whenever possible, interfaces should be the same
   results identical.
 
 
 64-Bit floating-point numbers
 """""""""""""""""""""""""""""
-To allow 64-bit precision numbers, a Jax config flag must be set as shown below: 
+If you need 64-bit floating point support, set the Jax config flag: 
 
 .. code-block:: python
 

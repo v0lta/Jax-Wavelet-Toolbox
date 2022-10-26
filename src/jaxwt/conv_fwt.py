@@ -23,7 +23,7 @@ def wavedec(
     """Compute the one dimensional analysis wavelet transform of the last dimension.
 
     Args:
-        data (jnp.array): Input data array of shape [batch, channels, time]
+        data (jnp.array): Input data array of shape [batch, time].
         wavelet (Wavelet): The named tuple containing the wavelet filter arrays.
         level (int): Max scale level to be used, of none as many levels as possible are
                      used. Defaults to None.
@@ -84,6 +84,7 @@ def waverec(coeffs: List[jnp.ndarray], wavelet: Wavelet) -> jnp.ndarray:
 
     Args:
         coeffs (list): Wavelet coefficients, typically produced by the wavedec function.
+            List entries of shape [batch_size, coefficients] work. 
         wavelet (Wavelet): The named tuple containing the wavelet filters used to evaluate
                               the decomposition.
 
@@ -108,6 +109,11 @@ def waverec(coeffs: List[jnp.ndarray], wavelet: Wavelet) -> jnp.ndarray:
     res_lo = coeffs[0]
     for c_pos, res_hi in enumerate(coeffs[1:]):
         # print('shapes', res_lo.shape, res_hi.shape)
+        if len(res_lo.shape) == 2:
+            res_lo = jnp.expand_dims(res_lo, 1)
+        if len(res_hi.shape) == 2:
+            res_hi = jnp.expand_dims(res_hi, 1)            
+
         res_lo = jnp.concatenate([res_lo, res_hi], 1)
         res_lo = jax.lax.conv_transpose(
             lhs=res_lo,
@@ -210,6 +216,7 @@ def _get_filter_arrays(
 
     if isinstance(wavelet, str):
         wavelet = pywt.Wavelet(wavelet)
+        dec_lo, dec_hi, rec_lo, rec_hi = wavelet.filter_bank
     elif type(wavelet) is pywt.Wavelet:
         dec_lo, dec_hi, rec_lo, rec_hi = wavelet.filter_bank
     else:

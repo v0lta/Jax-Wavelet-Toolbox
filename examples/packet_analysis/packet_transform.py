@@ -13,7 +13,7 @@ nodes = wp.get_level(7)
 np_lst = []
 for node in nodes:
     np_lst.append(wp[node])
-viz = np.stack(np_lst)
+viz = np.concatenate(np_lst)
 
 fig, axs = plt.subplots(2)
 axs[0].plot(t, w)
