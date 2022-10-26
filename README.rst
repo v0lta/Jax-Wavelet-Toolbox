@@ -39,8 +39,8 @@ Features
 - 1d analysis and synthesis transforms are implemented in ``src/jaxwt/conv_fwt.py``.
 - 2d analysis and synthesis transform are part of the ``src/jaxwt/conv_fwt_2d.py`` module.
 - ``cwt``-function supports 1d continuous wavelet transforms.
-- The ``WaveletPacket`` object supports 1d wavelet packet analysis transforms.
-- ``WaveletPacket2d`` implements two-dimensional wavelet packet forward transforms.
+- The ``WaveletPacket`` object supports 1d wavelet packet transforms.
+- ``WaveletPacket2d`` implements two-dimensional wavelet packet transforms.
 
 Installation
 """"""""""""
@@ -102,13 +102,13 @@ Unit tests are handled by ``nox``. Clone the repository and run it with the foll
 
 Goals
 """""
-- In the spirit of Jax the aim is to be 100% pywt compatible. Whenever possible, interfaces should be the same
+- In the spirit of Jax, the aim is to be 100% pywt compatible. Whenever possible, interfaces should be the same
   results identical.
 
 
 64-Bit floating-point numbers
 """""""""""""""""""""""""""""
-To allow 64-bit precision numbers, a Jax config flag must be set as shown below: 
+If you need 64-bit floating point support, set the Jax config flag: 
 
 .. code-block:: python
 
