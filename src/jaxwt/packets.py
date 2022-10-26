@@ -5,6 +5,7 @@
 # Copyright (c) 2020 Moritz Wolter
 #
 import collections
+from itertools import product
 from typing import TYPE_CHECKING, List, Optional, Union
 
 # import jax
@@ -12,7 +13,7 @@ import jax.numpy as jnp
 import pywt
 
 from .conv_fwt import wavedec, waverec
-from .conv_fwt_2d import wavedec2
+from .conv_fwt_2d import wavedec2, waverec2
 from .utils import Wavelet, _as_wavelet
 
 if TYPE_CHECKING:
@@ -126,7 +127,6 @@ class WaveletPacket(BaseDict):
            since changes in all other nodes will be replaced with
            a reconstruction from the leafs.
 
-
         Example:
             >>> import jaxwt as jwt
             >>> import jax
@@ -162,6 +162,9 @@ class WaveletPacket2D(BaseDict):
     ):
         """Create a 2D-wavelet packet decomposition object.
 
+        Example code illustrating the use of this class is available at:
+        https://github.com/v0lta/Jax-Wavelet-Toolbox/tree/packet-patch/examples/deepfake_analysis
+
         Args:
             data (jnp.array): The input data array of shape [batch_size, height, width].
             wavelet (Wavelet): The wavelet used for the decomposition.
@@ -180,25 +183,6 @@ class WaveletPacket2D(BaseDict):
         else:
             self.max_level = max_level
         self._recursive_dwt2d(self.input_data, level=0, path="")
-
-    def get_level(self, level: int) -> List[str]:
-        """Return the graycodes for a given level.
-
-        Args:
-            level (int): The required depth of the tree.
-
-        Returns:
-            list: A list with the node names.
-        """
-        return self._get_graycode_order(level)
-
-    def _get_graycode_order(self, level: int, x: str = "a", y: str = "d") -> List[str]:
-        graycode_order = [x, y]
-        for _ in range(level - 1):
-            graycode_order = [x + path for path in graycode_order] + [
-                y + path for path in graycode_order[::-1]
-            ]
-        return graycode_order
 
     def _recursive_dwt2d(
         self,
@@ -219,3 +203,37 @@ class WaveletPacket2D(BaseDict):
             self._recursive_dwt2d(result_d, level + 1, path + "d")
         else:
             self.data[path] = data
+
+    def _get_natural_order(self, level: int) -> List[str]:
+        """Get the natural ordering for a given decomposition level.
+
+        Args:
+            level (int): The decomposition level.
+
+        Returns:
+            list: A list with the filter order strings.
+        """
+        return ["".join(p) for p in list(product(["a", "h", "v", "d"], repeat=level))]
+
+    def reconstruct(self) -> "WaveletPacket2D":
+        """Recursively reconstruct the input starting from the leaf nodes.
+
+        Note:
+           Only changes to leaf node data impacts the results,
+           since changes in all other nodes will be replaced with
+           a reconstruction from the leafs.
+        """
+        if self.max_level is None:
+            self.max_level = pywt.dwt_max_level(
+                min(self[""].shape[-2:]), self.wavelet.dec_len
+            )
+
+        for level in reversed(range(self.max_level)):
+            for node in self._get_natural_order(level):
+                data_a = self[node + "a"]
+                data_h = self[node + "h"]
+                data_v = self[node + "v"]
+                data_d = self[node + "d"]
+                rec = waverec2([data_a, (data_h, data_v, data_d)], self.wavelet)
+                self[node] = rec
+        return self

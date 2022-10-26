@@ -84,3 +84,20 @@ def test_packets_2d(input_shape, wavelet, level, mode):
         np_lst.append(wp["".join(node)].data)
     res = jnp.stack(np_lst)
     assert jnp.allclose(jres, res)
+
+
+@pytest.mark.parametrize("level", [1, 3])
+@pytest.mark.parametrize("base_key", ["a", "h", "d"])
+@pytest.mark.parametrize("size", [(1, 32, 32), (2, 31, 64)])
+@pytest.mark.parametrize("wavelet", ["db1", "db2", "sym4"])
+def test_inverse_packet_2d(level, base_key, size, wavelet):
+    """Test the 2d reconstruction code."""
+    signal = np.random.randn(size[0], size[1], size[2])
+    mode = "reflect"
+    wp = pywt.WaveletPacket2D(signal, wavelet, mode=mode, maxlevel=level)
+    ptwp = WaveletPacket2D(jnp.array(signal), wavelet, mode=mode, max_level=level)
+    wp[base_key * level].data *= 0
+    ptwp[base_key * level] *= 0
+    wp.reconstruct(update=True)
+    ptwp.reconstruct()
+    assert jnp.allclose(wp[""].data, ptwp[""][:, : size[1], : size[2]])
