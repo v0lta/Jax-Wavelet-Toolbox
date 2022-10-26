@@ -11,7 +11,7 @@ import pywt
 from jax.config import config
 
 from .conv_fwt import _get_filter_arrays
-from .utils import Wavelet
+from .utils import Wavelet, _as_wavelet
 
 config.update("jax_enable_x64", True)
 
@@ -44,9 +44,11 @@ def wavedec2(
         >>> import pywt, scipy.misc
         >>> import jaxwt as jwt
         >>> import jax.numpy as jnp
-        >>> face = jnp.transpose(scipy.misc.face(), [2, 0, 1]).astype(jnp.float64)
-        >>> jwt.wavedec2(face, pywt.Wavelet("haar"), level=2, mode="reflect")
+        >>> face = jnp.transpose(scipy.misc.face(), [2, 0, 1])
+        >>> face = face.astype(jnp.float64)
+        >>> jwt.wavedec2(face, pywt.Wavelet("haar"), level=2)
     """
+    wavelet = _as_wavelet(Wavelet)
     data = jnp.expand_dims(data, 1)
     dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True)
     dec_filt = construct_2d_filt(lo=dec_lo, hi=dec_hi)
@@ -102,12 +104,14 @@ def waverec2(
         >>> import pywt, scipy.misc
         >>> import jaxwt as jwt
         >>> import jax.numpy as jnp
-        >>> face = jnp.transpose(scipy.misc.face(), [2, 0, 1]).astype(jnp.float64)
-        >>> transformed = jwt.wavedec2(face, pywt.Wavelet("haar"), level=2, mode="reflect")
+        >>> face = jnp.transpose(scipy.misc.face(), [2, 0, 1])
+        >>> face = face.astype(jnp.float64)
+        >>> transformed = jwt.wavedec2(face, pywt.Wavelet("haar"))
         >>> jwt.waverec2(transformed, pywt.Wavelet("haar"))
 
 
     """
+    wavelet = _as_wavelet(Wavelet)
     if not isinstance(coeffs[0], jnp.ndarray):
         raise ValueError(
             "First element of coeffs must be the approximation coefficient tensor."

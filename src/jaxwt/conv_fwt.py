@@ -11,7 +11,7 @@ import jax
 import jax.numpy as jnp
 import pywt
 
-from .utils import Wavelet
+from .utils import Wavelet, _as_wavelet
 
 
 def wavedec(
@@ -27,7 +27,7 @@ def wavedec(
         wavelet (Wavelet): The named tuple containing the wavelet filter arrays.
         level (int): Max scale level to be used, of none as many levels as possible are
                      used. Defaults to None.
-        mode: The padding used to extend the input signal. Choose reflect, symmetric or zero.
+        mode (str): The padding used to extend the input signal. Choose reflect, symmetric or zero.
             Defaults to reflect.
 
     Returns:
@@ -42,9 +42,9 @@ def wavedec(
         >>> import jax.numpy as jnp
         >>> # generate an input of even length.
         >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
-        >>> jwt.wavedec(data, pywt.Wavelet('haar'),
-                        mode='reflect', level=2)
+        >>> jwt.wavedec(data, wavelet=pywt.Wavelet('haar'), level=2)
     """
+    wavelet = _as_wavelet(Wavelet)
     if len(data.shape) == 1:
         # add channel and batch dimension.
         data = jnp.expand_dims(jnp.expand_dims(data, 0), 0)
@@ -97,10 +97,10 @@ def waverec(coeffs: List[jnp.ndarray], wavelet: Wavelet) -> jnp.ndarray:
         >>> import jax.numpy as jnp
         >>> # generate an input of even length.
         >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
-        >>> transformed = jwt.wavedec(data, pywt.Wavelet('haar'),
-                          mode='reflect', level=2)
+        >>> transformed = jwt.wavedec(data, pywt.Wavelet('haar'))
         >>> jwt.waverec(transformed, pywt.Wavelet('haar'))
     """
+    wavelet = _as_wavelet(Wavelet)
     # lax's transpose conv requires filter flips in contrast to pytorch.
     _, _, rec_lo, rec_hi = _get_filter_arrays(wavelet, flip=True, dtype=coeffs[0].dtype)
     filt_len = rec_lo.shape[-1]

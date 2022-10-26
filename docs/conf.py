@@ -60,14 +60,14 @@ html_theme = 'alabaster'
 html_sidebars = {
     '**': [
         'about.html',
-        'relations.html',
+        'navigation.html',
         'searchbox.html',
     ]
 }
 
 html_theme_options = {
     'github_user': 'v0lta',
-    'github_repo': 'PyTorch-Wavelet-Toolbox',
+    'github_repo': 'Jax-Wavelet-Toolbox',
     'github_banner': 'true',
     'show_related': 'true'
 }

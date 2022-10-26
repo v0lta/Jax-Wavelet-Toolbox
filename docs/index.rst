@@ -7,11 +7,11 @@
 .. include:: ../README.rst
 
 
-Use the jaxwt package link below to jump to the documentation of all functions.
+Use any of the jaxwt package links below to directly jump into the documentation.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: jaxwt module overview:
 
    jaxwt
 

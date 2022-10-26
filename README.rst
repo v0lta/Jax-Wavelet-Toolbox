@@ -72,7 +72,8 @@ One-dimensional fast wavelet transform:
   print(jwt.wavedec(data, wavelet, mode='zero', level=2))
   
   # invert the fwt.
-  print(jwt.waverec(jwt.wavedec(data, wavelet, mode='zero', level=2), wavelet))
+  print(jwt.waverec(jwt.wavedec(data, wavelet, mode='zero', level=2),
+                    wavelet))
 
 
 Two-dimensional fast wavelet transform:
@@ -81,11 +82,13 @@ Two-dimensional fast wavelet transform:
 
   import pywt, scipy.misc
   import jaxwt as jwt
-  import jax.numpy as np
-  face = np.transpose(scipy.misc.face(), [2, 0, 1]).astype(np.float64)
-  transformed = jwt.wavedec2(face, pywt.Wavelet("haar"), level=2, mode="reflect")
+  import jax.numpy as jnp
+  face = jnp.transpose(
+      scipy.misc.face(), [2, 0, 1]).astype(jnp.float64)
+  transformed = jwt.wavedec2(face, pywt.Wavelet("haar"), 
+                             level=2, mode="reflect")
   reconstruction = jwt.waverec2(transformed, pywt.Wavelet("haar"))
-  np.max(np.abs(face - reconstruction))
+  jnp.max(jnp.abs(face - reconstruction))
 
 
 

@@ -58,7 +58,8 @@ def cwt(
         >>> sig = signal.chirp(t, f0=1, f1=12, t1=2, method="linear")
         >>> widths = jnp.arange(1, 31)
         >>> cwtmatr, freqs = jwt.cwt(
-        >>>     jnp.array(sig), widths, "mexh", sampling_period=(4 / 800) * jnp.pi
+        >>>     jnp.array(sig), widths, "mexh",
+        >>>     sampling_period=(4 / 800) * jnp.pi
         >>> )
     """
     # accept array_like ijnput; make a copy to ensure a contiguous array

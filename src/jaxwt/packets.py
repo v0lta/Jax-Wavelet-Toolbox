@@ -44,7 +44,6 @@ class WaveletPacket(BaseDict):
             >>> import pywt
             >>> import jax.numpy as jnp
             >>> from jaxwt import WaveletPacket
-            >>> import matplotlib.pyplot as plt
             >>> import scipy.signal as signal
             >>> wavelet = pywt.Wavelet("db4")
             >>> t = jnp.linspace(0, 10, 5001)
@@ -56,15 +55,6 @@ class WaveletPacket(BaseDict):
             >>> for node in nodes:
             >>>     jnp_lst.append(wp[node])
             >>> viz = jnp.concatenate(jnp_lst)
-            >>> fig, axs = plt.subplots(2)
-            >>> axs[0].plot(t, w)
-            >>> axs[0].set_title("Linear Chirp, f(0)=.00001, f(10)=20")
-            >>> axs[0].set_xlabel("t (sec)")
-            >>> axs[1].set_title("Wavelet analysis")
-            >>> axs[1].imshow(viz[:20, :])
-            >>> axs[1].set_xlabel("time")
-            >>> axs[1].set_ylabel("frequency")
-            >>> plt.show()
         """
         if len(data.shape) == 1:
             self.input_data = jnp.expand_dims(jnp.expand_dims(data, 0), 0)
