@@ -7,11 +7,11 @@
 import collections
 from typing import TYPE_CHECKING, List, Optional, Union
 
-import jax
+# import jax
 import jax.numpy as jnp
 import pywt
 
-from .conv_fwt import _fwt_pad, _get_filter_arrays, wavedec, waverec
+from .conv_fwt import wavedec, waverec
 from .conv_fwt_2d import wavedec2
 from .utils import Wavelet, _as_wavelet
 
@@ -74,12 +74,11 @@ class WaveletPacket(BaseDict):
         self.wavelet = _as_wavelet(wavelet)
         self.mode = mode
         self.data = {}
-        self.max_level = max_level
         if max_level is None:
             self.max_level = pywt.dwt_max_level(data.shape[-1], self.wavelet.dec_len)
-        self._recursive_dwt(
-            self.input_data, level=0, path=""
-        )
+        else:
+            self.max_level = max_level
+        self._recursive_dwt(self.input_data, level=0, path="")
 
     def get_level(self, level: int) -> List[str]:
         """Return the graycodes for a given level.
@@ -138,7 +137,9 @@ class WaveletPacket(BaseDict):
             >>> print(jwp[""])
         """
         if self.max_level is None:
-            self.max_level = pywt.dwt_max_level(self[""].shape[-1], self.wavelet.dec_len)
+            self.max_level = pywt.dwt_max_level(
+                self[""].shape[-1], self.wavelet.dec_len
+            )
 
         for level in reversed(range(self.max_level)):
             for node in self.get_level(level):
@@ -147,8 +148,6 @@ class WaveletPacket(BaseDict):
                 rec = waverec([data_a, data_b], self.wavelet)
                 self[node] = rec
         return self
-
-
 
 
 class WaveletPacket2D(BaseDict):

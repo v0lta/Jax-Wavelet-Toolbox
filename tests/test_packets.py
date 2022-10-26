@@ -39,12 +39,14 @@ def test_packets_1d(input_shape, wavelet, level, mode):
     res = jnp.stack(np_lst)
     assert jnp.allclose(jres, res)
 
+
 @pytest.mark.parametrize("input_shape", ((1, 32), (3, 255), (1, 244)))
 @pytest.mark.parametrize("base_key", ["a", "d"])
 @pytest.mark.parametrize("wavelet", ("haar", "db2", "db3"))
 @pytest.mark.parametrize("level", (1, 2, 4))
 @pytest.mark.parametrize("mode", ("reflect", "zero"))
 def test_inverse_packets_1d(input_shape, wavelet, level, mode, base_key):
+    """Test 1d packet inversion."""
     wavelet = pywt.Wavelet(wavelet)
     input_data = jnp.array(np.random.randn(*input_shape))
     jwp = WaveletPacket(input_data, wavelet, mode=mode, max_level=level)
@@ -57,8 +59,7 @@ def test_inverse_packets_1d(input_shape, wavelet, level, mode, base_key):
     wp.reconstruct(update=True)
     jwp.reconstruct()
 
-    assert jnp.allclose(wp[""].data, jwp[""][:, 0, :input_shape[-1]])
-
+    assert jnp.allclose(wp[""].data, jwp[""][:, 0, : input_shape[-1]])
 
 
 @pytest.mark.parametrize("input_shape", ((2, 32, 32), (3, 33, 33), (1, 32, 33)))

@@ -84,7 +84,7 @@ def waverec(coeffs: List[jnp.ndarray], wavelet: Wavelet) -> jnp.ndarray:
 
     Args:
         coeffs (list): Wavelet coefficients, typically produced by the wavedec function.
-            List entries of shape [batch_size, coefficients] work. 
+            List entries of shape [batch_size, coefficients] work.
         wavelet (Wavelet): The named tuple containing the wavelet filters used to evaluate
                               the decomposition.
 
@@ -112,7 +112,7 @@ def waverec(coeffs: List[jnp.ndarray], wavelet: Wavelet) -> jnp.ndarray:
         if len(res_lo.shape) == 2:
             res_lo = jnp.expand_dims(res_lo, 1)
         if len(res_hi.shape) == 2:
-            res_hi = jnp.expand_dims(res_hi, 1)            
+            res_hi = jnp.expand_dims(res_hi, 1)
 
         res_lo = jnp.concatenate([res_lo, res_hi], 1)
         res_lo = jax.lax.conv_transpose(
