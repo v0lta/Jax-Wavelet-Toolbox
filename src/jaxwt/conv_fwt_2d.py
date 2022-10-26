@@ -27,7 +27,7 @@ def wavedec2(
     Args:
         data (jnp.ndarray): Jax array containing the data to be transformed. Assumed shape:
                          [batch size, hight, width].
-        wavelet (Wavelet): A namedtouple containing the filters for the transformation.
+        wavelet (pywt.Wavelet): A namedtouple containing the filters for the transformation.
         level (int): The max level to be used, if not set as many levels as possible
                                will be used. Defaults to None.
         mode (str): The desired padding mode. Choose reflect, symmetric or zero.
@@ -92,7 +92,7 @@ def waverec2(
 
     Args:
         coeffs (list): The input coefficients, typically the output of wavedec2.
-        wavelet (Wavelet): The named tuple contining the filters used to compute the analysis transform.
+        wavelet (pywt.Wavelet): The named tuple contining the filters used to compute the analysis transform.
 
     Returns:
         jnp.array: Reconstruction of the original input data array of shape [batch, height, width].
@@ -177,8 +177,8 @@ def construct_2d_filt(lo: jnp.ndarray, hi: jnp.ndarray) -> jnp.ndarray:
     """Construct 2d filters from 1d inputs using outer products.
 
     Args:
-        lo (jnp.array): 1d lowpass input filter of size [1, length].
-        hi (jnp.array): 1d highpass input filter of size [1, length].
+        lo (jnp.ndarray): 1d lowpass input filter of size [1, length].
+        hi (jnp.ndarray): 1d highpass input filter of size [1, length].
 
     Returns
         jnp.array: 2d filter arrays of shape [4, 1, length, length].

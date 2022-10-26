@@ -14,7 +14,7 @@ import pywt
 
 from .conv_fwt import wavedec, waverec
 from .conv_fwt_2d import wavedec2, waverec2
-from .utils import Wavelet, _as_wavelet
+from .utils import _as_wavelet
 
 if TYPE_CHECKING:
     BaseDict = collections.UserDict[str, jnp.ndarray]
@@ -28,7 +28,7 @@ class WaveletPacket(BaseDict):
     def __init__(
         self,
         data: jnp.ndarray,
-        wavelet: Wavelet,
+        wavelet: pywt.Wavelet,
         mode: str = "reflect",
         max_level: Optional[int] = None,
     ):
@@ -36,7 +36,7 @@ class WaveletPacket(BaseDict):
 
         Args:
             data (jnp.ndarray): The input data array of shape [batch_size, time].
-            wavelet (Wavelet): The wavelet used for the decomposition.
+            wavelet (pywt.Wavelet): The wavelet used for the decomposition.
             mode (str): The desired padding method. Choose i.e.
                 "reflect", "symmetric" or "zero". Defaults to "reflect".
 
@@ -119,7 +119,8 @@ class WaveletPacket(BaseDict):
         Example:
             >>> import jaxwt as jwt
             >>> import jax
-            >>> input_data = jax.random.normal(jax.random.PRNGKey(0), (1, 24))
+            >>> key = jax.random.PRNGKey(0)
+            >>> input_data = jax.random.normal(key, (1, 24))
             >>> jwp = jwt.WaveletPacket(input_data, "haar", max_level=2)
             >>> jwp["a" * 2] *= 0
             >>> jwp.reconstruct()
@@ -156,7 +157,7 @@ class WaveletPacket2D(BaseDict):
 
         Args:
             data (jnp.ndarray): The input data array of shape [batch_size, height, width].
-            wavelet (Wavelet): The wavelet used for the decomposition.
+            wavelet (pywt.Wavelet or str): The wavelet used for the decomposition.
             mode (str): The desired padding method. Choose i.e.
                 "reflect", "symmetric" or "zero". Defaults to "reflect".
             max_level (int, optional): Choose the desired decomposition level.

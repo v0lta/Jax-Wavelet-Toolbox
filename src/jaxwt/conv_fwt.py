@@ -24,7 +24,7 @@ def wavedec(
 
     Args:
         data (jnp.ndarray): Input data array of shape [batch, time].
-        wavelet (Wavelet): The named tuple containing the wavelet filter arrays.
+        wavelet (pywt.Wavelet): The named tuple containing the wavelet filter arrays.
         level (int): Max scale level to be used, of none as many levels as possible are
                      used. Defaults to None.
         mode (str): The padding used to extend the input signal. Choose reflect, symmetric or zero.
@@ -85,7 +85,7 @@ def waverec(coeffs: List[jnp.ndarray], wavelet: pywt.Wavelet) -> jnp.ndarray:
     Args:
         coeffs (list): Wavelet coefficients, typically produced by the wavedec function.
             List entries of shape [batch_size, coefficients] work.
-        wavelet (Wavelet): The named tuple containing the wavelet filters used to evaluate
+        wavelet (pywt.Wavelet): The named tuple containing the wavelet filters used to evaluate
                               the decomposition.
 
     Returns:
@@ -193,7 +193,7 @@ def _get_filter_arrays(
     """Extract the filter coefficients from an input wavelet object.
 
     Args:
-        wavelet (Wavelet): A pywt-style input wavelet.
+        wavelet (pywt.Wavelet): A pywt-style input wavelet.
         flip (bool): If true flip the input coefficients.
         dtype: The desired precision. Defaults to jnp.float64 .
 
