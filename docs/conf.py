@@ -65,11 +65,14 @@ html_sidebars = {
     ]
 }
 
+
 html_theme_options = {
     'github_user': 'v0lta',
     'github_repo': 'Jax-Wavelet-Toolbox',
     'github_banner': 'true',
-    'show_related': 'true'
+    'show_related': 'true',
+    'page_width': 'auto',
+    'sidebar_width': '250px'
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
