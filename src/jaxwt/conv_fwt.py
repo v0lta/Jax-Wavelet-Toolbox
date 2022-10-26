@@ -11,12 +11,12 @@ import jax
 import jax.numpy as jnp
 import pywt
 
-from .utils import Wavelet, _as_wavelet
+from .utils import _as_wavelet
 
 
 def wavedec(
     data: jnp.ndarray,
-    wavelet: Wavelet,
+    wavelet: pywt.Wavelet,
     level: Optional[int] = None,
     mode: str = "reflect",
 ) -> List[jnp.ndarray]:
@@ -44,7 +44,7 @@ def wavedec(
         >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
         >>> jwt.wavedec(data, wavelet=pywt.Wavelet('haar'), level=2)
     """
-    wavelet = _as_wavelet(Wavelet)
+    wavelet = _as_wavelet(wavelet)
     if len(data.shape) == 1:
         # add channel and batch dimension.
         data = jnp.expand_dims(jnp.expand_dims(data, 0), 0)
@@ -79,7 +79,7 @@ def wavedec(
     return result_lst
 
 
-def waverec(coeffs: List[jnp.ndarray], wavelet: Wavelet) -> jnp.ndarray:
+def waverec(coeffs: List[jnp.ndarray], wavelet: pywt.Wavelet) -> jnp.ndarray:
     """Reconstruct the original signal in one dimension.
 
     Args:
@@ -100,7 +100,7 @@ def waverec(coeffs: List[jnp.ndarray], wavelet: Wavelet) -> jnp.ndarray:
         >>> transformed = jwt.wavedec(data, pywt.Wavelet('haar'))
         >>> jwt.waverec(transformed, pywt.Wavelet('haar'))
     """
-    wavelet = _as_wavelet(Wavelet)
+    wavelet = _as_wavelet(wavelet)
     # lax's transpose conv requires filter flips in contrast to pytorch.
     _, _, rec_lo, rec_hi = _get_filter_arrays(wavelet, flip=True, dtype=coeffs[0].dtype)
     filt_len = rec_lo.shape[-1]
@@ -188,7 +188,7 @@ def _fwt_pad(data: jnp.ndarray, filt_len: int, mode: str = "reflect") -> jnp.nda
 
 
 def _get_filter_arrays(
-    wavelet: Wavelet, flip: bool, dtype: jnp.dtype = jnp.float64  # type: ignore
+    wavelet: pywt.Wavelet, flip: bool, dtype: jnp.dtype = jnp.float64  # type: ignore
 ) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
     """Extract the filter coefficients from an input wavelet object.
 

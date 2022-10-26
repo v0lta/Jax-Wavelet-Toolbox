@@ -11,14 +11,14 @@ import pywt
 from jax.config import config
 
 from .conv_fwt import _get_filter_arrays
-from .utils import Wavelet, _as_wavelet
+from .utils import _as_wavelet
 
 config.update("jax_enable_x64", True)
 
 
 def wavedec2(
     data: jnp.ndarray,
-    wavelet: Wavelet,
+    wavelet: pywt.Wavelet,
     level: Optional[int] = None,
     mode: str = "reflect",
 ) -> List[Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]]]:
@@ -48,7 +48,7 @@ def wavedec2(
         >>> face = face.astype(jnp.float64)
         >>> jwt.wavedec2(face, pywt.Wavelet("haar"), level=2)
     """
-    wavelet = _as_wavelet(Wavelet)
+    wavelet = _as_wavelet(wavelet)
     data = jnp.expand_dims(data, 1)
     dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True)
     dec_filt = construct_2d_filt(lo=dec_lo, hi=dec_hi)
@@ -84,7 +84,7 @@ def wavedec2(
 
 def waverec2(
     coeffs: List[Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]]],
-    wavelet: Wavelet,
+    wavelet: pywt.Wavelet,
 ) -> jnp.ndarray:
     """Compute a two dimensional synthesis wavelet transfrom.
 
@@ -111,7 +111,7 @@ def waverec2(
 
 
     """
-    wavelet = _as_wavelet(Wavelet)
+    wavelet = _as_wavelet(wavelet)
     if not isinstance(coeffs[0], jnp.ndarray):
         raise ValueError(
             "First element of coeffs must be the approximation coefficient tensor."
