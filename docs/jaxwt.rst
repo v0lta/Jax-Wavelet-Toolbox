@@ -1,9 +1,6 @@
 jaxwt package
 =============
 
-Submodules
-----------
-
 jaxwt.conv\_fwt module
 ----------------------
 
