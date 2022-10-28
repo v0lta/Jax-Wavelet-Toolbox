@@ -119,7 +119,7 @@ If you need 64-bit floating point support, set the Jax config flag:
     config.update("jax_enable_x64", True)
 
 
-📖 Citation
+Citation
 """""""""""
 
 If you use this work in a scientific context, please cite:
