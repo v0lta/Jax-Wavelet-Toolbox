@@ -42,6 +42,8 @@ Features
 - The ``WaveletPacket`` object supports 1d wavelet packet transforms.
 - ``WaveletPacket2d`` implements two-dimensional wavelet packet transforms.
 
+This toolbox extends `PyWavelets <https://pywavelets.readthedocs.io/en/latest/>`_ . We additionally provide GPU and gradient support via a PyTorch backend.
+
 Installation
 """"""""""""
 To install Jax, head over to https://github.com/google/jax#installation and follow the procedure described there.

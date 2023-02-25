@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath('../src'))
 # -- Project information -----------------------------------------------------
 
 project = 'Jax Wavelet Toolbox'
-copyright = '2022, Moritz Wolter'
+copyright = '2023, Moritz Wolter'
 author = 'Moritz Wolter'
 
 
