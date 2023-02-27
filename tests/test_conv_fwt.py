@@ -77,7 +77,6 @@ def test_fwt_ifwt_lorenz(wavelet, level, mode, tmax):
 @pytest.mark.parametrize("dtype", [jnp.float64, jnp.float32])
 def test_batch_fwt_ifwt(wavelet, mode, batch_size, level, dtype: jnp.dtype):
     """Test the batched version of the fwt."""
-
     if dtype == jnp.float32:
         atol = 1e-4
     else:

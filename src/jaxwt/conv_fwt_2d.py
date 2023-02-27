@@ -18,7 +18,7 @@ def wavedec2(
     wavelet: pywt.Wavelet,
     level: Optional[int] = None,
     mode: str = "reflect",
-    precision: jax.lax.Precision = "highest"
+    precision: str = "highest",
 ) -> List[Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]]]:
     """Compute the two dimensional wavelet analysis transform on the last two dimensions of the input data array.
 
@@ -30,7 +30,7 @@ def wavedec2(
                                will be used. Defaults to None.
         mode (str): The desired padding mode. Choose reflect, symmetric or zero.
             Defaults to reflect.
-        precision (jax.lax.Precision): The desired precision, choose "fastest", "high" or "highest".
+        precision (str): The desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
 
     Returns:
@@ -74,7 +74,7 @@ def wavedec2(
             padding="VALID",
             window_strides=[2, 2],
             dimension_numbers=("NCHW", "OIHW", "NCHW"),
-            precision=precision
+            precision=jax.lax.Precision(precision),
         )
         res_ll, res_lh, res_hl, res_hh = jnp.split(res, 4, 1)
         result_lst.append((res_lh.squeeze(1), res_hl.squeeze(1), res_hh.squeeze(1)))
@@ -85,7 +85,8 @@ def wavedec2(
 
 def waverec2(
     coeffs: List[Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]]],
-    wavelet: pywt.Wavelet, precision: jax.lax.Precision = "highest"
+    wavelet: pywt.Wavelet,
+    precision: str = "highest",
 ) -> jnp.ndarray:
     """Compute a two dimensional synthesis wavelet transfrom.
 
@@ -94,7 +95,7 @@ def waverec2(
     Args:
         coeffs (list): The input coefficients, typically the output of wavedec2.
         wavelet (pywt.Wavelet): The named tuple contining the filters used to compute the analysis transform.
-        precision (jax.lax.Precision): The desired precision, choose "fastest", "high" or "highest".
+        precision (str): The desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
 
     Returns:
@@ -141,7 +142,7 @@ def waverec2(
             padding="VALID",
             strides=[2, 2],
             dimension_numbers=("NCHW", "OIHW", "NCHW"),
-            precision=precision
+            precision=jax.lax.Precision(precision)
         )
         # remove the padding
         padl = (2 * filt_len - 3) // 2

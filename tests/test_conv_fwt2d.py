@@ -19,7 +19,6 @@ config.update("jax_platform_name", "cpu")
 @pytest.mark.parametrize("dtype", [jnp.float64])
 def test_conv_2d(wavelet: str, level: int, size: tuple, mode: str, dtype: jnp.dtype):
     """Run a specific test."""
-
     wavelet = pywt.Wavelet(wavelet)
     face = jnp.transpose(scipy.datasets.face(), [2, 0, 1]).astype(dtype)
     face = face[:, 128 : (128 + size[0]), 256 : (256 + size[1])]

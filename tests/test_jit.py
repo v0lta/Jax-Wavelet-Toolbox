@@ -1,9 +1,9 @@
 """Test jit compilation."""
 from collections import namedtuple
-import numpy as np
 
 import jax
 import jax.numpy as jnp
+import numpy as np
 import pytest
 import pywt
 

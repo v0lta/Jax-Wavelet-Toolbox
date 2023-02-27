@@ -8,6 +8,7 @@
 from typing import List, Optional, Tuple, Union
 
 import jax
+import jax.lax
 import jax.numpy as jnp
 import pywt
 
@@ -19,41 +20,36 @@ def wavedec(
     wavelet: pywt.Wavelet,
     level: Optional[int] = None,
     mode: str = "reflect",
-    precision: jax.lax.Precision = "highest"
+    precision: str = "highest",
 ) -> List[jnp.ndarray]:
     """Compute the analysis wavelet transform of the last dimension.
 
-    Args:
-        data (jnp.ndarray): Input data array of shape [batch, time].
-        wavelet (pywt.Wavelet): The named tuple containing the wavelet
-                    filter arrays.
-        level (int): Max scale level to be used,
-                     of none as many levels as possible are
-                     used. Defaults to None.
-<<<<<<< HEAD
-        mode (str): The padding used to extend the input signal. Choose reflect, symmetric or zero.
-            Defaults to reflect.
-        precision (jax.lax.Precision): The desired precision, choose "fastest", "high" or "highest".
-            Defaults to "highest".
-=======
-        mode (str): The padding used to extend the input signal.
-                    Choose reflect, symmetric or zero.
-                    Defaults to reflect.
->>>>>>> 4d422a04361b6b896f417849a3c9a494e3a3b348
+        Args:
+            data (jnp.ndarray): Input data array of shape [batch, time].
+            wavelet (pywt.Wavelet): The named tuple containing the wavelet
+                        filter arrays.
+            level (int): Max scale level to be used,
+                         of none as many levels as possible are
+                         used. Defaults to None.
+            mode (str): The padding used to extend the input signal. Choose reflect, symmetric or zero.
+                Defaults to reflect.
+            precision (str): The desired precision, choose "fastest", "high" or "highest".
+                Defaults to "highest".
 
-    Returns:
-        list: List containing the wavelet coefficients.
-            The coefficients are in pywt order:
-            [cA_n, cD_n, cD_n-1, …, cD2, cD1].
-            A denotes approximation and D detail coefficients.
 
-    Examples:
-        >>> import pywt
-        >>> import jaxwt as jwt
-        >>> import jax.numpy as jnp
-        >>> # generate an input of even length.
-        >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
-        >>> jwt.wavedec(data, wavelet=pywt.Wavelet('haar'), level=2)
+        Returns:
+            list: List containing the wavelet coefficients.
+                The coefficients are in pywt order:
+                [cA_n, cD_n, cD_n-1, …, cD2, cD1].
+                A denotes approximation and D detail coefficients.
+
+        Examples:
+            >>> import pywt
+            >>> import jaxwt as jwt
+            >>> import jax.numpy as jnp
+            >>> # generate an input of even length.
+            >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
+            >>> jwt.wavedec(data, wavelet=pywt.Wavelet('haar'), level=2)
     """
     wavelet = _as_wavelet(wavelet)
     if len(data.shape) == 1:
@@ -82,7 +78,7 @@ def wavedec(
                 2,
             ],
             dimension_numbers=("NCH", "OIH", "NCH"),
-            precision=precision
+            precision=jax.lax.Precision(precision),
         )
         res_lo, res_hi = jnp.split(res, 2, 1)
         result_lst.append(res_hi)
@@ -91,37 +87,32 @@ def wavedec(
     return result_lst
 
 
-def waverec(coeffs: List[jnp.ndarray], wavelet: pywt.Wavelet,
-            precision: jax.lax.Precision = "highest") -> jnp.ndarray:
+def waverec(
+    coeffs: List[jnp.ndarray],
+    wavelet: pywt.Wavelet,
+    precision: str = "highest",
+) -> jnp.ndarray:
     """Reconstruct the original signal in one dimension.
 
-    Args:
-<<<<<<< HEAD
-        coeffs (list): Wavelet coefficients, typically produced by the wavedec function.
-            List entries of shape [batch_size, coefficients] work.
-        wavelet (pywt.Wavelet): The named tuple containing the wavelet filters used to evaluate
-                              the decomposition.
-        precision (jax.lax.Precision): The desired precision, choose "fastest", "high" or "highest".
-            Defaults to "highest".
-=======
-        coeffs (list): Wavelet coefficients,
-                       typically produced by the wavedec function.
-                       List entries of shape [batch_size, coefficients] work.
-        wavelet (pywt.Wavelet): The named tuple containing the wavelet
-                        filters used to evaluate the decomposition.
->>>>>>> 4d422a04361b6b896f417849a3c9a494e3a3b348
+        Args:
+            coeffs (list): Wavelet coefficients, typically produced by the wavedec function.
+                List entries of shape [batch_size, coefficients] work.
+            wavelet (pywt.Wavelet): The named tuple containing the wavelet filters used to evaluate
+                                  the decomposition.
+            precision str: The desired precision, choose "fastest", "high" or "highest".
+                Defaults to "highest".
 
-    Returns:
-        jnp.array: Reconstruction of the original data.
+        Returns:
+            jnp.array: Reconstruction of the original data.
 
-    Examples:
-        >>> import pywt
-        >>> import jaxwt as jwt
-        >>> import jax.numpy as jnp
-        >>> # generate an input of even length.
-        >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
-        >>> transformed = jwt.wavedec(data, pywt.Wavelet('haar'))
-        >>> jwt.waverec(transformed, pywt.Wavelet('haar'))
+        Examples:
+            >>> import pywt
+            >>> import jaxwt as jwt
+            >>> import jax.numpy as jnp
+            >>> # generate an input of even length.
+            >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
+            >>> transformed = jwt.wavedec(data, pywt.Wavelet('haar'))
+            >>> jwt.waverec(transformed, pywt.Wavelet('haar'))
     """
     wavelet = _as_wavelet(wavelet)
     # lax's transpose conv requires filter flips in contrast to pytorch.
@@ -146,7 +137,7 @@ def waverec(coeffs: List[jnp.ndarray], wavelet: pywt.Wavelet,
                 2,
             ],
             dimension_numbers=("NCH", "OIH", "NCH"),
-            precision=precision
+            precision=jax.lax.Precision(precision)
         )
         res_lo = _fwt_unpad(res_lo, filt_len, c_pos, coeffs)
     return res_lo
