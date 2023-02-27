@@ -19,7 +19,6 @@ config.update("jax_platform_name", "cpu")
 @pytest.mark.parametrize("dtype", [jnp.float64, jnp.float32])
 def test_conv_2d(wavelet: str, level: int, size: tuple, mode: str, dtype: jnp.dtype):
     """Run a specific test."""
-
     if dtype == jnp.float32:
         atol = 1e-3
     else:
