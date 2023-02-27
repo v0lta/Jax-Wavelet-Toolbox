@@ -19,6 +19,7 @@ def wavedec(
     wavelet: pywt.Wavelet,
     level: Optional[int] = None,
     mode: str = "reflect",
+    precision: jax.lax.Precision = "highest"
 ) -> List[jnp.ndarray]:
     """Compute the analysis wavelet transform of the last dimension.
 
@@ -29,9 +30,16 @@ def wavedec(
         level (int): Max scale level to be used,
                      of none as many levels as possible are
                      used. Defaults to None.
+<<<<<<< HEAD
+        mode (str): The padding used to extend the input signal. Choose reflect, symmetric or zero.
+            Defaults to reflect.
+        precision (jax.lax.Precision): The desired precision, choose "fastest", "high" or "highest".
+            Defaults to "highest".
+=======
         mode (str): The padding used to extend the input signal.
                     Choose reflect, symmetric or zero.
                     Defaults to reflect.
+>>>>>>> 4d422a04361b6b896f417849a3c9a494e3a3b348
 
     Returns:
         list: List containing the wavelet coefficients.
@@ -74,6 +82,7 @@ def wavedec(
                 2,
             ],
             dimension_numbers=("NCH", "OIH", "NCH"),
+            precision=precision
         )
         res_lo, res_hi = jnp.split(res, 2, 1)
         result_lst.append(res_hi)
@@ -82,15 +91,25 @@ def wavedec(
     return result_lst
 
 
-def waverec(coeffs: List[jnp.ndarray], wavelet: pywt.Wavelet) -> jnp.ndarray:
+def waverec(coeffs: List[jnp.ndarray], wavelet: pywt.Wavelet,
+            precision: jax.lax.Precision = "highest") -> jnp.ndarray:
     """Reconstruct the original signal in one dimension.
 
     Args:
+<<<<<<< HEAD
+        coeffs (list): Wavelet coefficients, typically produced by the wavedec function.
+            List entries of shape [batch_size, coefficients] work.
+        wavelet (pywt.Wavelet): The named tuple containing the wavelet filters used to evaluate
+                              the decomposition.
+        precision (jax.lax.Precision): The desired precision, choose "fastest", "high" or "highest".
+            Defaults to "highest".
+=======
         coeffs (list): Wavelet coefficients,
                        typically produced by the wavedec function.
                        List entries of shape [batch_size, coefficients] work.
         wavelet (pywt.Wavelet): The named tuple containing the wavelet
                         filters used to evaluate the decomposition.
+>>>>>>> 4d422a04361b6b896f417849a3c9a494e3a3b348
 
     Returns:
         jnp.array: Reconstruction of the original data.
@@ -127,6 +146,7 @@ def waverec(coeffs: List[jnp.ndarray], wavelet: pywt.Wavelet) -> jnp.ndarray:
                 2,
             ],
             dimension_numbers=("NCH", "OIH", "NCH"),
+            precision=precision
         )
         res_lo = _fwt_unpad(res_lo, filt_len, c_pos, coeffs)
     return res_lo
