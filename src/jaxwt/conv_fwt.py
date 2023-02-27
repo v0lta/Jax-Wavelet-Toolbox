@@ -99,7 +99,7 @@ def waverec(
             List entries of shape [batch_size, coefficients] work.
         wavelet (pywt.Wavelet): The named tuple containing the wavelet filters used to evaluate
                               the decomposition.
-        precision str: The desired precision, choose "fastest", "high" or "highest".
+        precision (str): The desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
 
     Returns:
