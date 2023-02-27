@@ -80,11 +80,11 @@ Two-dimensional fast wavelet transform:
 
 .. code-block:: python
 
-  import pywt, scipy.misc
+  import pywt, scipy.datasets
   import jaxwt as jwt
   import jax.numpy as jnp
   face = jnp.transpose(
-      scipy.misc.face(), [2, 0, 1]).astype(jnp.float64)
+      scipy.datasets.face(), [2, 0, 1]).astype(jnp.float64)
   transformed = jwt.wavedec2(face, pywt.Wavelet("haar"), 
                              level=2, mode="reflect")
   reconstruction = jwt.waverec2(transformed, pywt.Wavelet("haar"))

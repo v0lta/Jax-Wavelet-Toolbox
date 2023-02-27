@@ -8,12 +8,9 @@ from typing import List, Optional, Tuple, Union
 import jax
 import jax.numpy as jnp
 import pywt
-from jax.config import config
 
 from .conv_fwt import _get_filter_arrays
 from .utils import _as_wavelet
-
-config.update("jax_enable_x64", True)
 
 
 def wavedec2(
@@ -21,6 +18,7 @@ def wavedec2(
     wavelet: pywt.Wavelet,
     level: Optional[int] = None,
     mode: str = "reflect",
+    precision: jax.lax.Precision = "highest"
 ) -> List[Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]]]:
     """Compute the two dimensional wavelet analysis transform on the last two dimensions of the input data array.
 
@@ -32,6 +30,8 @@ def wavedec2(
                                will be used. Defaults to None.
         mode (str): The desired padding mode. Choose reflect, symmetric or zero.
             Defaults to reflect.
+        precision (jax.lax.Precision): The desired precision, choose "fastest", "high" or "highest".
+            Defaults to "highest".
 
     Returns:
         list: The wavelet coefficients in a nested list.
@@ -41,17 +41,17 @@ def wavedec2(
             and D diagonal coefficients.
 
     Examples:
-        >>> import pywt, scipy.misc
+        >>> import pywt, scipy.datasets
         >>> import jaxwt as jwt
         >>> import jax.numpy as jnp
-        >>> face = jnp.transpose(scipy.misc.face(), [2, 0, 1])
+        >>> face = jnp.transpose(scipy.datasets.face(), [2, 0, 1])
         >>> face = face.astype(jnp.float64)
         >>> jwt.wavedec2(face, pywt.Wavelet("haar"), level=2)
     """
     wavelet = _as_wavelet(wavelet)
     data = jnp.expand_dims(data, 1)
-    dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True)
-    dec_filt = construct_2d_filt(lo=dec_lo, hi=dec_hi)
+    dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True, dtype=data.dtype)
+    dec_filt = _construct_2d_filt(lo=dec_lo, hi=dec_hi)
 
     if mode == "zero":
         # translate pywt to numpy.
@@ -74,6 +74,7 @@ def wavedec2(
             padding="VALID",
             window_strides=[2, 2],
             dimension_numbers=("NCHW", "OIHW", "NCHW"),
+            precision=precision
         )
         res_ll, res_lh, res_hl, res_hh = jnp.split(res, 4, 1)
         result_lst.append((res_lh.squeeze(1), res_hl.squeeze(1), res_hh.squeeze(1)))
@@ -84,7 +85,7 @@ def wavedec2(
 
 def waverec2(
     coeffs: List[Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]]],
-    wavelet: pywt.Wavelet,
+    wavelet: pywt.Wavelet, precision: jax.lax.Precision = "highest"
 ) -> jnp.ndarray:
     """Compute a two dimensional synthesis wavelet transfrom.
 
@@ -93,6 +94,8 @@ def waverec2(
     Args:
         coeffs (list): The input coefficients, typically the output of wavedec2.
         wavelet (pywt.Wavelet): The named tuple contining the filters used to compute the analysis transform.
+        precision (jax.lax.Precision): The desired precision, choose "fastest", "high" or "highest".
+            Defaults to "highest".
 
     Returns:
         jnp.array: Reconstruction of the original input data array of shape [batch, height, width].
@@ -101,10 +104,10 @@ def waverec2(
         ValueError: If `coeffs` is not in the shape as it is returned from `wavedec2`.
 
     Example:
-        >>> import pywt, scipy.misc
+        >>> import pywt, scipy.datasets
         >>> import jaxwt as jwt
         >>> import jax.numpy as jnp
-        >>> face = jnp.transpose(scipy.misc.face(), [2, 0, 1])
+        >>> face = jnp.transpose(scipy.datasets.face(), [2, 0, 1])
         >>> face = face.astype(jnp.float64)
         >>> transformed = jwt.wavedec2(face, pywt.Wavelet("haar"))
         >>> jwt.waverec2(transformed, pywt.Wavelet("haar"))
@@ -118,7 +121,7 @@ def waverec2(
         )
     _, _, rec_lo, rec_hi = _get_filter_arrays(wavelet, flip=True, dtype=coeffs[0].dtype)
     filt_len = rec_lo.shape[-1]
-    rec_filt = construct_2d_filt(lo=rec_lo, hi=rec_hi)
+    rec_filt = _construct_2d_filt(lo=rec_lo, hi=rec_hi)
     rec_filt = jnp.transpose(rec_filt, [1, 0, 2, 3])
 
     res_ll = jnp.expand_dims(coeffs[0], 1)
@@ -138,6 +141,7 @@ def waverec2(
             padding="VALID",
             strides=[2, 2],
             dimension_numbers=("NCHW", "OIHW", "NCHW"),
+            precision=precision
         )
         # remove the padding
         padl = (2 * filt_len - 3) // 2
@@ -173,7 +177,7 @@ def waverec2(
     return res_ll.squeeze(1)
 
 
-def construct_2d_filt(lo: jnp.ndarray, hi: jnp.ndarray) -> jnp.ndarray:
+def _construct_2d_filt(lo: jnp.ndarray, hi: jnp.ndarray) -> jnp.ndarray:
     """Construct 2d filters from 1d inputs using outer products.
 
     Args:

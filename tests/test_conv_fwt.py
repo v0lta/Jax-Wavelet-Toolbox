@@ -74,12 +74,19 @@ def test_fwt_ifwt_lorenz(wavelet, level, mode, tmax):
 @pytest.mark.parametrize("mode", ["reflect", "zero"])
 @pytest.mark.parametrize("batch_size", [1, 3])
 @pytest.mark.parametrize("level", [2, None])
-def test_batch_fwt_ifwt(wavelet, mode, batch_size, level):
+@pytest.mark.parametrize("dtype", [jnp.float64, jnp.float32])
+def test_batch_fwt_ifwt(wavelet, mode, batch_size, level, dtype: jnp.dtype):
     """Test the batched version of the fwt."""
+
+    if dtype == jnp.float32:
+        atol = 1e-4
+    else:
+        atol = 1e-8
+
     wavelet = pywt.Wavelet(wavelet)
-    random_dat = jnp.array(np.random.randn(batch_size, 100))
+    random_dat = jnp.array(np.random.randn(batch_size, 100)).astype(dtype)
     coeff = wavedec(random_dat, wavelet, mode=mode, level=level)
     rec_data = waverec(coeff, wavelet)
     assert jnp.allclose(
-        np.squeeze(rec_data[..., : random_dat.shape[-1]], 1), random_dat
+        np.squeeze(rec_data[..., : random_dat.shape[-1]], 1), random_dat, atol=atol
     )
