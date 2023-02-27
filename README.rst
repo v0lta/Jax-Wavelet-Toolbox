@@ -27,10 +27,6 @@ Jax Wavelet Toolbox (jaxwt)
     :target: https://github.com/psf/black
     :alt: Black code style
 
-.. image:: https://static.pepy.tech/personalized-badge/jaxwt?period=total&units=international_system&left_color=grey&right_color=orange&left_text=Downloads
-    :target: https://pepy.tech/project/jaxwt
-    :alt: PyPi - downloads
-
 
 Differentiable and GPU-enabled fast wavelet transforms in JAX. 
 
@@ -119,7 +115,7 @@ If you need 64-bit floating point support, set the Jax config flag:
     config.update("jax_enable_x64", True)
 
 
-📖 Citation
+Citation
 """""""""""
 
 If you use this work in a scientific context, please cite:

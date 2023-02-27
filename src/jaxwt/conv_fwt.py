@@ -21,17 +21,25 @@ def wavedec(
     mode: str = "reflect",
     precision: jax.lax.Precision = "highest"
 ) -> List[jnp.ndarray]:
-    """Compute the one dimensional analysis wavelet transform of the last dimension.
+    """Compute the analysis wavelet transform of the last dimension.
 
     Args:
         data (jnp.ndarray): Input data array of shape [batch, time].
-        wavelet (pywt.Wavelet): The named tuple containing the wavelet filter arrays.
-        level (int): Max scale level to be used, of none as many levels as possible are
+        wavelet (pywt.Wavelet): The named tuple containing the wavelet
+                    filter arrays.
+        level (int): Max scale level to be used,
+                     of none as many levels as possible are
                      used. Defaults to None.
+<<<<<<< HEAD
         mode (str): The padding used to extend the input signal. Choose reflect, symmetric or zero.
             Defaults to reflect.
         precision (jax.lax.Precision): The desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
+=======
+        mode (str): The padding used to extend the input signal.
+                    Choose reflect, symmetric or zero.
+                    Defaults to reflect.
+>>>>>>> 4d422a04361b6b896f417849a3c9a494e3a3b348
 
     Returns:
         list: List containing the wavelet coefficients.
@@ -88,12 +96,20 @@ def waverec(coeffs: List[jnp.ndarray], wavelet: pywt.Wavelet,
     """Reconstruct the original signal in one dimension.
 
     Args:
+<<<<<<< HEAD
         coeffs (list): Wavelet coefficients, typically produced by the wavedec function.
             List entries of shape [batch_size, coefficients] work.
         wavelet (pywt.Wavelet): The named tuple containing the wavelet filters used to evaluate
                               the decomposition.
         precision (jax.lax.Precision): The desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
+=======
+        coeffs (list): Wavelet coefficients,
+                       typically produced by the wavedec function.
+                       List entries of shape [batch_size, coefficients] work.
+        wavelet (pywt.Wavelet): The named tuple containing the wavelet
+                        filters used to evaluate the decomposition.
+>>>>>>> 4d422a04361b6b896f417849a3c9a494e3a3b348
 
     Returns:
         jnp.array: Reconstruction of the original data.
@@ -150,7 +166,6 @@ def _fwt_unpad(
         if nex_len != pred_len:
             padl += 1
             pred_len = res_lo.shape[-1] - padl
-            # assert nex_len == pred_len, 'padding error, please open an issue on github '
     if padl == 0:
         res_lo = res_lo[..., padr:]
     else:
