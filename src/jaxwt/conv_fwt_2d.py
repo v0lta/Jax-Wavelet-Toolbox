@@ -142,7 +142,7 @@ def waverec2(
             padding="VALID",
             strides=[2, 2],
             dimension_numbers=("NCHW", "OIHW", "NCHW"),
-            precision=jax.lax.Precision(precision)
+            precision=jax.lax.Precision(precision),
         )
         # remove the padding
         padl = (2 * filt_len - 3) // 2

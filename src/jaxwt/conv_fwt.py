@@ -24,32 +24,32 @@ def wavedec(
 ) -> List[jnp.ndarray]:
     """Compute the analysis wavelet transform of the last dimension.
 
-        Args:
-            data (jnp.ndarray): Input data array of shape [batch, time].
-            wavelet (pywt.Wavelet): The named tuple containing the wavelet
-                        filter arrays.
-            level (int): Max scale level to be used,
-                         of none as many levels as possible are
-                         used. Defaults to None.
-            mode (str): The padding used to extend the input signal. Choose reflect, symmetric or zero.
-                Defaults to reflect.
-            precision (str): The desired precision, choose "fastest", "high" or "highest".
-                Defaults to "highest".
+    Args:
+        data (jnp.ndarray): Input data array of shape [batch, time].
+        wavelet (pywt.Wavelet): The named tuple containing the wavelet
+                    filter arrays.
+        level (int): Max scale level to be used,
+                     of none as many levels as possible are
+                     used. Defaults to None.
+        mode (str): The padding used to extend the input signal. Choose reflect, symmetric or zero.
+            Defaults to reflect.
+        precision (str): The desired precision, choose "fastest", "high" or "highest".
+            Defaults to "highest".
 
 
-        Returns:
-            list: List containing the wavelet coefficients.
-                The coefficients are in pywt order:
-                [cA_n, cD_n, cD_n-1, …, cD2, cD1].
-                A denotes approximation and D detail coefficients.
+    Returns:
+        list: List containing the wavelet coefficients.
+            The coefficients are in pywt order:
+            [cA_n, cD_n, cD_n-1, …, cD2, cD1].
+            A denotes approximation and D detail coefficients.
 
-        Examples:
-            >>> import pywt
-            >>> import jaxwt as jwt
-            >>> import jax.numpy as jnp
-            >>> # generate an input of even length.
-            >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
-            >>> jwt.wavedec(data, wavelet=pywt.Wavelet('haar'), level=2)
+    Examples:
+        >>> import pywt
+        >>> import jaxwt as jwt
+        >>> import jax.numpy as jnp
+        >>> # generate an input of even length.
+        >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
+        >>> jwt.wavedec(data, wavelet=pywt.Wavelet('haar'), level=2)
     """
     wavelet = _as_wavelet(wavelet)
     if len(data.shape) == 1:
@@ -94,25 +94,25 @@ def waverec(
 ) -> jnp.ndarray:
     """Reconstruct the original signal in one dimension.
 
-        Args:
-            coeffs (list): Wavelet coefficients, typically produced by the wavedec function.
-                List entries of shape [batch_size, coefficients] work.
-            wavelet (pywt.Wavelet): The named tuple containing the wavelet filters used to evaluate
-                                  the decomposition.
-            precision str: The desired precision, choose "fastest", "high" or "highest".
-                Defaults to "highest".
+    Args:
+        coeffs (list): Wavelet coefficients, typically produced by the wavedec function.
+            List entries of shape [batch_size, coefficients] work.
+        wavelet (pywt.Wavelet): The named tuple containing the wavelet filters used to evaluate
+                              the decomposition.
+        precision str: The desired precision, choose "fastest", "high" or "highest".
+            Defaults to "highest".
 
-        Returns:
-            jnp.array: Reconstruction of the original data.
+    Returns:
+        jnp.array: Reconstruction of the original data.
 
-        Examples:
-            >>> import pywt
-            >>> import jaxwt as jwt
-            >>> import jax.numpy as jnp
-            >>> # generate an input of even length.
-            >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
-            >>> transformed = jwt.wavedec(data, pywt.Wavelet('haar'))
-            >>> jwt.waverec(transformed, pywt.Wavelet('haar'))
+    Examples:
+        >>> import pywt
+        >>> import jaxwt as jwt
+        >>> import jax.numpy as jnp
+        >>> # generate an input of even length.
+        >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
+        >>> transformed = jwt.wavedec(data, pywt.Wavelet('haar'))
+        >>> jwt.waverec(transformed, pywt.Wavelet('haar'))
     """
     wavelet = _as_wavelet(wavelet)
     # lax's transpose conv requires filter flips in contrast to pytorch.
@@ -137,7 +137,7 @@ def waverec(
                 2,
             ],
             dimension_numbers=("NCH", "OIH", "NCH"),
-            precision=jax.lax.Precision(precision)
+            precision=jax.lax.Precision(precision),
         )
         res_lo = _fwt_unpad(res_lo, filt_len, c_pos, coeffs)
     return res_lo
