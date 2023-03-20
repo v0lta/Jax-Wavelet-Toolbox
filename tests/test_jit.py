@@ -39,7 +39,7 @@ def test_conv_fwt_jit(wavelet_string, level, length, batch_size, dtype):
     coeff = jit_wavedec(data, wavelet, level=level)
     jit_waverec = jax.jit(jaxwt.waverec)
     res = jit_waverec(coeff, wavelet)
-    assert jnp.allclose(data, res.squeeze(1)[:, : data.shape[-1]])
+    assert jnp.allclose(data, res[:, : data.shape[-1]])
 
 
 @pytest.mark.parametrize("level", [1, 2])

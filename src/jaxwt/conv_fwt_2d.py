@@ -34,11 +34,14 @@ def wavedec2(
             Defaults to "highest".
 
     Returns:
-        list: The wavelet coefficients in a nested list.
+        list: The wavelet coefficients of shape [batch, height, width] in a nested list.
             The coefficients are in pywt order. That is:
             [cAn, (cHn, cVn, cDn), … (cH1, cV1, cD1)].
             A denotes approximation, H horizontal, V vertical
             and D diagonal coefficients.
+
+    Raises:
+        ValueError: If the dimensionality of the input data array is unsupported.
 
     Examples:
         >>> import pywt, scipy.datasets
@@ -49,7 +52,20 @@ def wavedec2(
         >>> jwt.wavedec2(face, pywt.Wavelet("haar"), level=2)
     """
     wavelet = _as_wavelet(wavelet)
-    data = jnp.expand_dims(data, 1)
+
+    if len(data.shape) == 2:
+        data = jnp.expand_dims(data, (0, 1))
+    elif len(data.shape) == 3:
+        data = jnp.expand_dims(data, 1)
+    elif len(data.shape) == 4:
+        raise ValueError(
+            "Wavedec2 does not support four input dimensions. \
+             Optionally-batched two dimensional inputs work."
+        )
+    elif len(data.shape) == 1:
+        raise ValueError("Wavedec2 needs more than one input dimension to work.")
+
+    # data = jnp.expand_dims(data, 1)
     dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True, dtype=data.dtype)
     dec_filt = _construct_2d_filt(lo=dec_lo, hi=dec_hi)
 

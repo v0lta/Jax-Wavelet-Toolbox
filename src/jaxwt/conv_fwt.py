@@ -38,10 +38,13 @@ def wavedec(
 
 
     Returns:
-        list: List containing the wavelet coefficients.
+        list: List containing the wavelet coefficients of shape [batch_size, coefficients].
             The coefficients are in pywt order:
             [cA_n, cD_n, cD_n-1, …, cD2, cD1].
             A denotes approximation and D detail coefficients.
+
+    Raises:
+        ValueError: If the dimensionality of the input data array is unsupported.
 
     Examples:
         >>> import pywt
@@ -55,9 +58,14 @@ def wavedec(
     if len(data.shape) == 1:
         # add channel and batch dimension.
         data = jnp.expand_dims(jnp.expand_dims(data, 0), 0)
-    if len(data.shape) == 2:
+    elif len(data.shape) == 2:
         # add the channel dimension.
         data = jnp.expand_dims(data, 1)
+    else:
+        raise ValueError(
+            "Wavedec only supports up to two input dimensions. \
+             Optionally-batched one dimensional inputs work."
+        )
 
     dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True, dtype=data.dtype)
     filt_len = dec_lo.shape[-1]
@@ -81,8 +89,8 @@ def wavedec(
             precision=jax.lax.Precision(precision),
         )
         res_lo, res_hi = jnp.split(res, 2, 1)
-        result_lst.append(res_hi)
-    result_lst.append(res_lo)
+        result_lst.append(res_hi.squeeze(1))
+    result_lst.append(res_lo.squeeze(1))
     result_lst.reverse()
     return result_lst
 
@@ -123,12 +131,7 @@ def waverec(
     res_lo = coeffs[0]
     for c_pos, res_hi in enumerate(coeffs[1:]):
         # print('shapes', res_lo.shape, res_hi.shape)
-        if len(res_lo.shape) == 2:
-            res_lo = jnp.expand_dims(res_lo, 1)
-        if len(res_hi.shape) == 2:
-            res_hi = jnp.expand_dims(res_hi, 1)
-
-        res_lo = jnp.concatenate([res_lo, res_hi], 1)
+        res_lo = jnp.stack([res_lo, res_hi], 1)
         res_lo = jax.lax.conv_transpose(
             lhs=res_lo,
             rhs=filt,
@@ -140,6 +143,7 @@ def waverec(
             precision=jax.lax.Precision(precision),
         )
         res_lo = _fwt_unpad(res_lo, filt_len, c_pos, coeffs)
+        res_lo = res_lo.squeeze(1)
     return res_lo
 
 
