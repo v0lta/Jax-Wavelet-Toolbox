@@ -57,9 +57,9 @@ class WaveletPacket(BaseDict):
             >>> viz = jnp.concatenate(jnp_lst)
         """
         if len(data.shape) == 1:
-            self.input_data = jnp.expand_dims(jnp.expand_dims(data, 0), 0)
+            self.input_data = jnp.expand_dims(data, 0)
         elif len(data.shape) == 2:
-            self.input_data = jnp.expand_dims(data, 1)
+            self.input_data = data
 
         self.wavelet = _as_wavelet(wavelet)
         self.mode = mode
@@ -98,13 +98,13 @@ class WaveletPacket(BaseDict):
         level: int,
         path: str,
     ) -> None:
-        self.data[path] = jnp.squeeze(data, 1)
+        self.data[path] = data
         if level < self.max_level:
             res_lo, res_hi = wavedec(data, self.wavelet, 1, mode=self.mode)
             self._recursive_dwt(res_lo, level + 1, path + "a")
             self._recursive_dwt(res_hi, level + 1, path + "d")
         else:
-            self.data[path] = jnp.squeeze(data, 1)
+            self.data[path] = data
 
     def reconstruct(self) -> "WaveletPacket":
         """Recursively reconstruct the input starting from the leaf nodes.

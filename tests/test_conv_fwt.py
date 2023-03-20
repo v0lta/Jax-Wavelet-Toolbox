@@ -11,8 +11,8 @@ import pytest
 import pywt
 from jax.config import config
 
-from src.jaxwt._lorenz import generate_lorenz
 from src.jaxwt.conv_fwt import wavedec, waverec
+from tests._lorenz import generate_lorenz
 
 config.update("jax_enable_x64", True)
 
@@ -40,7 +40,7 @@ def test_haar_fwt_ifwt_16_float32():
             16.0,
         ]
     ).astype(jnp.float32)
-    data = jnp.expand_dims(jnp.expand_dims(data, 0), 0)
+    data = jnp.expand_dims(data, 0)
     coeffs_pywt = pywt.wavedec(data, wavelet, level=2)
     coeffs_jaxwt = wavedec(data, wavelet, level=2)
     cat_coeffs_pywt = jnp.concatenate(coeffs_pywt, -1)
@@ -60,26 +60,29 @@ def test_fwt_ifwt_lorenz(wavelet, level, mode, tmax):
     lorenz = jnp.transpose(
         jnp.expand_dims(generate_lorenz(tmax=tmax)[:, 0], -1), [1, 0]
     ).astype(jnp.float64)
-    data = jnp.expand_dims(lorenz, 0)
-    coeff = wavedec(data, wavelet, mode=mode, level=level)
+    coeff = wavedec(lorenz, wavelet, mode=mode, level=level)
     pywt_coeff = pywt.wavedec(lorenz, wavelet, mode=mode, level=level)
     jwt_cat_coeff = jnp.concatenate(coeff, axis=-1).squeeze()
     pywt_cat_coeff = jnp.concatenate(pywt_coeff, axis=-1).squeeze()
     assert jnp.allclose(jwt_cat_coeff, pywt_cat_coeff)
     rec_data = waverec(coeff, wavelet)
-    assert jnp.allclose(rec_data[..., : data.shape[-1]], data)
+    assert jnp.allclose(rec_data[..., : lorenz.shape[-1]], lorenz)
 
 
 @pytest.mark.parametrize("wavelet", ["db2", "sym4"])
 @pytest.mark.parametrize("mode", ["reflect", "zero"])
 @pytest.mark.parametrize("batch_size", [1, 3])
 @pytest.mark.parametrize("level", [2, None])
-def test_batch_fwt_ifwt(wavelet, mode, batch_size, level):
+@pytest.mark.parametrize("dtype", [jnp.float64, jnp.float32])
+def test_batch_fwt_ifwt(wavelet, mode, batch_size, level, dtype: jnp.dtype):
     """Test the batched version of the fwt."""
+    if dtype == jnp.float32:
+        atol = 1e-4
+    else:
+        atol = 1e-8
+
     wavelet = pywt.Wavelet(wavelet)
-    random_dat = jnp.array(np.random.randn(batch_size, 100))
+    random_dat = jnp.array(np.random.randn(batch_size, 100)).astype(dtype)
     coeff = wavedec(random_dat, wavelet, mode=mode, level=level)
     rec_data = waverec(coeff, wavelet)
-    assert jnp.allclose(
-        np.squeeze(rec_data[..., : random_dat.shape[-1]], 1), random_dat
-    )
+    assert jnp.allclose(rec_data[..., : random_dat.shape[-1]], random_dat, atol=atol)

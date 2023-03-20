@@ -10,8 +10,11 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 import pywt
+from jax.config import config
 
 from src.jaxwt.packets import WaveletPacket, WaveletPacket2D
+
+config.update("jax_enable_x64", True)
 
 
 # TODO: add more input shapes. and level none
@@ -59,7 +62,7 @@ def test_inverse_packets_1d(input_shape, wavelet, level, mode, base_key):
     wp.reconstruct(update=True)
     jwp.reconstruct()
 
-    assert jnp.allclose(wp[""].data, jwp[""][:, 0, : input_shape[-1]])
+    assert jnp.allclose(wp[""].data, jwp[""][:, : input_shape[-1]])
 
 
 @pytest.mark.parametrize("input_shape", ((2, 32, 32), (3, 33, 33), (1, 32, 33)))
@@ -95,9 +98,9 @@ def test_inverse_packet_2d(level, base_key, size, wavelet):
     signal = np.random.randn(size[0], size[1], size[2])
     mode = "reflect"
     wp = pywt.WaveletPacket2D(signal, wavelet, mode=mode, maxlevel=level)
-    ptwp = WaveletPacket2D(jnp.array(signal), wavelet, mode=mode, max_level=level)
+    jaxwp = WaveletPacket2D(jnp.array(signal), wavelet, mode=mode, max_level=level)
     wp[base_key * level].data *= 0
-    ptwp[base_key * level] *= 0
+    jaxwp[base_key * level] *= 0
     wp.reconstruct(update=True)
-    ptwp.reconstruct()
-    assert jnp.allclose(wp[""].data, ptwp[""][:, : size[1], : size[2]])
+    jaxwp.reconstruct()
+    assert jnp.allclose(wp[""].data, jaxwp[""][:, : size[1], : size[2]])
