@@ -27,6 +27,10 @@ Jax Wavelet Toolbox (jaxwt)
     :target: https://github.com/psf/black
     :alt: Black code style
 
+.. image:: https://static.pepy.tech/personalized-badge/jaxwt?period=total&units=international_system&left_color=grey&right_color=orange&left_text=Downloads
+    :target: https://pepy.tech/project/jaxwt
+    :alt: PyPi - downloads
+
 
 Differentiable and GPU-enabled fast wavelet transforms in JAX. 
 
@@ -38,7 +42,7 @@ Features
 - The ``WaveletPacket`` object supports 1d wavelet packet transforms.
 - ``WaveletPacket2d`` implements two-dimensional wavelet packet transforms.
 
-This toolbox extends `PyWavelets <https://pywavelets.readthedocs.io/en/latest/>`_ . We additionally provide GPU and gradient support via a PyTorch backend.
+This toolbox extends `PyWavelets <https://pywavelets.readthedocs.io/en/latest/>`_ . We additionally provide GPU and gradient support via a Jax backend.
 
 Installation
 """"""""""""
