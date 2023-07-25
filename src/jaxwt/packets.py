@@ -153,7 +153,7 @@ class WaveletPacket2D(BaseDict):
         """Create a 2D-wavelet packet decomposition object.
 
         Example code illustrating the use of this class is available at:
-        https://github.com/v0lta/Jax-Wavelet-Toolbox/tree/packet-patch/examples/deepfake_analysis
+        https://github.com/v0lta/Jax-Wavelet-Toolbox/tree/master/examples/deepfake_analysis
 
         Args:
             data (jnp.ndarray): The input data array of shape [batch_size, height, width].
