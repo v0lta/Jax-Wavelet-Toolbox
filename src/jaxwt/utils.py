@@ -5,6 +5,7 @@ from collections import namedtuple
 from typing import List, Tuple, Union
 
 import jax.numpy as jnp
+import numpy as np
 import pywt
 
 __all__ = ["flatten_2d_coeff_lst"]
@@ -59,3 +60,23 @@ def _as_wavelet(wavelet: Union[Wavelet, str]) -> pywt.Wavelet:
         return pywt.Wavelet(wavelet)
     else:
         return wavelet
+
+
+def _fold_axes(data: jnp.ndarray, keep_no: int) -> Tuple[jnp.ndarray, List[int]]:
+    """Fold unchanged leading dimensions into a single batch dimension.
+
+    Args:
+        data (jnp.ndarray): The input data array.
+        keep_no (int): The number of dimensions to keep.
+
+    Returns:
+        Tuple[jnp.ndarray, List[int]]:
+            The folded result array, and the shape of the original input.
+    """
+    dshape = list(data.shape)
+    return jnp.reshape(data, [np.prod(dshape[:-keep_no])] + dshape[-keep_no:]), dshape
+
+
+def _unfold_axes(data: jnp.ndarray, ds: List[int], keep_no: int) -> jnp.ndarray:
+    """Unfold i.e. [batch*channel, height, widht] into [batch, channel, height, width]."""
+    return jnp.reshape(data, ds[:-keep_no] + list(data.shape[-keep_no:]))

@@ -5,10 +5,12 @@
 # Copyright (c) 2020 Moritz Wolter
 #
 
+import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
 import pywt
+from jax import random
 from jax.config import config
 
 from src.jaxwt.conv_fwt import wavedec, waverec
@@ -86,3 +88,22 @@ def test_batch_fwt_ifwt(wavelet, mode, batch_size, level, dtype: jnp.dtype):
     coeff = wavedec(random_dat, wavelet, mode=mode, level=level)
     rec_data = waverec(coeff, wavelet)
     assert jnp.allclose(rec_data[..., : random_dat.shape[-1]], random_dat, atol=atol)
+
+
+@pytest.mark.parametrize("level", [1, 2, 3, None])
+def test_multi_batch_fwt(level):
+    """Test 1d conv support for multiple inert batch dimensions."""
+    key = random.PRNGKey(42)
+    data = jax.random.normal(key, (3, 2, 1, 64), jnp.float64)
+
+    jaxwt_coeff = wavedec(data, "haar", level=level)
+    pywt_coeff = pywt.wavedec(np.array(data), "haar", level=level)
+
+    test = []
+    for jaxwtc, pywtc in zip(jaxwt_coeff, pywt_coeff):
+        test.append(np.allclose(jaxwtc, pywtc))
+
+    assert all(test)
+
+    rec = waverec(jaxwt_coeff, "haar")
+    assert np.allclose(data, rec)

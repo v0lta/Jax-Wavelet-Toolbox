@@ -12,7 +12,7 @@ import jax.lax
 import jax.numpy as jnp
 import pywt
 
-from .utils import _as_wavelet
+from .utils import _as_wavelet, _fold_axes, _unfold_axes
 
 
 def wavedec(
@@ -43,9 +43,6 @@ def wavedec(
             [cA_n, cD_n, cD_n-1, …, cD2, cD1].
             A denotes approximation and D detail coefficients.
 
-    Raises:
-        ValueError: If the dimensionality of the input data array is unsupported.
-
     Examples:
         >>> import pywt
         >>> import jaxwt as jwt
@@ -54,6 +51,7 @@ def wavedec(
         >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
         >>> jwt.wavedec(data, wavelet=pywt.Wavelet('haar'), level=2)
     """
+    fold = False
     wavelet = _as_wavelet(wavelet)
     if len(data.shape) == 1:
         # add channel and batch dimension.
@@ -62,10 +60,9 @@ def wavedec(
         # add the channel dimension.
         data = jnp.expand_dims(data, 1)
     else:
-        raise ValueError(
-            "Wavedec only supports up to two input dimensions. \
-             Optionally-batched one dimensional inputs work."
-        )
+        fold = True
+        data, ds = _fold_axes(data, 1)
+        data = jnp.expand_dims(data, 1)
 
     dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True, dtype=data.dtype)
     filt_len = dec_lo.shape[-1]
@@ -92,6 +89,13 @@ def wavedec(
         result_lst.append(res_hi.squeeze(1))
     result_lst.append(res_lo.squeeze(1))
     result_lst.reverse()
+
+    if fold:
+        unfold_list = []
+        for fres in result_lst:
+            unfold_list.append(_unfold_axes(fres, ds, 1))
+        result_lst = unfold_list
+
     return result_lst
 
 
@@ -122,8 +126,18 @@ def waverec(
         >>> transformed = jwt.wavedec(data, pywt.Wavelet('haar'))
         >>> jwt.waverec(transformed, pywt.Wavelet('haar'))
     """
+    fold = False
+    if coeffs[0].ndim > 3:
+        fold = True
+        fold_coeffs = []
+        ds = list(coeffs[0].shape)
+        for uf_coeff in coeffs:
+            f_coeff, _ = _fold_axes(uf_coeff, 1)
+            fold_coeffs.append(f_coeff)
+        coeffs = fold_coeffs
+
     wavelet = _as_wavelet(wavelet)
-    # lax's transpose conv requires filter flips in contrast to pytorch.
+    # unlike pytorch lax's transpose conv requires filter flips.
     _, _, rec_lo, rec_hi = _get_filter_arrays(wavelet, flip=True, dtype=coeffs[0].dtype)
     filt_len = rec_lo.shape[-1]
     filt = jnp.stack([rec_lo, rec_hi], 1)
@@ -144,6 +158,9 @@ def waverec(
         )
         res_lo = _fwt_unpad(res_lo, filt_len, c_pos, coeffs)
         res_lo = res_lo.squeeze(1)
+
+    if fold:
+        res_lo = _unfold_axes(res_lo, ds, 1)
     return res_lo
 
 
@@ -201,7 +218,7 @@ def _fwt_pad(data: jnp.ndarray, filt_len: int, mode: str = "reflect") -> jnp.nda
     if data.shape[-1] % 2 != 0:
         padr += 1
 
-    data = jnp.pad(data, ((0, 0), (0, 0), (padl, padr)), mode)
+    data = jnp.pad(data, [(0, 0)] * (data.ndim - 1) + [(padl, padr)], mode)
     return data
 
 
