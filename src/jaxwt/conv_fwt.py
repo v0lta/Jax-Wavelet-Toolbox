@@ -25,14 +25,15 @@ def wavedec(
     """Compute the analysis wavelet transform of the last dimension.
 
     Args:
-        data (jnp.ndarray): Input data array of shape [batch, time].
+        data (jnp.ndarray): Input data array.
+            I.e. of shape [batch, time].
         wavelet (pywt.Wavelet): The named tuple containing the wavelet
                     filter arrays.
         level (int): Max scale level to be used,
                      of none as many levels as possible are
                      used. Defaults to None.
         mode (str): The padding used to extend the input signal. Choose reflect, symmetric or zero.
-            Defaults to reflect.
+            Defaults to symmetric.
         precision (str): The desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
 
@@ -127,7 +128,7 @@ def waverec(
         >>> jwt.waverec(transformed, pywt.Wavelet('haar'))
     """
     fold = False
-    if coeffs[0].ndim > 3:
+    if coeffs[0].ndim > 2:
         fold = True
         fold_coeffs = []
         ds = list(coeffs[0].shape)

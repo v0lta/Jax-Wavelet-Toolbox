@@ -91,10 +91,11 @@ def test_batch_fwt_ifwt(wavelet, mode, batch_size, level, dtype: jnp.dtype):
 
 
 @pytest.mark.parametrize("level", [1, 2, 3, None])
-def test_multi_batch_fwt(level):
+@pytest.mark.parametrize("inshape", [(3, 2, 64), (4, 3, 2, 64)])
+def test_multi_batch_fwt(level, inshape):
     """Test 1d conv support for multiple inert batch dimensions."""
     key = random.PRNGKey(42)
-    data = jax.random.normal(key, (3, 2, 1, 64), jnp.float64)
+    data = jax.random.normal(key, inshape, jnp.float64)
 
     jaxwt_coeff = wavedec(data, "haar", level=level)
     pywt_coeff = pywt.wavedec(np.array(data), "haar", level=level)

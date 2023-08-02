@@ -3,33 +3,33 @@
 # Created on Thu Jun 12 2020
 # Copyright (c) 2020 Moritz Wolter
 #
-from typing import List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 import jax
 import jax.numpy as jnp
 import pywt
 
 from .conv_fwt import _get_filter_arrays
-from .utils import _as_wavelet
+from .utils import _as_wavelet, _fold_axes, _unfold_axes
 
 
 def wavedec2(
     data: jnp.ndarray,
     wavelet: pywt.Wavelet,
     level: Optional[int] = None,
-    mode: str = "reflect",
+    mode: str = "symmetric",
     precision: str = "highest",
 ) -> List[Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]]]:
     """Compute the two dimensional wavelet analysis transform on the last two dimensions of the input data array.
 
     Args:
-        data (jnp.ndarray): Jax array containing the data to be transformed. Assumed shape:
-                         [batch size, hight, width].
+        data (jnp.ndarray): Jax array containing the data to be transformed.
+            A possible input shape would be [batch size, hight, width].
         wavelet (pywt.Wavelet): A namedtouple containing the filters for the transformation.
         level (int): The max level to be used, if not set as many levels as possible
                                will be used. Defaults to None.
         mode (str): The desired padding mode. Choose reflect, symmetric or zero.
-            Defaults to reflect.
+            Defaults to symmetric.
         precision (str): The desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
 
@@ -51,17 +51,17 @@ def wavedec2(
         >>> face = face.astype(jnp.float64)
         >>> jwt.wavedec2(face, pywt.Wavelet("haar"), level=2)
     """
+    fold = False
     wavelet = _as_wavelet(wavelet)
 
     if len(data.shape) == 2:
         data = jnp.expand_dims(data, (0, 1))
     elif len(data.shape) == 3:
         data = jnp.expand_dims(data, 1)
-    elif len(data.shape) == 4:
-        raise ValueError(
-            "Wavedec2 does not support four input dimensions. \
-             Optionally-batched two dimensional inputs work."
-        )
+    elif len(data.shape) >= 4:
+        fold = True
+        data, ds = _fold_axes(data, 2)
+        data = jnp.expand_dims(data, 1)
     elif len(data.shape) == 1:
         raise ValueError("Wavedec2 needs more than one input dimension to work.")
 
@@ -96,7 +96,28 @@ def wavedec2(
         result_lst.append((res_lh.squeeze(1), res_hl.squeeze(1), res_hh.squeeze(1)))
     result_lst.append(res_ll.squeeze(1))
     result_lst.reverse()
+
+    if fold:
+        unfold_list: List[Union[jnp.ndarray, Tuple[jnp.ndarray, ...]]] = []
+        for fres in result_lst:
+            # TODO: Tuples, unterstuetzen!
+            if isinstance(fres, jnp.ndarray):
+                unfold_list.append(_unfold_axes(fres, ds, 2))
+            else:
+                unfold_list.append(
+                    tuple(_unfold_axes(fres_el, ds, 2) for fres_el in fres)
+                )
+        result_lst = unfold_list  # type: ignore
+
     return result_lst
+
+
+def _check_if_array(array: Any) -> jnp.ndarray:
+    if not isinstance(array, jnp.ndarray):
+        raise ValueError(
+            "First element of coeffs must be the approximation coefficient tensor."
+        )
+    return array
 
 
 def waverec2(
@@ -117,9 +138,6 @@ def waverec2(
     Returns:
         jnp.array: Reconstruction of the original input data array of shape [batch, height, width].
 
-    Raises:
-        ValueError: If `coeffs` is not in the shape as it is returned from `wavedec2`.
-
     Example:
         >>> import pywt, scipy.datasets
         >>> import jaxwt as jwt
@@ -132,16 +150,29 @@ def waverec2(
 
     """
     wavelet = _as_wavelet(wavelet)
-    if not isinstance(coeffs[0], jnp.ndarray):
-        raise ValueError(
-            "First element of coeffs must be the approximation coefficient tensor."
-        )
-    _, _, rec_lo, rec_hi = _get_filter_arrays(wavelet, flip=True, dtype=coeffs[0].dtype)
+
+    fold = False
+    if _check_if_array(coeffs[0]).ndim > 3:
+        fold = True
+        ds = list(_check_if_array(coeffs[0]).shape)
+        fold_list: List[Union[jnp.ndarray, Tuple[jnp.ndarray, ...]]] = []
+        for coeff in coeffs:
+            if isinstance(coeff, jnp.ndarray):
+                fold_list.append(_fold_axes(coeff, 2)[0])
+            else:
+                fold_list.append(
+                    tuple(_fold_axes(coeff_el, 2)[0] for coeff_el in coeff)
+                )
+        coeffs = fold_list  # type: ignore
+
+    _, _, rec_lo, rec_hi = _get_filter_arrays(
+        wavelet, flip=True, dtype=_check_if_array(coeffs[0]).dtype
+    )
     filt_len = rec_lo.shape[-1]
     rec_filt = _construct_2d_filt(lo=rec_lo, hi=rec_hi)
     rec_filt = jnp.transpose(rec_filt, [1, 0, 2, 3])
 
-    res_ll = jnp.expand_dims(coeffs[0], 1)
+    res_ll = jnp.expand_dims(_check_if_array(coeffs[0]), 1)
     for c_pos, res_lh_hl_hh in enumerate(coeffs[1:]):
         res_ll = jnp.concatenate(
             [
@@ -191,7 +222,12 @@ def waverec2(
             res_ll = res_ll[..., padl:]
         if padr > 0:
             res_ll = res_ll[..., :-padr]
-    return res_ll.squeeze(1)
+
+    res_ll = res_ll.squeeze(1)
+
+    if fold:
+        res_ll = _unfold_axes(res_ll, ds, 2)
+    return res_ll
 
 
 def _construct_2d_filt(lo: jnp.ndarray, hi: jnp.ndarray) -> jnp.ndarray:
