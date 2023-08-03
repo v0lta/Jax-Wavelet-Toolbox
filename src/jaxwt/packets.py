@@ -29,7 +29,7 @@ class WaveletPacket(BaseDict):
         self,
         data: jnp.ndarray,
         wavelet: pywt.Wavelet,
-        mode: str = "reflect",
+        mode: str = "symmetric",
         max_level: Optional[int] = None,
     ):
         """Create a wavelet packet decomposition object.
@@ -38,7 +38,7 @@ class WaveletPacket(BaseDict):
             data (jnp.ndarray): The input data array of shape [batch_size, time].
             wavelet (pywt.Wavelet): The wavelet used for the decomposition.
             mode (str): The desired padding method. Choose i.e.
-                "reflect", "symmetric" or "zero". Defaults to "reflect".
+                "reflect", "symmetric" or "zero". Defaults to "symmetric".
 
         Example:
             >>> import pywt
@@ -147,7 +147,7 @@ class WaveletPacket2D(BaseDict):
         self,
         data: jnp.ndarray,
         wavelet: Union[str, pywt.Wavelet],
-        mode: str = "reflect",
+        mode: str = "symmetric",
         max_level: Optional[int] = None,
     ):
         """Create a 2D-wavelet packet decomposition object.
@@ -159,7 +159,7 @@ class WaveletPacket2D(BaseDict):
             data (jnp.ndarray): The input data array of shape [batch_size, height, width].
             wavelet (pywt.Wavelet or str): The wavelet used for the decomposition.
             mode (str): The desired padding method. Choose i.e.
-                "reflect", "symmetric" or "zero". Defaults to "reflect".
+                "reflect", "symmetric" or "zero". Defaults to "symmetric".
             max_level (int, optional): Choose the desired decomposition level.
         """
         self.input_data = data

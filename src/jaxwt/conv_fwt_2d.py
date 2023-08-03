@@ -100,7 +100,6 @@ def wavedec2(
     if fold:
         unfold_list: List[Union[jnp.ndarray, Tuple[jnp.ndarray, ...]]] = []
         for fres in result_lst:
-            # TODO: Tuples, unterstuetzen!
             if isinstance(fres, jnp.ndarray):
                 unfold_list.append(_unfold_axes(fres, ds, 2))
             else:
@@ -146,7 +145,6 @@ def waverec2(
         >>> face = face.astype(jnp.float64)
         >>> transformed = jwt.wavedec2(face, pywt.Wavelet("haar"))
         >>> jwt.waverec2(transformed, pywt.Wavelet("haar"))
-
 
     """
     wavelet = _as_wavelet(wavelet)

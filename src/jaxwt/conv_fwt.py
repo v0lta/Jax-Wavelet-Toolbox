@@ -15,9 +15,30 @@ import pywt
 from .utils import _as_wavelet, _fold_axes, _unfold_axes
 
 
+def _preprocess_array_dec1d(data: jnp.ndarray) -> Tuple[jnp.ndarray, List[int]]:
+    ds = None
+    if len(data.shape) == 1:
+        # add channel and batch dimension.
+        data = jnp.expand_dims(data, (0, 1))
+    elif len(data.shape) == 2:
+        # add the channel dimension.
+        data = jnp.expand_dims(data, 1)
+    else:
+        data, ds = _fold_axes(data, 1)
+        data = jnp.expand_dims(data, 1)
+    return data, ds
+
+
+def _postprocess_array_dec1d(result_lst, ds):
+    unfold_list = []
+    for fres in result_lst:
+        unfold_list.append(_unfold_axes(fres, ds, 1))
+    return unfold_list
+
+
 def wavedec(
     data: jnp.ndarray,
-    wavelet: pywt.Wavelet,
+    wavelet: Union[pywt.Wavelet, str],
     level: Optional[int] = None,
     mode: str = "reflect",
     precision: str = "highest",
@@ -27,12 +48,12 @@ def wavedec(
     Args:
         data (jnp.ndarray): Input data array.
             I.e. of shape [batch, time].
-        wavelet (pywt.Wavelet): The named tuple containing the wavelet
-                    filter arrays.
-        level (int): Max scale level to be used,
-                     of none as many levels as possible are
-                     used. Defaults to None.
-        mode (str): The padding used to extend the input signal. Choose reflect, symmetric or zero.
+        wavelet (pywt.Wavelet): A wavelet name-string or a wavelet object
+            containing the wavelet filter arrays.
+        level (int): Max scale level to be used, of none as many levels
+                     as possible are used. Defaults to None.
+        mode (str): The padding used to extend the input signal.
+            Choose reflect, symmetric or zero.
             Defaults to symmetric.
         precision (str): The desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
@@ -52,18 +73,8 @@ def wavedec(
         >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
         >>> jwt.wavedec(data, wavelet=pywt.Wavelet('haar'), level=2)
     """
-    fold = False
     wavelet = _as_wavelet(wavelet)
-    if len(data.shape) == 1:
-        # add channel and batch dimension.
-        data = jnp.expand_dims(jnp.expand_dims(data, 0), 0)
-    elif len(data.shape) == 2:
-        # add the channel dimension.
-        data = jnp.expand_dims(data, 1)
-    else:
-        fold = True
-        data, ds = _fold_axes(data, 1)
-        data = jnp.expand_dims(data, 1)
+    data, ds = _preprocess_array_dec1d(data)
 
     dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True, dtype=data.dtype)
     filt_len = dec_lo.shape[-1]
@@ -72,7 +83,7 @@ def wavedec(
     if level is None:
         level = pywt.dwt_max_level(data.shape[-1], filt_len)
 
-    result_lst = []
+    result_list = []
     res_lo = data
     for _ in range(level):
         res_lo = _fwt_pad(res_lo, len(wavelet.dec_lo), mode=mode)
@@ -87,22 +98,19 @@ def wavedec(
             precision=jax.lax.Precision(precision),
         )
         res_lo, res_hi = jnp.split(res, 2, 1)
-        result_lst.append(res_hi.squeeze(1))
-    result_lst.append(res_lo.squeeze(1))
-    result_lst.reverse()
+        result_list.append(res_hi.squeeze(1))
+    result_list.append(res_lo.squeeze(1))
+    result_list.reverse()
 
-    if fold:
-        unfold_list = []
-        for fres in result_lst:
-            unfold_list.append(_unfold_axes(fres, ds, 1))
-        result_lst = unfold_list
+    if ds:
+        result_list = _postprocess_array_dec1d(result_list, ds)
 
-    return result_lst
+    return result_list
 
 
 def waverec(
     coeffs: List[jnp.ndarray],
-    wavelet: pywt.Wavelet,
+    wavelet: Union[pywt.Wavelet, str],
     precision: str = "highest",
 ) -> jnp.ndarray:
     """Reconstruct the original signal in one dimension.
@@ -110,8 +118,9 @@ def waverec(
     Args:
         coeffs (list): Wavelet coefficients, typically produced by the wavedec function.
             List entries of shape [batch_size, coefficients] work.
-        wavelet (pywt.Wavelet): The named tuple containing the wavelet filters used to evaluate
-                              the decomposition.
+        wavelet (pywt.Wavelet): A string with a wavelet name or
+            a wavelet object containing the wavelet filters used to evaluate
+            the decomposition.
         precision (str): The desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
 
@@ -127,9 +136,8 @@ def waverec(
         >>> transformed = jwt.wavedec(data, pywt.Wavelet('haar'))
         >>> jwt.waverec(transformed, pywt.Wavelet('haar'))
     """
-    fold = False
+    ds = None
     if coeffs[0].ndim > 2:
-        fold = True
         fold_coeffs = []
         ds = list(coeffs[0].shape)
         for uf_coeff in coeffs:
@@ -160,7 +168,7 @@ def waverec(
         res_lo = _fwt_unpad(res_lo, filt_len, c_pos, coeffs)
         res_lo = res_lo.squeeze(1)
 
-    if fold:
+    if ds:
         res_lo = _unfold_axes(res_lo, ds, 1)
     return res_lo
 
