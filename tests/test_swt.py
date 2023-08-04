@@ -25,14 +25,14 @@ def test_swt_1d(level, size, wavelet):
     """Test the 1d swt."""
     key = jax.random.PRNGKey(42)
     signal = jax.random.randint(key, size, 0, 9).astype(jnp.float64)
-    ptwt_coeff = swt(signal, wavelet, level=level)
+    jaxwt_coeff = swt(signal, wavelet, level=level)
     pywt_coeff = pywt.swt(signal, wavelet, level, trim_approx=True, norm=False)
     test_list = []
-    for a, b in zip(ptwt_coeff, pywt_coeff):
+    for a, b in zip(jaxwt_coeff, pywt_coeff):
         test_list.extend([jnp.allclose(ael, bel) for ael, bel in zip(a, b)])
     assert all(test_list)
 
-    rec = iswt(ptwt_coeff, wavelet)
+    rec = iswt(jaxwt_coeff, wavelet)
     assert jnp.allclose(rec, signal)
 
 

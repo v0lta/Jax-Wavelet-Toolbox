@@ -55,7 +55,8 @@ def wavedec(
     data: jnp.ndarray,
     wavelet: Union[pywt.Wavelet, str],
     level: Optional[int] = None,
-    mode: str = "reflect",
+    mode: str = "symmetric",
+    axis: int = -1,
     precision: str = "highest",
 ) -> List[jnp.ndarray]:
     """Compute the analysis wavelet transform of the last dimension.
@@ -80,6 +81,9 @@ def wavedec(
             [cA_n, cD_n, cD_n-1, …, cD2, cD1].
             A denotes approximation and D detail coefficients.
 
+    Raises:
+        ValueError: If the axis argument is not an integer.
+
     Examples:
         >>> import pywt
         >>> import jaxwt as jwt
@@ -88,6 +92,12 @@ def wavedec(
         >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
         >>> jwt.wavedec(data, wavelet=pywt.Wavelet('haar'), level=2)
     """
+    if axis != -1:
+        if isinstance(axis, int):
+            data = data.swapaxes(axis, -1)
+        else:
+            raise ValueError("wavedec transforms a single axis.")
+
     wavelet = _as_wavelet(wavelet)
     data, ds = _preprocess_array_dec1d(data)
 
@@ -120,12 +130,19 @@ def wavedec(
     if ds:
         result_list = _postprocess_result_list_dec1d(result_list, ds)
 
+    if axis != -1:
+        swap = []
+        for coeff in result_list:
+            swap.append(coeff.swapaxes(axis, -1))
+        result_list = swap
+
     return result_list
 
 
 def waverec(
     coeffs: List[jnp.ndarray],
     wavelet: Union[pywt.Wavelet, str],
+    axis: int = -1,
     precision: str = "highest",
 ) -> jnp.ndarray:
     """Reconstruct the original signal in one dimension.
@@ -142,6 +159,9 @@ def waverec(
     Returns:
         jnp.array: Reconstruction of the original data.
 
+    Raises:
+        ValueError: If the axis argument is not an integer.
+
     Examples:
         >>> import pywt
         >>> import jaxwt as jwt
@@ -151,6 +171,15 @@ def waverec(
         >>> transformed = jwt.wavedec(data, pywt.Wavelet('haar'))
         >>> jwt.waverec(transformed, pywt.Wavelet('haar'))
     """
+    if axis != -1:
+        swap = []
+        if isinstance(axis, int):
+            for coeff in coeffs:
+                swap.append(coeff.swapaxes(axis, -1))
+            coeffs = swap
+        else:
+            raise ValueError("wavedec transforms a single axis.")
+
     ds = None
     if coeffs[0].ndim > 2:
         coeffs, ds = _preprocess_result_list_rec1d(coeffs)
@@ -180,6 +209,9 @@ def waverec(
 
     if ds:
         res_lo = _unfold_axes(res_lo, ds, 1)
+    if axis != -1:
+        res_lo = res_lo.swapaxes(axis, -1)
+
     return res_lo
 
 

@@ -103,8 +103,24 @@ def test_multi_batch_fwt(level, shape):
     test = []
     for jaxwtc, pywtc in zip(jaxwt_coeff, pywt_coeff):
         test.append(np.allclose(jaxwtc, pywtc))
-
     assert all(test)
 
     rec = waverec(jaxwt_coeff, "haar")
+    assert np.allclose(data, rec)
+
+
+@pytest.mark.parametrize("axis", [-1, 1, 2])
+def test_axis_arg(axis):
+    """Ensure the axis argument works as expected."""
+    key = random.PRNGKey(42)
+    data = jax.random.normal(key, [16, 16, 16], jnp.float64)
+
+    jaxwtcs = wavedec(data, "haar", level=2, axis=axis)
+    pywtcs = pywt.wavedec(data, "haar", level=2, axis=axis)
+    test = []
+    for jaxwtc, pywtc in zip(jaxwtcs, pywtcs):
+        test.append(np.allclose(jaxwtc, pywtc))
+    assert all(test)
+
+    rec = waverec(jaxwtcs, "haar", axis=axis)
     assert np.allclose(data, rec)
