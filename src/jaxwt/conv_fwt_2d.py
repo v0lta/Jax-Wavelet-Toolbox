@@ -10,7 +10,12 @@ import jax.numpy as jnp
 import pywt
 
 from .conv_fwt import _check_if_array, _get_filter_arrays
-from .utils import _as_wavelet, _fold_axes, _unfold_axes
+from .utils import (
+    _adjust_padding_at_reconstruction,
+    _as_wavelet,
+    _fold_axes,
+    _unfold_axes,
+)
 
 
 def wavedec2(
@@ -187,23 +192,12 @@ def waverec2(
         padt = (2 * filt_len - 3) // 2
         padb = (2 * filt_len - 3) // 2
         if c_pos < len(coeffs) - 2:
-            pred_len = res_ll.shape[-1] - (padl + padr)
-            next_len = coeffs[c_pos + 2][0].shape[-1]
-            pred_len2 = res_ll.shape[-2] - (padt + padb)
-            next_len2 = coeffs[c_pos + 2][0].shape[-2]
-            if next_len != pred_len:
-                padr += 1
-                pred_len = res_ll.shape[-1] - (padl + padr)
-                assert (
-                    next_len == pred_len
-                ), "padding error, please open an issue on github "
-            if next_len2 != pred_len2:
-                padb += 1
-                pred_len2 = res_ll.shape[-2] - (padt + padb)
-                assert (
-                    next_len2 == pred_len2
-                ), "padding error, please open an issue on github "
-        # print('padding', padt, padb, padl, padr)
+            padr, padl = _adjust_padding_at_reconstruction(
+                res_ll.shape[-1], coeffs[c_pos + 2][0].shape[-1], padr, padl
+            )
+            padb, padt = _adjust_padding_at_reconstruction(
+                res_ll.shape[-2], coeffs[c_pos + 2][0].shape[-2], padb, padt
+            )
         if padt > 0:
             res_ll = res_ll[..., padt:, :]
         if padb > 0:
