@@ -6,8 +6,8 @@ import pytest
 import pywt
 from jax.config import config
 
-from src.jaxwt.stationary_transform import _conv_transpose_dedilate, iswt, swt
 from src.jaxwt.conv_fwt import _get_filter_arrays
+from src.jaxwt.stationary_transform import _conv_transpose_dedilate, iswt, swt
 from src.jaxwt.utils import _as_wavelet
 
 config.update("jax_enable_x64", True)

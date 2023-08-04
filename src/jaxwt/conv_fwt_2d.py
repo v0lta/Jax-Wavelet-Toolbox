@@ -3,7 +3,7 @@
 # Created on Thu Jun 12 2020
 # Copyright (c) 2020 Moritz Wolter
 #
-from typing import Any, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import jax
 import jax.numpy as jnp

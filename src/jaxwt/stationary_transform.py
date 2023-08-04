@@ -113,14 +113,14 @@ def _conv_transpose_dedilate(
 def iswt(
     coeffs: List[jnp.ndarray],
     wavelet: Union[pywt.Wavelet, str],
-    precision: str = "highest",
+    precision: Optional[str] = "highest",
 ) -> jnp.ndarray:
-    """Computes an inverse stationary wavelet transform.
+    """Compute an inverse stationary wavelet transform.
 
     Args:
         coeffs (List[jnp.ndarray]): The coefficients as computed by the analysis code.
         wavelet (Union[pywt.Wavelet, str]): The wavelet used by the transform.
-        precision (str, optional): Precision value for lax convolution code.
+        precision (Optional[str]): Precision value for lax convolution code.
             Defaults to "highest".
 
     Returns:
