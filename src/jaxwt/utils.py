@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 from collections import namedtuple
-from typing import List, Tuple, Union
+from typing import Any, List, Tuple, Union
 
 import jax.numpy as jnp
 import numpy as np
@@ -96,3 +96,11 @@ def _adjust_padding_at_reconstruction(
             "padding error, please check if dec and rec wavelets are identical."
         )
     return pad_end, pad_start
+
+
+def _check_if_array(array: Any) -> jnp.ndarray:
+    if not isinstance(array, jnp.ndarray):
+        raise ValueError(
+            "First element of coeffs must be the approximation coefficient tensor."
+        )
+    return array

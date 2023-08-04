@@ -20,13 +20,14 @@ config.update("jax_platform_name", "cpu")
 @pytest.mark.parametrize("level", [1, 2, None])
 @pytest.mark.parametrize("axes", [[-3, -2, -1]])
 @pytest.mark.parametrize("wavelet", ["haar", "sym3", "db4"])
-def test_multidim_input(size: List[int], axes: List[int], level: int, wavelet: str):
+@pytest.mark.parametrize("mode", ["zero", "symmetric", "reflect"])
+def test_multidim_input(size: List[int], axes: List[int], level: int, wavelet: str, mode: str):
     """Ensure correct folding of multidimensional inputs."""
     key = jax.random.PRNGKey(42)
     data = jax.random.uniform(key, size).astype(jnp.float64)
 
-    jaxwt_coeff = wavedec3(data, wavelet, level=level)
-    pywt_coeff = pywt.wavedecn(data, wavelet, level=level, axes=axes)
+    jaxwt_coeff = wavedec3(data, wavelet, level=level, mode=mode)
+    pywt_coeff = pywt.wavedecn(data, wavelet, level=level, axes=axes, mode=mode)
 
     test_list = []
     for jaxwtc, pywtc in zip(jaxwt_coeff, pywt_coeff):

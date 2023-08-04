@@ -75,7 +75,7 @@ def wavedec2(
         wavelet (pywt.Wavelet): A namedtouple containing the filters for the transformation.
         level (int): The max level to be used, if not set as many levels as possible
                                will be used. Defaults to None.
-        mode (str): The desired padding mode. Choose reflect, symmetric or zero.
+        mode (str): The desired padding mode. Choose "reflect", "symmetric" or "zero".
             Defaults to symmetric.
         precision (str): The desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
@@ -100,13 +100,9 @@ def wavedec2(
     dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True, dtype=data.dtype)
     dec_filt = _construct_2d_filt(lo=dec_lo, hi=dec_hi)
 
-    if mode == "zero":
-        # translate pywt to numpy.
-        mode = "constant"
-
     if level is None:
         level = pywt.dwtn_max_level(
-            [data.shape[-1], data.shape[-2]], pywt.Wavelet("MyWavelet", wavelet)
+            [data.shape[-1], data.shape[-2]], wavelet
         )
 
     result_list: List[
@@ -258,6 +254,10 @@ def _fwt_pad2d(
         padr += 1
     if data.shape[-2] % 2 != 0:
         padb += 1
+
+    if mode == "zero":
+        # translate pywt to numpy.
+        mode = "constant"
 
     data = jnp.pad(data, ((0, 0), (0, 0), (padt, padb), (padl, padr)), mode)
     return data

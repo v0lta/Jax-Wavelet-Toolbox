@@ -72,7 +72,7 @@ def test_fwt_ifwt_lorenz(wavelet, level, mode, tmax):
 
 
 @pytest.mark.parametrize("wavelet", ["db2", "sym4"])
-@pytest.mark.parametrize("mode", ["reflect", "zero"])
+@pytest.mark.parametrize("mode", ["symmetric", "reflect", "zero"])
 @pytest.mark.parametrize("batch_size", [1, 3])
 @pytest.mark.parametrize("level", [2, None])
 @pytest.mark.parametrize("dtype", [jnp.float64, jnp.float32])

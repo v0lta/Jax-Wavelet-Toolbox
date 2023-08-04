@@ -5,22 +5,14 @@
 # Created on Thu Jun 11 2020
 # Copyright (c) 2020 Moritz Wolter
 #
-from typing import Any, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import jax
 import jax.lax
 import jax.numpy as jnp
 import pywt
 
-from .utils import _as_wavelet, _fold_axes, _unfold_axes
-
-
-def _check_if_array(array: Any) -> jnp.ndarray:
-    if not isinstance(array, jnp.ndarray):
-        raise ValueError(
-            "First element of coeffs must be the approximation coefficient tensor."
-        )
-    return array
+from .utils import _as_wavelet, _check_if_array, _fold_axes, _unfold_axes
 
 
 def _preprocess_array_dec1d(

@@ -15,7 +15,7 @@ config.update("jax_enable_x64", True)
 config.update("jax_platform_name", "cpu")
 
 
-@pytest.mark.parametrize("mode", ["symmetric", "reflect"])
+@pytest.mark.parametrize("mode", ["symmetric", "reflect", "zero"])
 @pytest.mark.parametrize("wavelet", ["haar", "db2", "db3", "sym4"])
 @pytest.mark.parametrize("level", [1, 2, None])
 @pytest.mark.parametrize("size", [(65, 65), (64, 64), (47, 45), (45, 47)])

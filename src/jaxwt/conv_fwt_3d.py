@@ -59,6 +59,10 @@ def wavedec3(
     fold = False
     wavelet = _as_wavelet(wavelet)
 
+    if mode == "zero":
+        # translate pywt to numpy.
+        mode = "constant"
+
     if len(data.shape) == 3:
         data = jnp.expand_dims(data, 1)
     elif len(data.shape) >= 4:
@@ -301,6 +305,10 @@ def _fwt_pad3d(
         padb += 1
     if data.shape[-3] % 2 != 0:
         padba += 1
+
+    if mode == "zero":
+        # translate pywt to numpy.
+        mode = "constant"
 
     data = jnp.pad(
         data, ((0, 0), (0, 0), (padfr, padba), (padt, padb), (padl, padr)), mode
