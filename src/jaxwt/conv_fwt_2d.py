@@ -239,7 +239,9 @@ def _construct_2d_filt(lo: jnp.ndarray, hi: jnp.ndarray) -> jnp.ndarray:
     return filt
 
 
-def _fwt_pad2d(data: jnp.ndarray, filt_len: int, mode: str = "reflect") -> jnp.ndarray:
+def _fwt_pad2d(
+    data: jnp.ndarray, filt_len: int, mode: str = "symmetric"
+) -> jnp.ndarray:
     padr = 0
     padl = 0
     padt = 0

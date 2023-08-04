@@ -57,7 +57,7 @@ def test_multidim_input(size: List[int]):
         if isinstance(jaxwtc, jnp.ndarray):
             test_list.append(jnp.allclose(jaxwtc, pywtc))
         else:
-            test_list.append(
+            test_list.extend(
                 tuple(
                     jnp.allclose(jaxwtce, pywtce)
                     for jaxwtce, pywtce in zip(jaxwtc, pywtc)
