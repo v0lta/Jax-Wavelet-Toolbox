@@ -1,11 +1,18 @@
-from typing import Dict, List, Optional, Tuple, Union
+"""Three dimensional transformation support."""
+
+from typing import Dict, List, Optional, Union
 
 import jax
 import jax.numpy as jnp
 import pywt
 
 from .conv_fwt import _check_if_array, _get_filter_arrays
-from .utils import _as_wavelet, _fold_axes, _unfold_axes
+from .utils import (
+    _adjust_padding_at_reconstruction,
+    _as_wavelet,
+    _fold_axes,
+    _unfold_axes,
+)
 
 
 def wavedec3(
@@ -14,7 +21,7 @@ def wavedec3(
     level: Optional[int] = None,
     mode: str = "symmetric",
     precision: str = "highest",
-) -> List[Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]]]:
+) -> List[Union[jnp.ndarray, Dict[str, jnp.ndarray]]]:
     """Compute the three dimensional wavelet analysis transform on the last three \
        dimensions of the input data array.
 
@@ -38,6 +45,8 @@ def wavedec3(
         as keys. With a for the low pass or approximation filter and
         d for the high-pass or detail filter.
 
+    Raises:
+        ValueError: If the input has less than three dimensions.
 
     Examples:
         >>> import pywt
@@ -75,9 +84,7 @@ def wavedec3(
             pywt.Wavelet("MyWavelet", wavelet),
         )
 
-    result_lst: List[
-        Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]]
-    ] = []
+    result_lst: List[Union[jnp.ndarray, Dict[str, jnp.ndarray]]] = []
     res_lll = data
     for _ in range(level):
         if res_lll.ndim == 4:
@@ -109,7 +116,7 @@ def wavedec3(
     result_lst.reverse()
 
     if fold:
-        unfold_list: List[Union[jnp.ndarray, Tuple[jnp.ndarray, ...]]] = []
+        unfold_list: List[Union[jnp.ndarray, Dict[str, jnp.ndarray]]] = []
         for fres in result_lst:
             if isinstance(fres, jnp.ndarray):
                 unfold_list.append(_unfold_axes(fres, ds, 3))
@@ -117,7 +124,7 @@ def wavedec3(
                 unfold_list.append(
                     {key: _unfold_axes(fres_el, ds, 3) for key, fres_el in fres.items()}
                 )
-        result_lst = unfold_list  # type: ignore
+        result_lst = unfold_list
 
     return result_lst
 
@@ -165,7 +172,7 @@ def waverec3(
                 fold_list.append(
                     {key: _fold_axes(coeff_el, 3)[0] for key, coeff_el in coeff.items()}
                 )
-        coeffs = fold_list  # type: ignore
+        coeffs = fold_list
 
     _, _, rec_lo, rec_hi = _get_filter_arrays(
         wavelet, flip=True, dtype=_check_if_array(coeffs[0]).dtype
@@ -175,6 +182,8 @@ def waverec3(
     rec_filt = jnp.transpose(rec_filt, [1, 0, 2, 3, 4])
 
     res_lll = jnp.expand_dims(_check_if_array(coeffs[0]), 1)
+
+    coeff_dicts = coeffs[1:]
     for c_pos, coeff_dict in enumerate(coeffs[1:]):
         res_lll = jnp.concatenate(
             [
@@ -205,32 +214,16 @@ def waverec3(
         padfr = (2 * filt_len - 3) // 2
         padba = (2 * filt_len - 3) // 2
 
-        if c_pos < len(coeffs) - 2:
-            pred_len = res_lll.shape[-1] - (padl + padr)
-            next_len = coeffs[c_pos + 2]["aad"].shape[-1]
-            pred_len2 = res_lll.shape[-2] - (padt + padb)
-            next_len2 = coeffs[c_pos + 2]["aad"].shape[-2]
-            pred_len3 = res_lll.shape[-3] - (padt + padb)
-            next_len3 = coeffs[c_pos + 2]["aad"].shape[-3]
-            if next_len != pred_len:
-                padr += 1
-                pred_len = res_lll.shape[-1] - (padl + padr)
-                assert (
-                    next_len == pred_len
-                ), "padding error, please open an issue on github "
-            if next_len2 != pred_len2:
-                padb += 1
-                pred_len2 = res_lll.shape[-2] - (padt + padb)
-                assert (
-                    next_len2 == pred_len2
-                ), "padding error, please open an issue on github "
-            if next_len3 != pred_len3:
-                padba += 1
-                pred_len3 = res_lll.shape[-3] - (padfr + padba)
-                assert (
-                    next_len3 == pred_len3
-                ), "padding error, please open an issue on github "
-
+        if c_pos + 1 < len(coeff_dicts):
+            padr, padl = _adjust_padding_at_reconstruction(
+                res_lll.shape[-1], coeff_dicts[c_pos + 1]["aad"].shape[-1], padr, padl
+            )
+            padb, padt = _adjust_padding_at_reconstruction(
+                res_lll.shape[-2], coeff_dicts[c_pos + 1]["aad"].shape[-2], padb, padt
+            )
+            padba, padfr = _adjust_padding_at_reconstruction(
+                res_lll.shape[-3], coeff_dicts[c_pos + 1]["aad"].shape[-3], padba, padfr
+            )
         # print('padding', padt, padb, padl, padr)
         if padt > 0:
             res_lll = res_lll[..., padt:, :]

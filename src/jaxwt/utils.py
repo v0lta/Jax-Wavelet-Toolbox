@@ -80,3 +80,19 @@ def _fold_axes(data: jnp.ndarray, keep_no: int) -> Tuple[jnp.ndarray, List[int]]
 def _unfold_axes(data: jnp.ndarray, ds: List[int], keep_no: int) -> jnp.ndarray:
     """Unfold i.e. [batch*channel, height, widht] into [batch, channel, height, width]."""
     return jnp.reshape(data, ds[:-keep_no] + list(data.shape[-keep_no:]))
+
+
+def _adjust_padding_at_reconstruction(
+    res_size: int, coeff_size: int, pad_end: int, pad_start: int
+) -> Tuple[int, int]:
+    pred_size = res_size - (pad_start + pad_end)
+    next_size = coeff_size
+    if next_size == pred_size:
+        pass
+    elif next_size == pred_size - 1:
+        pad_end += 1
+    else:
+        raise AssertionError(
+            "padding error, please check if dec and rec wavelets are identical."
+        )
+    return pad_end, pad_start
