@@ -85,7 +85,7 @@ def _conv_transpose_dedilate(
         rec_filt (jnp.ndarray): The reconstruction filter pair
             of shape [1, 2, filter_length].
         dilation (int): The dilation factor.
-        length (int): The signal lenght.
+        length (int): The signal length.
         precision (str): Defaults to "highest".
 
     Returns:
@@ -112,9 +112,20 @@ def _conv_transpose_dedilate(
 
 def iswt(
     coeffs: List[jnp.ndarray],
-    wavelet: pywt.Wavelet,
+    wavelet: Union[pywt.Wavelet, str],
     precision: str = "highest",
 ) -> jnp.ndarray:
+    """Computes an inverse stationary wavelet transform.
+
+    Args:
+        coeffs (List[jnp.ndarray]): The coefficients as computed by the analysis code.
+        wavelet (Union[pywt.Wavelet, str]): The wavelet used by the transform.
+        precision (str, optional): Precision value for lax convolution code.
+            Defaults to "highest".
+
+    Returns:
+        jnp.ndarray: The reconstruction of the original signal.
+    """
     ds = None
     length = coeffs[0].shape[-1]
     if coeffs[0].ndim > 2:
