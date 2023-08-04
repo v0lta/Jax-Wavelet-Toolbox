@@ -9,13 +9,55 @@ import jax
 import jax.numpy as jnp
 import pywt
 
-from .conv_fwt import _check_if_array, _get_filter_arrays
+from .conv_fwt import _get_filter_arrays
 from .utils import (
     _adjust_padding_at_reconstruction,
     _as_wavelet,
+    _check_if_array,
     _fold_axes,
     _unfold_axes,
 )
+
+
+def _preprocess_array_dec2d(
+    data: jnp.ndarray,
+) -> Tuple[jnp.ndarray, Union[List[int], None]]:
+    ds = None
+    if len(data.shape) == 2:
+        data = jnp.expand_dims(data, (0, 1))
+    elif len(data.shape) == 3:
+        data = jnp.expand_dims(data, 1)
+    elif len(data.shape) >= 4:
+        data, ds = _fold_axes(data, 2)
+        data = jnp.expand_dims(data, 1)
+    elif len(data.shape) == 1:
+        raise ValueError("More than one input dimension required.")
+    return data, ds
+
+
+def _postprocess_result_list_dec2d(
+    result_lst: List[Union[jnp.ndarray, Tuple[jnp.ndarray, ...]]], ds: List[int]
+) -> jnp.ndarray:
+    unfold_list: List[Union[jnp.ndarray, Tuple[jnp.ndarray, ...]]] = []
+    for fres in result_lst:
+        if isinstance(fres, jnp.ndarray):
+            unfold_list.append(_unfold_axes(fres, ds, 2))
+        else:
+            unfold_list.append(tuple(_unfold_axes(fres_el, ds, 2) for fres_el in fres))
+    return unfold_list
+
+
+def _preprocess_result_list_rec2d(
+    coeffs: List[Union[jnp.ndarray, Tuple[jnp.ndarray, ...]]]
+) -> Tuple[List[Union[jnp.ndarray, Tuple[jnp.ndarray, ...]]], List[int]]:
+    ds = list(_check_if_array(coeffs[0]).shape)
+    fold_list: List[Union[jnp.ndarray, Tuple[jnp.ndarray, ...]]] = []
+    for coeff in coeffs:
+        if isinstance(coeff, jnp.ndarray):
+            fold_list.append(_fold_axes(coeff, 2)[0])
+        else:
+            fold_list.append(tuple(_fold_axes(coeff_el, 2)[0] for coeff_el in coeff))
+    return fold_list, ds
 
 
 def wavedec2(
@@ -45,9 +87,6 @@ def wavedec2(
             A denotes approximation, H horizontal, V vertical
             and D diagonal coefficients.
 
-    Raises:
-        ValueError: If the dimensionality of the input data array is unsupported.
-
     Examples:
         >>> import pywt, scipy.datasets
         >>> import jaxwt as jwt
@@ -56,21 +95,8 @@ def wavedec2(
         >>> face = face.astype(jnp.float64)
         >>> jwt.wavedec2(face, pywt.Wavelet("haar"), level=2)
     """
-    fold = False
     wavelet = _as_wavelet(wavelet)
-
-    if len(data.shape) == 2:
-        data = jnp.expand_dims(data, (0, 1))
-    elif len(data.shape) == 3:
-        data = jnp.expand_dims(data, 1)
-    elif len(data.shape) >= 4:
-        fold = True
-        data, ds = _fold_axes(data, 2)
-        data = jnp.expand_dims(data, 1)
-    elif len(data.shape) == 1:
-        raise ValueError("Wavedec2 needs more than one input dimension to work.")
-
-    # data = jnp.expand_dims(data, 1)
+    data, ds = _preprocess_array_dec2d(data)
     dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True, dtype=data.dtype)
     dec_filt = _construct_2d_filt(lo=dec_lo, hi=dec_hi)
 
@@ -83,7 +109,7 @@ def wavedec2(
             [data.shape[-1], data.shape[-2]], pywt.Wavelet("MyWavelet", wavelet)
         )
 
-    result_lst: List[
+    result_list: List[
         Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]]
     ] = []
     res_ll = data
@@ -98,22 +124,14 @@ def wavedec2(
             precision=jax.lax.Precision(precision),
         )
         res_ll, res_lh, res_hl, res_hh = jnp.split(res, 4, 1)
-        result_lst.append((res_lh.squeeze(1), res_hl.squeeze(1), res_hh.squeeze(1)))
-    result_lst.append(res_ll.squeeze(1))
-    result_lst.reverse()
+        result_list.append((res_lh.squeeze(1), res_hl.squeeze(1), res_hh.squeeze(1)))
+    result_list.append(res_ll.squeeze(1))
+    result_list.reverse()
 
-    if fold:
-        unfold_list: List[Union[jnp.ndarray, Tuple[jnp.ndarray, ...]]] = []
-        for fres in result_lst:
-            if isinstance(fres, jnp.ndarray):
-                unfold_list.append(_unfold_axes(fres, ds, 2))
-            else:
-                unfold_list.append(
-                    tuple(_unfold_axes(fres_el, ds, 2) for fres_el in fres)
-                )
-        result_lst = unfold_list  # type: ignore
+    if ds:
+        result_list = _postprocess_result_list_dec2d(result_list, ds)  # type: ignore
 
-    return result_lst
+    return result_list
 
 
 def waverec2(
@@ -146,19 +164,9 @@ def waverec2(
     """
     wavelet = _as_wavelet(wavelet)
 
-    fold = False
+    ds = None
     if _check_if_array(coeffs[0]).ndim > 3:
-        fold = True
-        ds = list(_check_if_array(coeffs[0]).shape)
-        fold_list: List[Union[jnp.ndarray, Tuple[jnp.ndarray, ...]]] = []
-        for coeff in coeffs:
-            if isinstance(coeff, jnp.ndarray):
-                fold_list.append(_fold_axes(coeff, 2)[0])
-            else:
-                fold_list.append(
-                    tuple(_fold_axes(coeff_el, 2)[0] for coeff_el in coeff)
-                )
-        coeffs = fold_list  # type: ignore
+        coeffs, ds = _preprocess_result_list_rec2d(coeffs)
 
     _, _, rec_lo, rec_hi = _get_filter_arrays(
         wavelet, flip=True, dtype=_check_if_array(coeffs[0]).dtype
@@ -206,10 +214,8 @@ def waverec2(
             res_ll = res_ll[..., padl:]
         if padr > 0:
             res_ll = res_ll[..., :-padr]
-
     res_ll = res_ll.squeeze(1)
-
-    if fold:
+    if ds:
         res_ll = _unfold_axes(res_ll, ds, 2)
     return res_ll
 
