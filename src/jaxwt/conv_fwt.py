@@ -5,7 +5,7 @@
 # Created on Thu Jun 11 2020
 # Copyright (c) 2020 Moritz Wolter
 #
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, Any
 
 import jax
 import jax.lax
@@ -15,9 +15,18 @@ import pywt
 from .utils import _as_wavelet, _fold_axes, _unfold_axes
 
 
+
+def _check_if_array(array: Any) -> jnp.ndarray:
+    if not isinstance(array, jnp.ndarray):
+        raise ValueError(
+            "First element of coeffs must be the approximation coefficient tensor."
+        )
+    return array
+
+
 def _preprocess_array_dec1d(
-        data: jnp.ndarray
-        ) -> Tuple[jnp.ndarray, Union[List[int], None]]:
+    data: jnp.ndarray,
+) -> Tuple[jnp.ndarray, Union[List[int], None]]:
     ds = None
     if len(data.shape) == 1:
         # add channel and batch dimension.
@@ -31,12 +40,23 @@ def _preprocess_array_dec1d(
     return data, ds
 
 
-def _postprocess_array_dec1d(
-        result_lst: List[jnp.ndarray], ds: List[int]) -> List[jnp.ndarray]:
+def _postprocess_result_list_dec1d(
+    result_lst: List[jnp.ndarray], ds: List[int]
+) -> List[jnp.ndarray]:
     unfold_list = []
     for fres in result_lst:
         unfold_list.append(_unfold_axes(fres, ds, 1))
     return unfold_list
+
+def _preprocess_result_list_rec1d(
+        result_lst: List[jnp.ndarray]
+    ) -> Tuple[List[jnp.ndarray], List[int]]:
+    fold_coeffs = []
+    ds = list(_check_if_array(result_lst[0]).shape)
+    for uf_coeff in result_lst:
+        f_coeff, _ = _fold_axes(uf_coeff, 1)
+        fold_coeffs.append(f_coeff)
+    return fold_coeffs, ds
 
 
 def wavedec(
@@ -106,7 +126,7 @@ def wavedec(
     result_list.reverse()
 
     if ds:
-        result_list = _postprocess_array_dec1d(result_list, ds)
+        result_list = _postprocess_result_list_dec1d(result_list, ds)
 
     return result_list
 
@@ -141,12 +161,7 @@ def waverec(
     """
     ds = None
     if coeffs[0].ndim > 2:
-        fold_coeffs = []
-        ds = list(coeffs[0].shape)
-        for uf_coeff in coeffs:
-            f_coeff, _ = _fold_axes(uf_coeff, 1)
-            fold_coeffs.append(f_coeff)
-        coeffs = fold_coeffs
+        coeffs, ds = _preprocess_result_list_rec1d(coeffs)
 
     wavelet = _as_wavelet(wavelet)
     # unlike pytorch lax's transpose conv requires filter flips.

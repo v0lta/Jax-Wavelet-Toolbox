@@ -9,7 +9,7 @@ import jax
 import jax.numpy as jnp
 import pywt
 
-from .conv_fwt import _get_filter_arrays
+from .conv_fwt import _get_filter_arrays, _check_if_array
 from .utils import _as_wavelet, _fold_axes, _unfold_axes
 
 
@@ -110,13 +110,6 @@ def wavedec2(
 
     return result_lst
 
-
-def _check_if_array(array: Any) -> jnp.ndarray:
-    if not isinstance(array, jnp.ndarray):
-        raise ValueError(
-            "First element of coeffs must be the approximation coefficient tensor."
-        )
-    return array
 
 
 def waverec2(

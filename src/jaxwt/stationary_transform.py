@@ -1,16 +1,20 @@
 """Code for stationary wavelet transforms."""
-from typing import List, Union, Optional
+from typing import List, Optional, Union
 
 import jax
 import jax.numpy as jnp
 import pywt
 
-from .conv_fwt import _get_filter_arrays  # _fwt_unpad,
-from .conv_fwt import _postprocess_array_dec1d, _preprocess_array_dec1d
-from .utils import _as_wavelet, _fold_axes, _unfold_axes
+from .conv_fwt import (
+    _get_filter_arrays,
+    _postprocess_result_list_dec1d,
+    _preprocess_array_dec1d,
+    _preprocess_result_list_rec1d
+)
+from .utils import _as_wavelet, _unfold_axes
 
 
-def _swt(
+def swt(
     data: jnp.ndarray,
     wavelet: Union[pywt.Wavelet, str],
     level: Optional[int] = None,
@@ -61,7 +65,7 @@ def _swt(
     result_list.append(res_lo.squeeze(1))
 
     if ds:
-        result_list = _postprocess_array_dec1d(result_list, ds)
+        result_list = _postprocess_result_list_dec1d(result_list, ds)
 
     return result_list[::-1]
 
@@ -106,7 +110,7 @@ def _conv_transpose_dedilate(
     return jnp.concatenate(recs, -1)
 
 
-def _iswt(
+def iswt(
     coeffs: List[jnp.ndarray],
     wavelet: pywt.Wavelet,
     precision: str = "highest",
@@ -114,12 +118,7 @@ def _iswt(
     ds = None
     length = coeffs[0].shape[-1]
     if coeffs[0].ndim > 2:
-        fold_coeffs = []
-        ds = list(coeffs[0].shape)
-        for uf_coeff in coeffs:
-            f_coeff, _ = _fold_axes(uf_coeff, 1)
-            fold_coeffs.append(f_coeff)
-        coeffs = fold_coeffs
+        coeffs, ds = _preprocess_result_list_rec1d(coeffs)
 
     wavelet = _as_wavelet(wavelet)
     # unlike pytorch lax's transpose conv requires filter flips.
@@ -129,16 +128,13 @@ def _iswt(
 
     res_lo = coeffs[0]
     for c_pos, res_hi in enumerate(coeffs[1:]):
-        dilation = 2 ** (len(coeffs[1:]) // 2 - c_pos)
+        dilation = 2 ** (len(coeffs[1:]) - c_pos - 1)
         res_lo = jnp.stack([res_lo, res_hi], 1)
         padl, padr = dilation * (filt_len // 2), dilation * (filt_len // 2 - 1)
         res_lo = jnp.pad(
             res_lo, [(0, 0)] * (res_lo.ndim - 1) + [(padl, padr)], mode="wrap"
         )
-
         res_lo = _conv_transpose_dedilate(res_lo, rec_filt, dilation, length, precision)
-        # res_lo = _fwt_unpad(res_lo, filt_len, c_pos, coeffs)
-        # res_lo = res_lo[..., ::2]
         res_lo = res_lo.squeeze(1)
 
     if ds:
