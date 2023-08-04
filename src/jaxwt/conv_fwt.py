@@ -5,7 +5,7 @@
 # Created on Thu Jun 11 2020
 # Copyright (c) 2020 Moritz Wolter
 #
-from typing import List, Optional, Tuple, Union, Any
+from typing import Any, List, Optional, Tuple, Union
 
 import jax
 import jax.lax
@@ -13,7 +13,6 @@ import jax.numpy as jnp
 import pywt
 
 from .utils import _as_wavelet, _fold_axes, _unfold_axes
-
 
 
 def _check_if_array(array: Any) -> jnp.ndarray:
@@ -48,9 +47,10 @@ def _postprocess_result_list_dec1d(
         unfold_list.append(_unfold_axes(fres, ds, 1))
     return unfold_list
 
+
 def _preprocess_result_list_rec1d(
-        result_lst: List[jnp.ndarray]
-    ) -> Tuple[List[jnp.ndarray], List[int]]:
+    result_lst: List[jnp.ndarray],
+) -> Tuple[List[jnp.ndarray], List[int]]:
     fold_coeffs = []
     ds = list(_check_if_array(result_lst[0]).shape)
     for uf_coeff in result_lst:

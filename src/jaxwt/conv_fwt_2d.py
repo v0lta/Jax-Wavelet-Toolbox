@@ -9,7 +9,7 @@ import jax
 import jax.numpy as jnp
 import pywt
 
-from .conv_fwt import _get_filter_arrays, _check_if_array
+from .conv_fwt import _check_if_array, _get_filter_arrays
 from .utils import _as_wavelet, _fold_axes, _unfold_axes
 
 
@@ -109,7 +109,6 @@ def wavedec2(
         result_lst = unfold_list  # type: ignore
 
     return result_lst
-
 
 
 def waverec2(

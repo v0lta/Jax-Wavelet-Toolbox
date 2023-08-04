@@ -9,7 +9,7 @@ from .conv_fwt import (
     _get_filter_arrays,
     _postprocess_result_list_dec1d,
     _preprocess_array_dec1d,
-    _preprocess_result_list_rec1d
+    _preprocess_result_list_rec1d,
 )
 from .utils import _as_wavelet, _unfold_axes
 
