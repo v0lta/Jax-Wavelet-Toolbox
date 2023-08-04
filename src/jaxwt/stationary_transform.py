@@ -29,8 +29,8 @@ def swt(
 
     Args:
         data (jnp.ndarray): The input data of shape [batch_size, time].
-            The function assumes the last dimension to have a length divisible
-            by two.
+            This function assumes a trailing input dimension with
+            a length divisible by two.
         wavelet (Union[Wavelet, str]): The wavelet to use.
         level (Optional[int], optional): The number of levels to compute
 
@@ -41,6 +41,13 @@ def swt(
             A denotes approximation and D detail coefficients.
             The ordering is identical to the ``wavedec`` function.
             Equivalent to pywt.swt with trim_approx=True.
+
+    Example:
+        >>> import jax, jaxwt
+        >>> import jax.numpy as jnp
+        >>> signal = jax.random.randint(
+                jax.random.PRNGKey(42), [1, 10], 0, 9).astype(jnp.float32)
+        >>> jaxwt.swt(signal, "haar", level=2)
     """
     wavelet = _as_wavelet(wavelet)
     data, ds = _preprocess_array_dec1d(data)
@@ -101,6 +108,14 @@ def _conv_transpose_dedilate(
 
     Returns:
         jnp.ndarray: The convolution result.
+
+
+    Example:
+        >>> import jax, jaxwt
+        >>> import jax.numpy as jnp
+        >>> signal = jax.random.randint(
+                jax.random.PRNGKey(42), [1, 10], 0, 9).astype(jnp.float32)
+        >>> jaxwt.iswt(jaxwt.swt(signal, "haar", level=2), "haar")
     """
     recs = []
     to_conv_t_list = [
