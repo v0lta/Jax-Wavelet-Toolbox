@@ -37,7 +37,7 @@ def _preprocess_array_dec2d(
 
 def _postprocess_result_list_dec2d(
     result_lst: List[Union[jnp.ndarray, Tuple[jnp.ndarray, ...]]], ds: List[int]
-) -> jnp.ndarray:
+) -> List[Union[jnp.ndarray, Tuple[jnp.ndarray, ...]]]:
     unfold_list: List[Union[jnp.ndarray, Tuple[jnp.ndarray, ...]]] = []
     for fres in result_lst:
         if isinstance(fres, jnp.ndarray):
@@ -48,7 +48,7 @@ def _postprocess_result_list_dec2d(
 
 
 def _preprocess_result_list_rec2d(
-    coeffs: List[Union[jnp.ndarray, Tuple[jnp.ndarray, ...]]]
+    coeffs: List[Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]]]
 ) -> Tuple[List[Union[jnp.ndarray, Tuple[jnp.ndarray, ...]]], List[int]]:
     ds = list(_check_if_array(coeffs[0]).shape)
     fold_list: List[Union[jnp.ndarray, Tuple[jnp.ndarray, ...]]] = []
@@ -56,6 +56,8 @@ def _preprocess_result_list_rec2d(
         if isinstance(coeff, jnp.ndarray):
             fold_list.append(_fold_axes(coeff, 2)[0])
         else:
+            if len(coeff) != 3:
+                raise ValueError("We expect a length three tuple in 2d.")
             fold_list.append(tuple(_fold_axes(coeff_el, 2)[0] for coeff_el in coeff))
     return fold_list, ds
 
@@ -101,9 +103,7 @@ def wavedec2(
     dec_filt = _construct_2d_filt(lo=dec_lo, hi=dec_hi)
 
     if level is None:
-        level = pywt.dwtn_max_level(
-            [data.shape[-1], data.shape[-2]], wavelet
-        )
+        level = pywt.dwtn_max_level([data.shape[-1], data.shape[-2]], wavelet)
 
     result_list: List[
         Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]]
@@ -162,17 +162,19 @@ def waverec2(
 
     ds = None
     if _check_if_array(coeffs[0]).ndim > 3:
-        coeffs, ds = _preprocess_result_list_rec2d(coeffs)
+        fcoeffs, ds = _preprocess_result_list_rec2d(coeffs)
+    else:
+        fcoeffs = coeffs  # type: ignore
 
     _, _, rec_lo, rec_hi = _get_filter_arrays(
-        wavelet, flip=True, dtype=_check_if_array(coeffs[0]).dtype
+        wavelet, flip=True, dtype=_check_if_array(fcoeffs[0]).dtype
     )
     filt_len = rec_lo.shape[-1]
     rec_filt = _construct_2d_filt(lo=rec_lo, hi=rec_hi)
     rec_filt = jnp.transpose(rec_filt, [1, 0, 2, 3])
 
-    res_ll = jnp.expand_dims(_check_if_array(coeffs[0]), 1)
-    for c_pos, res_lh_hl_hh in enumerate(coeffs[1:]):
+    res_ll = jnp.expand_dims(_check_if_array(fcoeffs[0]), 1)
+    for c_pos, res_lh_hl_hh in enumerate(fcoeffs[1:]):
         res_ll = jnp.concatenate(
             [
                 res_ll,
@@ -195,12 +197,12 @@ def waverec2(
         padr = (2 * filt_len - 3) // 2
         padt = (2 * filt_len - 3) // 2
         padb = (2 * filt_len - 3) // 2
-        if c_pos < len(coeffs) - 2:
+        if c_pos < len(fcoeffs) - 2:
             padr, padl = _adjust_padding_at_reconstruction(
-                res_ll.shape[-1], coeffs[c_pos + 2][0].shape[-1], padr, padl
+                res_ll.shape[-1], fcoeffs[c_pos + 2][0].shape[-1], padr, padl
             )
             padb, padt = _adjust_padding_at_reconstruction(
-                res_ll.shape[-2], coeffs[c_pos + 2][0].shape[-2], padb, padt
+                res_ll.shape[-2], fcoeffs[c_pos + 2][0].shape[-2], padb, padt
             )
         if padt > 0:
             res_ll = res_ll[..., padt:, :]

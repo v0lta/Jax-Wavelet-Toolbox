@@ -1,4 +1,9 @@
 """Code for stationary wavelet transforms."""
+#
+# Created on Fri Aug 04 2023
+# Copyright (c) 2023 Moritz Wolter
+#
+
 from typing import List, Optional, Union
 
 import jax
@@ -23,13 +28,19 @@ def swt(
     """Compute a multilevel 1d stationary wavelet transform.
 
     Args:
-        data (torch.Tensor): The input data of shape [batch_size, time].
+        data (jnp.ndarray): The input data of shape [batch_size, time].
+            The function assumes the last dimension to have a length divisible
+            by two.
         wavelet (Union[Wavelet, str]): The wavelet to use.
         level (Optional[int], optional): The number of levels to compute
 
     Returns:
-        List[torch.Tensor]: Same as wavedec.
-        Equivalent to pywt.swt with trim_approx=True.
+        List[jnp.ndarray]: A list containing the wavelet coefficients.
+            The coefficients are in pywt order:
+            [cA_n, cD_n, cD_n-1, …, cD2, cD1].
+            A denotes approximation and D detail coefficients.
+            The ordering is identical to the ``wavedec`` function.
+            Equivalent to pywt.swt with trim_approx=True.
     """
     wavelet = _as_wavelet(wavelet)
     data, ds = _preprocess_array_dec1d(data)

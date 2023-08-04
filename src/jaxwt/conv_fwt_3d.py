@@ -1,4 +1,8 @@
 """Three dimensional transformation support."""
+#
+# Created on Fri Aug 4 2023
+# Copyright (c) 2023 Moritz Wolter
+#
 
 from typing import Dict, List, Optional, Union
 
@@ -253,11 +257,11 @@ def _construct_3d_filt(lo: jnp.ndarray, hi: jnp.ndarray) -> jnp.ndarray:
     """Construct three-dimensional filters using outer products.
 
     Args:
-        lo (torch.Tensor): Low-pass input filter.
-        hi (torch.Tensor): High-pass input filter
+        lo (jnp.ndarray): Low-pass input filter.
+        hi (jnp.ndarray): High-pass input filter
 
     Returns:
-        torch.Tensor: Stacked 3d filters of dimension::
+        jnp.ndarray: Stacked 3d filters of dimension::
 
         [8, 1, length, height, width].
 

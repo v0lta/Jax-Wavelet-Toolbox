@@ -1,4 +1,7 @@
 """Test utility code."""
+#
+# Copyright (c) 2023 Moritz Wolter
+#
 
 import jax
 import jax.numpy as jnp

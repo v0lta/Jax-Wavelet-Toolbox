@@ -1,4 +1,8 @@
 """Test 3d transform support."""
+#
+# Created on Fri Aug 04 2023
+# Copyright (c) 2023 Moritz Wolter
+#
 
 from typing import List
 
@@ -21,7 +25,9 @@ config.update("jax_platform_name", "cpu")
 @pytest.mark.parametrize("axes", [[-3, -2, -1]])
 @pytest.mark.parametrize("wavelet", ["haar", "sym3", "db4"])
 @pytest.mark.parametrize("mode", ["zero", "symmetric", "reflect"])
-def test_multidim_input(size: List[int], axes: List[int], level: int, wavelet: str, mode: str):
+def test_multidim_input(
+    size: List[int], axes: List[int], level: int, wavelet: str, mode: str
+):
     """Ensure correct folding of multidimensional inputs."""
     key = jax.random.PRNGKey(42)
     data = jax.random.uniform(key, size).astype(jnp.float64)

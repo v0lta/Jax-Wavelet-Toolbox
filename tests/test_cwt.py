@@ -1,4 +1,7 @@
 """Test the continuous transformation code."""
+#
+# Copyright (c) 2023 Moritz Wolter
+#
 from typing import Union
 
 import jax.numpy as jnp

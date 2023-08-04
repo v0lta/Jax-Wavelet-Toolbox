@@ -1,4 +1,8 @@
 """2d Convolution fast wavelet transform test code."""
+#
+# Copyright (c) 2023 Moritz Wolter
+#
+
 from typing import List
 
 import jax

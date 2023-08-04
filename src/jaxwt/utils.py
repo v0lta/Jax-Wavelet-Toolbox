@@ -1,6 +1,7 @@
 """Various utility functions."""
-
-# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2023 Moritz Wolter
+#
 from collections import namedtuple
 from typing import Any, List, Tuple, Union
 

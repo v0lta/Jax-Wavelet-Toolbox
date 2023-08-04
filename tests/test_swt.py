@@ -1,4 +1,8 @@
 """Test the stationary wavelet transformation code."""
+#
+# Created on Fri Aug 04 2023
+# Copyright (c) 2023 Moritz Wolter
+#
 
 import jax
 import jax.numpy as jnp
