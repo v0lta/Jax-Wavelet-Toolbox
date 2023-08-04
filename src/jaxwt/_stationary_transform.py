@@ -1,15 +1,12 @@
 """Code for stationary wavelet transforms."""
-from typing import List, Optional, Union
+from typing import List, Union, Optional
 
 import jax
 import jax.numpy as jnp
 import pywt
 
-from .conv_fwt import (
-    _get_filter_arrays,  # _fwt_unpad,
-    _postprocess_array_dec1d,
-    _preprocess_array_dec1d,
-)
+from .conv_fwt import _get_filter_arrays  # _fwt_unpad,
+from .conv_fwt import _postprocess_array_dec1d, _preprocess_array_dec1d
 from .utils import _as_wavelet, _fold_axes, _unfold_axes
 
 
@@ -69,12 +66,53 @@ def _swt(
     return result_list[::-1]
 
 
+def _conv_transpose_dedilate(
+    conv_res: jnp.ndarray,
+    rec_filt: jnp.ndarray,
+    dilation: int,
+    length: int,
+    precision: Optional[str] = "highest",
+) -> jnp.ndarray:
+    """Undo the forward dilated convolution from the analysis transform.
+
+    Args:
+        conv_res (jnp.ndarray): The dilated coeffcients
+            of shape [batch, 2, length].
+        rec_filt (jnp.ndarray): The reconstruction filter pair
+            of shape [1, 2, filter_length].
+        dilation (int): The dilation factor.
+        length (int): The signal lenght.
+        precision (str): Defaults to "highest".
+
+    Returns:
+        jnp.ndarray: The convolution result.
+    """
+    recs = []
+    to_conv_t_list = [
+        conv_res[..., fl : (fl + dilation * rec_filt.shape[-1]) : dilation]
+        for fl in range(length)
+    ]
+    to_conv_t = jnp.concatenate(to_conv_t_list, 0)
+    rec = jax.lax.conv_transpose(
+        lhs=to_conv_t,
+        rhs=rec_filt,
+        padding=[(0, 0)],
+        strides=[1],
+        dimension_numbers=("NCH", "OIH", "NCH"),
+        precision=jax.lax.Precision(precision),
+    )
+    rec = rec / 2.0
+    recs = jnp.split(rec, len(to_conv_t_list))
+    return jnp.concatenate(recs, -1)
+
+
 def _iswt(
     coeffs: List[jnp.ndarray],
     wavelet: pywt.Wavelet,
     precision: str = "highest",
 ) -> jnp.ndarray:
     ds = None
+    length = coeffs[0].shape[-1]
     if coeffs[0].ndim > 2:
         fold_coeffs = []
         ds = list(coeffs[0].shape)
@@ -87,27 +125,18 @@ def _iswt(
     # unlike pytorch lax's transpose conv requires filter flips.
     _, _, rec_lo, rec_hi = _get_filter_arrays(wavelet, flip=True, dtype=coeffs[0].dtype)
     filt_len = rec_lo.shape[-1]
-    filt = jnp.stack([rec_lo, rec_hi], 1)
+    rec_filt = jnp.stack([rec_lo, rec_hi], 1)
 
     res_lo = coeffs[0]
     for c_pos, res_hi in enumerate(coeffs[1:]):
         dilation = 2 ** (len(coeffs[1:]) // 2 - c_pos)
-        padl, padr = dilation * (filt_len // 2), dilation * (filt_len // 2 - 1)
         res_lo = jnp.stack([res_lo, res_hi], 1)
+        padl, padr = dilation * (filt_len // 2), dilation * (filt_len // 2 - 1)
         res_lo = jnp.pad(
             res_lo, [(0, 0)] * (res_lo.ndim - 1) + [(padl, padr)], mode="wrap"
         )
-        res_lo = res_lo[..., ::2]
-        res_lo = jax.lax.conv_general_dilated(
-            lhs=res_lo,
-            rhs=filt,
-            padding=[(0, 0)],
-            lhs_dilation=[2],
-            rhs_dilation=[dilation],
-            window_strides=[1],
-            dimension_numbers=("NCH", "OIH", "NCH"),
-            precision=jax.lax.Precision(precision),
-        )
+
+        res_lo = _conv_transpose_dedilate(res_lo, rec_filt, dilation, length, precision)
         # res_lo = _fwt_unpad(res_lo, filt_len, c_pos, coeffs)
         # res_lo = res_lo[..., ::2]
         res_lo = res_lo.squeeze(1)

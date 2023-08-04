@@ -15,7 +15,9 @@ import pywt
 from .utils import _as_wavelet, _fold_axes, _unfold_axes
 
 
-def _preprocess_array_dec1d(data: jnp.ndarray) -> Tuple[jnp.ndarray, List[int]]:
+def _preprocess_array_dec1d(
+        data: jnp.ndarray
+        ) -> Tuple[jnp.ndarray, Union[List[int], None]]:
     ds = None
     if len(data.shape) == 1:
         # add channel and batch dimension.
@@ -29,7 +31,8 @@ def _preprocess_array_dec1d(data: jnp.ndarray) -> Tuple[jnp.ndarray, List[int]]:
     return data, ds
 
 
-def _postprocess_array_dec1d(result_lst, ds):
+def _postprocess_array_dec1d(
+        result_lst: List[jnp.ndarray], ds: List[int]) -> List[jnp.ndarray]:
     unfold_list = []
     for fres in result_lst:
         unfold_list.append(_unfold_axes(fres, ds, 1))
