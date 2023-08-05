@@ -14,8 +14,11 @@ from .conv_fwt import _get_filter_arrays
 from .utils import (
     _adjust_padding_at_reconstruction,
     _as_wavelet,
+    _check_axes_argument,
     _check_if_array,
     _fold_axes,
+    _swap_axes,
+    _undo_swap_axes,
     _unfold_axes,
 )
 
@@ -34,33 +37,6 @@ def _preprocess_array_dec2d(
     elif len(data.shape) == 1:
         raise ValueError("More than one input dimension required.")
     return data, ds
-
-
-def _check_axes(axes: List[int]) -> None:
-    if len(set(axes)) != len(axes):
-        raise ValueError("Cant transform the same axis twice.")
-
-
-def _get_transpose_order(
-    axes: List[int], data_shape: List[int]
-) -> Tuple[List[int], List[int]]:
-    axes = list(map(lambda a: a + len(data_shape) if a < 0 else a, axes))
-    all_axes = list(range(len(data_shape)))
-    remove_transformed = list(filter(lambda a: a not in axes, all_axes))
-    return remove_transformed, axes
-
-
-def _swap_axes(data: jnp.ndarray, axes: List[int]) -> jnp.ndarray:
-    _check_axes(axes)
-    front, back = _get_transpose_order(axes, list(data.shape))
-    return jnp.transpose(data, front + back)
-
-
-def _undo_swap_axes(data: jnp.ndarray, axes: List[int]) -> jnp.ndarray:
-    _check_axes(axes)
-    front, back = _get_transpose_order(axes, list(data.shape))
-    restore_sorted = jnp.argsort(jnp.array(front + back))
-    return jnp.transpose(data, restore_sorted)
 
 
 def wavedec2(
@@ -189,12 +165,12 @@ def waverec2(
         if len(axes) != 2:
             raise ValueError("2d transforms work with two axes.")
         else:
-            _check_axes(list(axes))
+            _check_axes_argument(list(axes))
             to_tree = partial(_swap_axes, axes=list(axes))
             coeffs = jax.tree_util.tree_map(to_tree, coeffs)
 
     ds = None
-    if _check_if_array(coeffs[0]).ndim > 3:
+    if _check_if_array(coeffs[0]).ndim > 3:  # TODO: check this!
         ds = list(_check_if_array(coeffs[0]).shape)
         _fold_axes_keep2 = partial(_fold_axes, keep_no=2)
         _tree_fold = lambda array: _fold_axes_keep2(array)[0]  # noqa: E731

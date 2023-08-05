@@ -3,8 +3,8 @@
 # Created on Fri Aug 4 2023
 # Copyright (c) 2023 Moritz Wolter
 #
-
-from typing import Dict, List, Optional, Union
+from functools import partial
+from typing import Dict, List, Optional, Tuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -14,7 +14,10 @@ from .conv_fwt import _check_if_array, _get_filter_arrays
 from .utils import (
     _adjust_padding_at_reconstruction,
     _as_wavelet,
+    _check_axes_argument,
     _fold_axes,
+    _swap_axes,
+    _undo_swap_axes,
     _unfold_axes,
 )
 
@@ -24,6 +27,7 @@ def wavedec3(
     wavelet: pywt.Wavelet,
     mode: str = "symmetric",
     level: Optional[int] = None,
+    axes: Tuple[int, int, int] = (-3, -2, -1),
     precision: str = "highest",
 ) -> List[Union[jnp.ndarray, Dict[str, jnp.ndarray]]]:
     """Compute the three dimensional wavelet analysis transform on the last three \
@@ -33,10 +37,12 @@ def wavedec3(
         data (jnp.ndarray): Jax array containing the data to be transformed.
             A possible input shape would be [batch size, channels, hight, width].
         wavelet (pywt.Wavelet): A namedtouple containing the filters for the transformation.
-        level (int): The max level to be used, if not set as many levels as possible
-                               will be used. Defaults to None.
         mode (str): The desired padding mode. Choose reflect, symmetric or zero.
             Defaults to symmetric.
+        level (int): The max level to be used, if not set as many levels as possible
+                               will be used. Defaults to None.
+        axes (Tuple[int, int, int]): Compute the transform over these axes instead of the
+            last three. Defaults to (-3, -2, -1).
         precision (str): The desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
 
@@ -51,6 +57,7 @@ def wavedec3(
 
     Raises:
         ValueError: If the input has less than three dimensions.
+        ValueError: If axes does not have three elements or contains a repetition.
 
     Examples:
         >>> import pywt
@@ -60,17 +67,18 @@ def wavedec3(
                                       [3, 16, 16, 16])
         >>> jwt.wavedec3(data, "haar", level=2)
     """
-    fold = False
+    ds = None
     wavelet = _as_wavelet(wavelet)
 
-    if mode == "zero":
-        # translate pywt to numpy.
-        mode = "constant"
+    if tuple(axes) != (-3, -2, -1):
+        if len(axes) != 3:
+            raise ValueError("3d transforms work with two axes.")
+        else:
+            data = _swap_axes(data, list(axes))
 
     if len(data.shape) == 3:
         data = jnp.expand_dims(data, 1)
     elif len(data.shape) >= 4:
-        fold = True
         data, ds = _fold_axes(data, 3)
         data = jnp.expand_dims(data, 1)
     else:
@@ -92,7 +100,7 @@ def wavedec3(
             pywt.Wavelet("MyWavelet", wavelet),
         )
 
-    result_lst: List[Union[jnp.ndarray, Dict[str, jnp.ndarray]]] = []
+    result_list: List[Union[jnp.ndarray, Dict[str, jnp.ndarray]]] = []
     res_lll = data
     for _ in range(level):
         if res_lll.ndim == 4:
@@ -109,7 +117,7 @@ def wavedec3(
         res_lll, res_llh, res_lhl, res_lhh, res_hll, res_hlh, res_hhl, res_hhh = [
             sr.squeeze(1) for sr in jnp.split(res, 8, 1)
         ]
-        result_lst.append(
+        result_list.append(
             {
                 "aad": res_llh,
                 "ada": res_lhl,
@@ -120,26 +128,24 @@ def wavedec3(
                 "ddd": res_hhh,
             }
         )
-    result_lst.append(res_lll)
-    result_lst.reverse()
+    result_list.append(res_lll)
+    result_list.reverse()
 
-    if fold:
-        unfold_list: List[Union[jnp.ndarray, Dict[str, jnp.ndarray]]] = []
-        for fres in result_lst:
-            if isinstance(fres, jnp.ndarray):
-                unfold_list.append(_unfold_axes(fres, ds, 3))
-            else:
-                unfold_list.append(
-                    {key: _unfold_axes(fres_el, ds, 3) for key, fres_el in fres.items()}
-                )
-        result_lst = unfold_list
+    if ds:
+        f_unfold_axes3 = partial(_unfold_axes, ds=ds, keep_no=3)
+        result_list = jax.tree_util.tree_map(f_unfold_axes3, result_list)
 
-    return result_lst
+    if tuple(axes) != (-3, -2, -1):
+        to_tree = partial(_undo_swap_axes, axes=axes)
+        result_list = jax.tree_util.tree_map(to_tree, result_list)
+
+    return result_list
 
 
 def waverec3(
     coeffs: List[Union[jnp.ndarray, Dict[str, jnp.ndarray]]],
     wavelet: pywt.Wavelet,
+    axes: Tuple[int, int, int] = (-3, -2, -1),
     precision: str = "highest",
 ) -> jnp.ndarray:
     """Compute a two dimensional synthesis wavelet transfrom.
@@ -149,12 +155,17 @@ def waverec3(
     Args:
         coeffs (list): The input coefficients, typically the output of wavedec3.
         wavelet (pywt.Wavelet): The named tuple contining the filters used to compute the analysis transform.
+        axes (Tuple[int, int, int]): Transform these axes instead of the
+            last three. Defaults to (-3, -2, -1).
         precision (str): The desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
 
     Returns:
         jnp.array: Reconstruction of the original input data array.
             For example of shape [batch, channels, height, width].
+
+    Raises:
+        ValueError: If axes does not have three elements or contains a repetition.
 
     Example:
         >>> import pywt
@@ -168,19 +179,20 @@ def waverec3(
     """
     wavelet = _as_wavelet(wavelet)
 
-    fold = False
-    if _check_if_array(coeffs[0]).ndim > 3:
-        fold = True
+    if tuple(axes) != (-3, -2, -1):
+        if len(axes) != 3:
+            raise ValueError("3d transforms work with two axes.")
+        else:
+            _check_axes_argument(list(axes))
+            to_tree = partial(_swap_axes, axes=list(axes))
+            coeffs = jax.tree_util.tree_map(to_tree, coeffs)
+
+    ds = None
+    if _check_if_array(coeffs[0]).ndim > 4:
         ds = list(_check_if_array(coeffs[0]).shape)
-        fold_list: List[Union[jnp.ndarray, Dict[str, jnp.ndarray]]] = []
-        for coeff in coeffs:
-            if isinstance(coeff, jnp.ndarray):
-                fold_list.append(_fold_axes(coeff, 3)[0])
-            else:
-                fold_list.append(
-                    {key: _fold_axes(coeff_el, 3)[0] for key, coeff_el in coeff.items()}
-                )
-        coeffs = fold_list
+        _fold_axes_keep3 = partial(_fold_axes, keep_no=3)
+        _tree_fold = lambda array: _fold_axes_keep3(array)[0]  # noqa: E731
+        coeffs = jax.tree_util.tree_map(_tree_fold, coeffs)
 
     _, _, rec_lo, rec_hi = _get_filter_arrays(
         wavelet, flip=True, dtype=_check_if_array(coeffs[0]).dtype
@@ -248,8 +260,10 @@ def waverec3(
 
     res_lll = res_lll.squeeze(1)
 
-    if fold:
+    if ds:
         res_lll = _unfold_axes(res_lll, ds, 3)
+    if axes != (-3, -2, -1):
+        res_lll = _undo_swap_axes(res_lll, list(axes))
     return res_lll
 
 

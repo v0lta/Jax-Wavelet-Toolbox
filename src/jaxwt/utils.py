@@ -94,7 +94,8 @@ def _adjust_padding_at_reconstruction(
         pad_end += 1
     else:
         raise AssertionError(
-            "padding error, please check if dec and rec wavelets are identical."
+            "padding error, please check if dec as well as rec wavelets \
+             and axes are identical."
         )
     return pad_end, pad_start
 
@@ -105,3 +106,30 @@ def _check_if_array(array: Any) -> jnp.ndarray:
             "First element of coeffs must be the approximation coefficient tensor."
         )
     return array
+
+
+def _check_axes_argument(axes: List[int]) -> None:
+    if len(set(axes)) != len(axes):
+        raise ValueError("Cant transform the same axis twice.")
+
+
+def _get_transpose_order(
+    axes: List[int], data_shape: List[int]
+) -> Tuple[List[int], List[int]]:
+    axes = list(map(lambda a: a + len(data_shape) if a < 0 else a, axes))
+    all_axes = list(range(len(data_shape)))
+    remove_transformed = list(filter(lambda a: a not in axes, all_axes))
+    return remove_transformed, axes
+
+
+def _swap_axes(data: jnp.ndarray, axes: List[int]) -> jnp.ndarray:
+    _check_axes_argument(axes)
+    front, back = _get_transpose_order(axes, list(data.shape))
+    return jnp.transpose(data, front + back)
+
+
+def _undo_swap_axes(data: jnp.ndarray, axes: List[int]) -> jnp.ndarray:
+    _check_axes_argument(axes)
+    front, back = _get_transpose_order(axes, list(data.shape))
+    restore_sorted = jnp.argsort(jnp.array(front + back))
+    return jnp.transpose(data, restore_sorted)
