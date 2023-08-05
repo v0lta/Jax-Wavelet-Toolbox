@@ -54,8 +54,8 @@ def _preprocess_result_list_rec1d(
 def wavedec(
     data: jnp.ndarray,
     wavelet: Union[pywt.Wavelet, str],
-    level: Optional[int] = None,
     mode: str = "symmetric",
+    level: Optional[int] = None,
     axis: int = -1,
     precision: str = "highest",
 ) -> List[jnp.ndarray]:
@@ -66,11 +66,13 @@ def wavedec(
             I.e. of shape [batch, time].
         wavelet (pywt.Wavelet): A wavelet name-string or a wavelet object
             containing the wavelet filter arrays.
-        level (int): Max scale level to be used, of none as many levels
-                     as possible are used. Defaults to None.
         mode (str): The padding used to extend the input signal.
             Choose reflect, symmetric or zero.
             Defaults to symmetric.
+        level (int): Max scale level to be used, of none as many levels
+                     as possible are used. Defaults to None.
+        axis (int): Compute the transform over this axis instead of the
+            last one. Defaults to -1.
         precision (str): The desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
 
@@ -153,6 +155,7 @@ def waverec(
         wavelet (pywt.Wavelet): A string with a wavelet name or
             a wavelet object containing the wavelet filters used to evaluate
             the decomposition.
+        axis (int): Transform this axis instead of the last one. Defaults to -1.
         precision (str): The desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
 

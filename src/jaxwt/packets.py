@@ -100,7 +100,9 @@ class WaveletPacket(BaseDict):
     ) -> None:
         self.data[path] = data
         if level < self.max_level:
-            res_lo, res_hi = wavedec(data, self.wavelet, 1, mode=self.mode)
+            res_lo, res_hi = wavedec(
+                data=data, wavelet=self.wavelet, level=1, mode=self.mode
+            )
             self._recursive_dwt(res_lo, level + 1, path + "a")
             self._recursive_dwt(res_hi, level + 1, path + "d")
         else:
@@ -183,7 +185,7 @@ class WaveletPacket2D(BaseDict):
         self.data[path] = data
         if level < self.max_level:
             result_a, (result_h, result_v, result_d) = wavedec2(
-                data, self.wavelet, 1, mode=self.mode
+                data=data, wavelet=self.wavelet, level=1, mode=self.mode
             )
             # assert for type checking
             assert not isinstance(result_a, tuple)

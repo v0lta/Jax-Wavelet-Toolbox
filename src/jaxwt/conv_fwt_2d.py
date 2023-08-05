@@ -3,6 +3,7 @@
 # Created on Thu Jun 12 2020
 # Copyright (c) 2020 Moritz Wolter
 #
+from functools import partial
 from typing import List, Optional, Tuple, Union
 
 import jax
@@ -35,38 +36,39 @@ def _preprocess_array_dec2d(
     return data, ds
 
 
-def _postprocess_result_list_dec2d(
-    result_lst: List[Union[jnp.ndarray, Tuple[jnp.ndarray, ...]]], ds: List[int]
-) -> List[Union[jnp.ndarray, Tuple[jnp.ndarray, ...]]]:
-    unfold_list: List[Union[jnp.ndarray, Tuple[jnp.ndarray, ...]]] = []
-    for fres in result_lst:
-        if isinstance(fres, jnp.ndarray):
-            unfold_list.append(_unfold_axes(fres, ds, 2))
-        else:
-            unfold_list.append(tuple(_unfold_axes(fres_el, ds, 2) for fres_el in fres))
-    return unfold_list
+def _check_axes(axes: List[int]) -> None:
+    if len(set(axes)) != len(axes):
+        raise ValueError("Cant transform the same axis twice.")
 
 
-def _preprocess_result_list_rec2d(
-    coeffs: List[Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]]]
-) -> Tuple[List[Union[jnp.ndarray, Tuple[jnp.ndarray, ...]]], List[int]]:
-    ds = list(_check_if_array(coeffs[0]).shape)
-    fold_list: List[Union[jnp.ndarray, Tuple[jnp.ndarray, ...]]] = []
-    for coeff in coeffs:
-        if isinstance(coeff, jnp.ndarray):
-            fold_list.append(_fold_axes(coeff, 2)[0])
-        else:
-            if len(coeff) != 3:
-                raise ValueError("We expect a length three tuple in 2d.")
-            fold_list.append(tuple(_fold_axes(coeff_el, 2)[0] for coeff_el in coeff))
-    return fold_list, ds
+def _get_transpose_order(
+    axes: List[int], data_shape: List[int]
+) -> Tuple[List[int], List[int]]:
+    axes = list(map(lambda a: a + len(data_shape) if a < 0 else a, axes))
+    all_axes = list(range(len(data_shape)))
+    remove_transformed = list(filter(lambda a: a not in axes, all_axes))
+    return remove_transformed, axes
+
+
+def _swap_axes(data: jnp.ndarray, axes: List[int]) -> jnp.ndarray:
+    _check_axes(axes)
+    front, back = _get_transpose_order(axes, list(data.shape))
+    return jnp.transpose(data, front + back)
+
+
+def _undo_swap_axes(data: jnp.ndarray, axes: List[int]) -> jnp.ndarray:
+    _check_axes(axes)
+    front, back = _get_transpose_order(axes, list(data.shape))
+    restore_sorted = jnp.argsort(jnp.array(front + back))
+    return jnp.transpose(data, restore_sorted)
 
 
 def wavedec2(
     data: jnp.ndarray,
     wavelet: pywt.Wavelet,
-    level: Optional[int] = None,
     mode: str = "symmetric",
+    level: Optional[int] = None,
+    axes: Tuple[int, int] = (-2, -1),
     precision: str = "highest",
 ) -> List[Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]]]:
     """Compute the two dimensional wavelet analysis transform on the last two dimensions of the input data array.
@@ -75,10 +77,12 @@ def wavedec2(
         data (jnp.ndarray): Jax array containing the data to be transformed.
             A possible input shape would be [batch size, hight, width].
         wavelet (pywt.Wavelet): A namedtouple containing the filters for the transformation.
-        level (int): The max level to be used, if not set as many levels as possible
-                               will be used. Defaults to None.
         mode (str): The desired padding mode. Choose "reflect", "symmetric" or "zero".
             Defaults to symmetric.
+        level (int): The max level to be used, if not set as many levels as possible
+                               will be used. Defaults to None.
+        axes (Tuple[int, int]): Compute the transform over these axes instead of the
+            last two. Defaults to (-2, -1).
         precision (str): The desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
 
@@ -89,6 +93,9 @@ def wavedec2(
             A denotes approximation, H horizontal, V vertical
             and D diagonal coefficients.
 
+    Raises:
+        ValueError: If axes does not have two elements or contains a repetition.
+
     Examples:
         >>> import pywt, scipy.datasets
         >>> import jaxwt as jwt
@@ -98,6 +105,13 @@ def wavedec2(
         >>> jwt.wavedec2(face, pywt.Wavelet("haar"), level=2)
     """
     wavelet = _as_wavelet(wavelet)
+
+    if tuple(axes) != (-2, -1):
+        if len(axes) != 2:
+            raise ValueError("2d transforms work with two axes.")
+        else:
+            data = _swap_axes(data, list(axes))
+
     data, ds = _preprocess_array_dec2d(data)
     dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True, dtype=data.dtype)
     dec_filt = _construct_2d_filt(lo=dec_lo, hi=dec_hi)
@@ -125,7 +139,12 @@ def wavedec2(
     result_list.reverse()
 
     if ds:
-        result_list = _postprocess_result_list_dec2d(result_list, ds)  # type: ignore
+        _unfold_axes2 = partial(_unfold_axes, ds=ds, keep_no=2)
+        result_list = jax.tree_util.tree_map(_unfold_axes2, result_list)
+
+    if axes != (-2, -1):
+        to_tree = partial(_undo_swap_axes, axes=axes)
+        result_list = jax.tree_util.tree_map(to_tree, result_list)
 
     return result_list
 
@@ -133,6 +152,7 @@ def wavedec2(
 def waverec2(
     coeffs: List[Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]]],
     wavelet: pywt.Wavelet,
+    axes: Tuple[int, int] = (-2, -1),
     precision: str = "highest",
 ) -> jnp.ndarray:
     """Compute a two dimensional synthesis wavelet transfrom.
@@ -142,8 +162,13 @@ def waverec2(
     Args:
         coeffs (list): The input coefficients, typically the output of wavedec2.
         wavelet (pywt.Wavelet): The named tuple contining the filters used to compute the analysis transform.
+        axes (Tuple[int, int]): Compute the transform over these axes instead of the
+            last two. Defaults to (-2, -1).
         precision (str): The desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
+
+    Raises:
+        ValueError: If axes does not have two elements or contains a repetition.
 
     Returns:
         jnp.array: Reconstruction of the original input data array of shape [batch, height, width].
@@ -160,11 +185,22 @@ def waverec2(
     """
     wavelet = _as_wavelet(wavelet)
 
+    if tuple(axes) != (-2, -1):
+        if len(axes) != 2:
+            raise ValueError("2d transforms work with two axes.")
+        else:
+            _check_axes(list(axes))
+            to_tree = partial(_swap_axes, axes=list(axes))
+            coeffs = jax.tree_util.tree_map(to_tree, coeffs)
+
     ds = None
     if _check_if_array(coeffs[0]).ndim > 3:
-        fcoeffs, ds = _preprocess_result_list_rec2d(coeffs)
+        ds = list(_check_if_array(coeffs[0]).shape)
+        _fold_axes_keep2 = partial(_fold_axes, keep_no=2)
+        _tree_fold = lambda array: _fold_axes_keep2(array)[0]  # noqa: E731
+        fcoeffs = jax.tree_util.tree_map(_tree_fold, coeffs)
     else:
-        fcoeffs = coeffs  # type: ignore
+        fcoeffs = coeffs
 
     _, _, rec_lo, rec_hi = _get_filter_arrays(
         wavelet, flip=True, dtype=_check_if_array(fcoeffs[0]).dtype
@@ -215,6 +251,10 @@ def waverec2(
     res_ll = res_ll.squeeze(1)
     if ds:
         res_ll = _unfold_axes(res_ll, ds, 2)
+
+    if axes != (-2, -1):
+        res_ll = _undo_swap_axes(res_ll, list(axes))
+
     return res_ll
 
 

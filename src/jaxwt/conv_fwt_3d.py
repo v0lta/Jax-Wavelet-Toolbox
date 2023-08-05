@@ -22,8 +22,8 @@ from .utils import (
 def wavedec3(
     data: jnp.ndarray,
     wavelet: pywt.Wavelet,
-    level: Optional[int] = None,
     mode: str = "symmetric",
+    level: Optional[int] = None,
     precision: str = "highest",
 ) -> List[Union[jnp.ndarray, Dict[str, jnp.ndarray]]]:
     """Compute the three dimensional wavelet analysis transform on the last three \
