@@ -162,7 +162,7 @@ def waverec(
             Defaults to "highest".
 
     Returns:
-        jnp.array: Reconstruction of the original data.
+        jnp.ndarray: Reconstruction of the original data.
 
     Raises:
         ValueError: If the axis argument is not an integer.

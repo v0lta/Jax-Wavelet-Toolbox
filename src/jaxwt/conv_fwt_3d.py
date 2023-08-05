@@ -161,7 +161,7 @@ def waverec3(
             Defaults to "highest".
 
     Returns:
-        jnp.array: Reconstruction of the original input data array.
+        jnp.ndarray: Reconstruction of the original input data array.
             For example of shape [batch, channels, height, width].
 
     Raises:
