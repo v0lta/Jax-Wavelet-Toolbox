@@ -1,4 +1,4 @@
-.. |favicon| image:: https://raw.githubusercontent.com/v0lta/Jax-Wavelet-Toolbox/main/docs/favicon/favicon.ico
+.. |favicon| image:: https://raw.githubusercontent.com/v0lta/Jax-Wavelet-Toolbox/master/docs/favicon/favicon.ico
     :alt: Shannon-wavelet favicon
     :width: 32
     :target: https://pypi.org/project/jaxwt/
