@@ -23,6 +23,7 @@ def swt(
     data: jnp.ndarray,
     wavelet: Union[pywt.Wavelet, str],
     level: Optional[int] = None,
+    axis: int = -1,
     precision: str = "highest",
 ) -> List[jnp.ndarray]:
     """Compute a multilevel 1d stationary wavelet transform.
@@ -33,6 +34,10 @@ def swt(
             a length divisible by two.
         wavelet (Union[Wavelet, str]): The wavelet to use.
         level (Optional[int], optional): The number of levels to compute
+        axis (int): Compute the transform over this axis instead of the
+            last one. Defaults to -1.
+        precision (str): For the desired precision, choose "fastest", "high" or "highest".
+            Defaults to "highest".
 
     Returns:
         List[jnp.ndarray]: A list containing the wavelet coefficients.
@@ -42,6 +47,9 @@ def swt(
             The ordering is identical to the ``wavedec`` function.
             Equivalent to pywt.swt with trim_approx=True.
 
+    Raises:
+        ValueError: If the axis argument is not an integer.
+
     Example:
         >>> import jax, jaxwt
         >>> import jax.numpy as jnp
@@ -49,6 +57,12 @@ def swt(
                 jax.random.PRNGKey(42), [1, 10], 0, 9).astype(jnp.float32)
         >>> jaxwt.swt(signal, "haar", level=2)
     """
+    if axis != -1:
+        if isinstance(axis, int):
+            data = data.swapaxes(axis, -1)
+        else:
+            raise ValueError("swt transforms a single axis.")
+
     wavelet = _as_wavelet(wavelet)
     data, ds = _preprocess_array_dec1d(data)
 
@@ -84,6 +98,12 @@ def swt(
 
     if ds:
         result_list = _postprocess_result_list_dec1d(result_list, ds)
+
+    if axis != -1:
+        swap = []
+        for coeff in result_list:
+            swap.append(coeff.swapaxes(axis, -1))
+        result_list = swap
 
     return result_list[::-1]
 
@@ -139,6 +159,7 @@ def _conv_transpose_dedilate(
 def iswt(
     coeffs: List[jnp.ndarray],
     wavelet: Union[pywt.Wavelet, str],
+    axis: int = -1,
     precision: Optional[str] = "highest",
 ) -> jnp.ndarray:
     """Compute an inverse stationary wavelet transform.
@@ -146,12 +167,25 @@ def iswt(
     Args:
         coeffs (List[jnp.ndarray]): The coefficients as computed by the analysis code.
         wavelet (Union[pywt.Wavelet, str]): The wavelet used by the transform.
-        precision (Optional[str]): Precision value for lax convolution code.
+        axis (int): Transform this axis instead of the last one. Defaults to -1.
+        precision (Optional[str]): Precision value for the underlying lax convolution code.
             Defaults to "highest".
+
+    Raises:
+        ValueError: If the axis argument is not an integer.
 
     Returns:
         jnp.ndarray: The reconstruction of the original signal.
     """
+    if axis != -1:
+        swap = []
+        if isinstance(axis, int):
+            for coeff in coeffs:
+                swap.append(coeff.swapaxes(axis, -1))
+            coeffs = swap
+        else:
+            raise ValueError("iswt transforms a single axis only.")
+
     ds = None
     length = coeffs[0].shape[-1]
     if coeffs[0].ndim > 2:
@@ -176,4 +210,7 @@ def iswt(
 
     if ds:
         res_lo = _unfold_axes(res_lo, ds, 1)
+    if axis != -1:
+        res_lo = res_lo.swapaxes(axis, -1)
+
     return res_lo

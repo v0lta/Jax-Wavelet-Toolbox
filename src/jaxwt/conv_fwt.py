@@ -73,7 +73,7 @@ def wavedec(
                      as possible are used. Defaults to None.
         axis (int): Compute the transform over this axis instead of the
             last one. Defaults to -1.
-        precision (str): The desired precision, choose "fastest", "high" or "highest".
+        precision (str): For desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
 
 
@@ -98,7 +98,7 @@ def wavedec(
         if isinstance(axis, int):
             data = data.swapaxes(axis, -1)
         else:
-            raise ValueError("wavedec transforms a single axis.")
+            raise ValueError("wavedec transforms a single axis only.")
 
     wavelet = _as_wavelet(wavelet)
     data, ds = _preprocess_array_dec1d(data)
@@ -181,7 +181,7 @@ def waverec(
                 swap.append(coeff.swapaxes(axis, -1))
             coeffs = swap
         else:
-            raise ValueError("wavedec transforms a single axis.")
+            raise ValueError("waverec transforms a single axis only.")
 
     ds = None
     if coeffs[0].ndim > 2:

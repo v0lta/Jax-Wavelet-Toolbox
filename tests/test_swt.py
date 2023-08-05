@@ -36,6 +36,22 @@ def test_swt_1d(level, size, wavelet):
     assert jnp.allclose(rec, signal)
 
 
+@pytest.mark.parametrize("axis", [-1, 0, 1, 2])
+def test_axis_arg(axis):
+    """Test swt axis argument support."""
+    key = jax.random.PRNGKey(41)
+    signal = jax.random.randint(key, [32, 32, 32], 0, 9).astype(jnp.float64)
+    jaxwt_coeff = swt(signal, "haar", level=2, axis=axis)
+    pywt_coeff = pywt.swt(signal, "haar", 2, trim_approx=True, norm=False, axis=axis)
+    test_list = []
+    for a, b in zip(jaxwt_coeff, pywt_coeff):
+        test_list.extend([jnp.allclose(ael, bel) for ael, bel in zip(a, b)])
+    assert all(test_list)
+
+    rec = iswt(jaxwt_coeff, "haar", axis=axis)
+    assert jnp.allclose(rec, signal)
+
+
 @pytest.mark.parametrize("wavelet_str", ["db1", "db2", "db3", "sym4"])
 def test_inverse_dilation(wavelet_str):
     """Test transposed dilated convolutions."""

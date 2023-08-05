@@ -109,7 +109,7 @@ def test_multi_batch_fwt(level, shape):
     assert np.allclose(data, rec)
 
 
-@pytest.mark.parametrize("axis", [-1, 1, 2])
+@pytest.mark.parametrize("axis", [-1, 0, 1, 2])
 def test_axis_arg(axis):
     """Ensure the axis argument works as expected."""
     key = random.PRNGKey(42)
