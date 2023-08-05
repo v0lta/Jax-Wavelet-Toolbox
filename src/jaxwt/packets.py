@@ -28,7 +28,7 @@ class WaveletPacket(BaseDict):
     def __init__(
         self,
         data: jnp.ndarray,
-        wavelet: pywt.Wavelet,
+        wavelet: Union[pywt.Wavelet, str],
         mode: str = "symmetric",
         max_level: Optional[int] = None,
     ):
@@ -36,7 +36,7 @@ class WaveletPacket(BaseDict):
 
         Args:
             data (jnp.ndarray): The input data array of shape [batch_size, time].
-            wavelet (pywt.Wavelet): The wavelet used for the decomposition.
+            wavelet (Union[pywt.Wavelet, str]): The wavelet used for the decomposition.
             mode (str): The desired padding method. Choose i.e.
                 "reflect", "symmetric" or "zero". Defaults to "symmetric".
 

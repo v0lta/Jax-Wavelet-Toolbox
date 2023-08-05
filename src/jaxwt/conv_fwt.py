@@ -66,6 +66,7 @@ def wavedec(
             I.e. of shape [batch, time].
         wavelet (pywt.Wavelet): A wavelet name-string or a wavelet object
             containing the wavelet filter arrays.
+            Check pywt.wavelist() for a list of options.
         mode (str): The padding used to extend the input signal.
             Choose reflect, symmetric or zero.
             Defaults to symmetric.
@@ -150,9 +151,10 @@ def waverec(
     """Reconstruct the original signal in one dimension.
 
     Args:
-        coeffs (list): Wavelet coefficients, typically produced by the wavedec function.
+        coeffs (List[jnp.ndarray]): Wavelet coefficients, typically produced
+            by the ``wavedec`` function.
             List entries of shape [batch_size, coefficients] work.
-        wavelet (pywt.Wavelet): A string with a wavelet name or
+        wavelet (Union[pywt.Wavelet, str]): A string with a wavelet name or
             a wavelet object containing the wavelet filters used to evaluate
             the decomposition.
         axis (int): Transform this axis instead of the last one. Defaults to -1.

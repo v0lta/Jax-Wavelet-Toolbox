@@ -41,25 +41,26 @@ def _preprocess_array_dec2d(
 
 def wavedec2(
     data: jnp.ndarray,
-    wavelet: pywt.Wavelet,
+    wavelet: Union[pywt.Wavelet, str],
     mode: str = "symmetric",
     level: Optional[int] = None,
     axes: Tuple[int, int] = (-2, -1),
     precision: str = "highest",
 ) -> List[Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]]]:
-    """Compute the two dimensional wavelet analysis transform on the last two dimensions of the input data array.
+    """Compute the two-dimensional wavelet analysis transform on the last two dimensions of the input data array.
 
     Args:
         data (jnp.ndarray): Jax array containing the data to be transformed.
-            A possible input shape would be [batch size, hight, width].
-        wavelet (pywt.Wavelet): A namedtouple containing the filters for the transformation.
+            A possible input shape would be [batch size, height, width].
+        wavelet (Union[pywt.Wavelet, str]):  A wavelet object or wavelet string
+            for the transformation. Check pywt.wavelist() for a list of options.
         mode (str): The desired padding mode. Choose "reflect", "symmetric" or "zero".
             Defaults to symmetric.
         level (int): The max level to be used, if not set as many levels as possible
                                will be used. Defaults to None.
         axes (Tuple[int, int]): Compute the transform over these axes instead of the
             last two. Defaults to (-2, -1).
-        precision (str): The desired precision, choose "fastest", "high" or "highest".
+        precision (str): For the desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
 
     Returns:
@@ -70,7 +71,7 @@ def wavedec2(
             and D diagonal coefficients.
 
     Raises:
-        ValueError: If axes does not have two elements or contains a repetition.
+        ValueError: If the axes tuple does not have two elements or contains a repetition.
 
     Examples:
         >>> import pywt, scipy.datasets
@@ -127,27 +128,28 @@ def wavedec2(
 
 def waverec2(
     coeffs: List[Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]]],
-    wavelet: pywt.Wavelet,
+    wavelet: Union[pywt.Wavelet, str],
     axes: Tuple[int, int] = (-2, -1),
     precision: str = "highest",
 ) -> jnp.ndarray:
-    """Compute a two dimensional synthesis wavelet transfrom.
+    """Compute a two-dimensional synthesis wavelet transform.
 
        Use it to reconstruct the original input image from the wavelet coefficients.
 
     Args:
         coeffs (list): The input coefficients, typically the output of wavedec2.
-        wavelet (pywt.Wavelet): The named tuple contining the filters used to compute the analysis transform.
+        wavelet (Union[pywt.Wavelet, str]): The wavelet to use for the synthesis transform.
         axes (Tuple[int, int]): Compute the transform over these axes instead of the
             last two. Defaults to (-2, -1).
-        precision (str): The desired precision, choose "fastest", "high" or "highest".
+        precision (str): For desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
 
     Raises:
-        ValueError: If axes does not have two elements or contains a repetition.
+        ValueError: If the axes tuple does not have two elements or contains a repetition.
 
     Returns:
-        jnp.array: Reconstruction of the original input data array of shape [batch, height, width].
+        jnp.ndarray: Reconstruction of the original input data array
+          of shape [batch, height, width].
 
     Example:
         >>> import pywt, scipy.datasets

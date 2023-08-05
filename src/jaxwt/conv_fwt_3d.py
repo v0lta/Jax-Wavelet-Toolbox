@@ -1,4 +1,4 @@
-"""Three dimensional transformation support."""
+"""Three-dimensional transformation support."""
 #
 # Created on Fri Aug 4 2023
 # Copyright (c) 2023 Moritz Wolter
@@ -24,26 +24,26 @@ from .utils import (
 
 def wavedec3(
     data: jnp.ndarray,
-    wavelet: pywt.Wavelet,
+    wavelet: Union[pywt.Wavelet, str],
     mode: str = "symmetric",
     level: Optional[int] = None,
     axes: Tuple[int, int, int] = (-3, -2, -1),
     precision: str = "highest",
 ) -> List[Union[jnp.ndarray, Dict[str, jnp.ndarray]]]:
-    """Compute the three dimensional wavelet analysis transform on the last three \
+    """Compute the three-dimensional wavelet analysis transform on the last three \
        dimensions of the input data array.
 
     Args:
         data (jnp.ndarray): Jax array containing the data to be transformed.
-            A possible input shape would be [batch size, channels, hight, width].
-        wavelet (pywt.Wavelet): A namedtouple containing the filters for the transformation.
+            A possible input shape would be [batch size, channels, height, width].
+        wavelet (Union[pywt.Wavelet, str]): A wavelet object or str for the transformation.
         mode (str): The desired padding mode. Choose reflect, symmetric or zero.
             Defaults to symmetric.
         level (int): The max level to be used, if not set as many levels as possible
                                will be used. Defaults to None.
         axes (Tuple[int, int, int]): Compute the transform over these axes instead of the
             last three. Defaults to (-3, -2, -1).
-        precision (str): The desired precision, choose "fastest", "high" or "highest".
+        precision (str): For desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
 
     Returns:
@@ -57,7 +57,7 @@ def wavedec3(
 
     Raises:
         ValueError: If the input has less than three dimensions.
-        ValueError: If axes does not have three elements or contains a repetition.
+        ValueError: If the axes tuple does not have three elements or contains a repetition.
 
     Examples:
         >>> import pywt
@@ -144,20 +144,20 @@ def wavedec3(
 
 def waverec3(
     coeffs: List[Union[jnp.ndarray, Dict[str, jnp.ndarray]]],
-    wavelet: pywt.Wavelet,
+    wavelet: Union[pywt.Wavelet, str],
     axes: Tuple[int, int, int] = (-3, -2, -1),
     precision: str = "highest",
 ) -> jnp.ndarray:
-    """Compute a two dimensional synthesis wavelet transfrom.
+    """Compute a three-dimensional synthesis wavelet transform.
 
        Use it to reconstruct the original input image from the wavelet coefficients.
 
     Args:
         coeffs (list): The input coefficients, typically the output of wavedec3.
-        wavelet (pywt.Wavelet): The named tuple contining the filters used to compute the analysis transform.
+        wavelet (Union[pywt.Wavelet, str]): The wavelet we want.
         axes (Tuple[int, int, int]): Transform these axes instead of the
             last three. Defaults to (-3, -2, -1).
-        precision (str): The desired precision, choose "fastest", "high" or "highest".
+        precision (str): For desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
 
     Returns:
@@ -165,7 +165,8 @@ def waverec3(
             For example of shape [batch, channels, height, width].
 
     Raises:
-        ValueError: If axes does not have three elements or contains a repetition.
+        ValueError: If the axes list does not have three elements
+            or contains a repetition.
 
     Example:
         >>> import pywt
