@@ -78,8 +78,8 @@ def wavedec2(
         >>> import jaxwt as jwt
         >>> import jax.numpy as jnp
         >>> face = jnp.transpose(scipy.datasets.face(), [2, 0, 1])
-        >>> face = face.astype(jnp.float64)
-        >>> jwt.wavedec2(face, pywt.Wavelet("haar"), level=2)
+        >>> face = face.astype(jnp.float32)
+        >>> jwt.wavedec2(face, "haar", level=2)
     """
     wavelet = _as_wavelet(wavelet)
 
@@ -156,9 +156,9 @@ def waverec2(
         >>> import jaxwt as jwt
         >>> import jax.numpy as jnp
         >>> face = jnp.transpose(scipy.datasets.face(), [2, 0, 1])
-        >>> face = face.astype(jnp.float64)
-        >>> transformed = jwt.wavedec2(face, pywt.Wavelet("haar"))
-        >>> jwt.waverec2(transformed, pywt.Wavelet("haar"))
+        >>> face = face.astype(jnp.float32)
+        >>> transformed = jwt.wavedec2(face, "haar")
+        >>> jwt.waverec2(transformed, "haar")
 
     """
     wavelet = _as_wavelet(wavelet)

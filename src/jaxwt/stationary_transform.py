@@ -54,7 +54,7 @@ def swt(
         >>> import jax, jaxwt
         >>> import jax.numpy as jnp
         >>> signal = jax.random.randint(
-                jax.random.PRNGKey(42), [1, 10], 0, 9).astype(jnp.float32)
+        >>>     jax.random.PRNGKey(42), [1, 10], 0, 9).astype(jnp.float32)
         >>> jaxwt.swt(signal, "haar", level=2)
     """
     if axis != -1:

@@ -42,6 +42,7 @@ jaxwt.packets module
    :show-inheritance:
 
 jaxwt.stationary_transform
+--------------------------
 
 .. automodule:: jaxwt.stationary_transform
    :members:

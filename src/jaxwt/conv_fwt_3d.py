@@ -64,7 +64,7 @@ def wavedec3(
         >>> import jaxwt as jwt
         >>> import jax
         >>> data = jax.random.uniform(jax.random.PRNGKey(42),
-                                      [3, 16, 16, 16])
+        >>>                           [3, 16, 16, 16])
         >>> jwt.wavedec3(data, "haar", level=2)
     """
     ds = None
@@ -173,7 +173,7 @@ def waverec3(
         >>> import jaxwt as jwt
         >>> import jax
         >>> data = jax.random.uniform(jax.random.PRNGKey(42),
-                                      [3, 16, 16, 16])
+        >>>                           [3, 16, 16, 16])
         >>> rec = jwt.waverec3(jwt.wavedec3(data, "haar", level=2), "haar")
         >>> jax.numpy.allclose(data, rec)
 
