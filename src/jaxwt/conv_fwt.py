@@ -80,9 +80,9 @@ def wavedec(
 
     Returns:
         list: List containing the wavelet coefficients.
-            The coefficients are in ``pywt`` order:
+        The coefficients are in ``pywt`` order:
             [cA_n, cD_n, cD_n-1, …, cD2, cD1].
-            A denotes approximation and D detail coefficients.
+        A denotes approximation and D detail coefficients.
 
     Raises:
         ValueError: If the axis argument is not an integer.
