@@ -37,12 +37,17 @@ Differentiable and GPU-enabled fast wavelet transforms in JAX.
 Features
 """"""""
 - 1d analysis and synthesis transforms are implemented in ``src/jaxwt/conv_fwt.py``.
-- 2d analysis and synthesis transform are part of the ``src/jaxwt/conv_fwt_2d.py`` module.
+  Try ``wavedec`` and ``waverec``.
+- 2d analysis and synthesis transforms are part of the ``src/jaxwt/conv_fwt_2d.py`` module.
+  The two functions are called ``wavedec2`` and ``waverec2``.
+- Furthermore, 3d transforms are provided by the ``wavedec3`` and ``waverec3`` functions.
 - ``cwt``-function supports 1d continuous wavelet transforms.
 - The ``WaveletPacket`` object supports 1d wavelet packet transforms.
 - ``WaveletPacket2d`` implements two-dimensional wavelet packet transforms.
+- ``swt`` computes a single dimensional stationary transform ``iswt`` inverts it. 
 
-This toolbox extends `PyWavelets <https://pywavelets.readthedocs.io/en/latest/>`_ . We additionally provide GPU and gradient support via a Jax backend.
+This toolbox extends `PyWavelets <https://pywavelets.readthedocs.io/en/latest/>`_ .
+``jaxwt`` additionally provides GPU and gradient support via a Jax backend.
 
 Installation
 """"""""""""
@@ -51,7 +56,7 @@ Afterward, type ``pip install jaxwt`` to install the Jax-Wavelet-Toolbox. You ca
 
 Documentation
 """""""""""""
-The documentation is available at: https://jax-wavelet-toolbox.readthedocs.io .
+The documentation is available at: https://jax-wavelet-toolbox.readthedocs.io/en/latest/jaxwt.html .
 
 
 Transform Examples:

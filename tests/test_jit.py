@@ -1,4 +1,7 @@
 """Test jit compilation."""
+#
+# Copyright (c) 2023 Moritz Wolter
+#
 from collections import namedtuple
 
 import jax

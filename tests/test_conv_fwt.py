@@ -5,10 +5,12 @@
 # Copyright (c) 2020 Moritz Wolter
 #
 
+import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
 import pywt
+from jax import random
 from jax.config import config
 
 from src.jaxwt.conv_fwt import wavedec, waverec
@@ -70,7 +72,7 @@ def test_fwt_ifwt_lorenz(wavelet, level, mode, tmax):
 
 
 @pytest.mark.parametrize("wavelet", ["db2", "sym4"])
-@pytest.mark.parametrize("mode", ["reflect", "zero"])
+@pytest.mark.parametrize("mode", ["symmetric", "reflect", "zero"])
 @pytest.mark.parametrize("batch_size", [1, 3])
 @pytest.mark.parametrize("level", [2, None])
 @pytest.mark.parametrize("dtype", [jnp.float64, jnp.float32])
@@ -86,3 +88,39 @@ def test_batch_fwt_ifwt(wavelet, mode, batch_size, level, dtype: jnp.dtype):
     coeff = wavedec(random_dat, wavelet, mode=mode, level=level)
     rec_data = waverec(coeff, wavelet)
     assert jnp.allclose(rec_data[..., : random_dat.shape[-1]], random_dat, atol=atol)
+
+
+@pytest.mark.parametrize("level", [1, 2, 3, None])
+@pytest.mark.parametrize("shape", [(64,), (1, 64), (3, 2, 64), (4, 3, 2, 64)])
+def test_multi_batch_fwt(level, shape):
+    """Test 1d conv support for multiple inert batch dimensions."""
+    key = random.PRNGKey(42)
+    data = jax.random.normal(key, shape, jnp.float64)
+
+    jaxwt_coeff = wavedec(data, "haar", level=level)
+    pywt_coeff = pywt.wavedec(np.array(data), "haar", level=level)
+
+    test = []
+    for jaxwtc, pywtc in zip(jaxwt_coeff, pywt_coeff):
+        test.append(np.allclose(jaxwtc, pywtc))
+    assert all(test)
+
+    rec = waverec(jaxwt_coeff, "haar")
+    assert np.allclose(data, rec)
+
+
+@pytest.mark.parametrize("axis", [-1, 0, 1, 2])
+def test_axis_arg(axis):
+    """Ensure the axis argument works as expected."""
+    key = random.PRNGKey(42)
+    data = jax.random.normal(key, [16, 16, 16], jnp.float64)
+
+    jaxwtcs = wavedec(data, "haar", level=2, axis=axis)
+    pywtcs = pywt.wavedec(data, "haar", level=2, axis=axis)
+    test = []
+    for jaxwtc, pywtc in zip(jaxwtcs, pywtcs):
+        test.append(np.allclose(jaxwtc, pywtc))
+    assert all(test)
+
+    rec = waverec(jaxwtcs, "haar", axis=axis)
+    assert np.allclose(data, rec)

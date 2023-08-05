@@ -24,13 +24,13 @@ def cwt(
     wavelet: Union[ContinuousWavelet, str],
     sampling_period: float = 1.0,
 ) -> Tuple[jnp.ndarray, jnp.ndarray]:
-    """Compute the single dimensional continuous wavelet transform.
+    """Compute the single-dimensional continuous wavelet transform.
 
     This function is a jax port of pywt.cwt as found at:
     https://github.com/PyWavelets/pywt/blob/master/pywt/_cwt.py
 
     Args:
-        data (jnp.ndarray): The ijnput tensor of shape [batch_size, time].
+        data (jnp.ndarray): The input tensor of shape [batch_size, time].
         scales (np.ndarray or jnp.array):
             The wavelet scales to use. One can use
             ``f = pywt.scale2frequency(wavelet, scale)/sampling_period`` to determine
