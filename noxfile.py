@@ -79,12 +79,17 @@ def clean_coverage(session):
     session.run("rm", "-r", "htmlcov", external=True)
 
 
+@nox.session(name="check-package")
+def pyroma(session):
+    """Run pyroma to check if the package is ok."""
+    session.install("pyroma")
+    session.run("pyroma", ".")
+
 @nox.session(name="build")
 def build(session):
     """Build a pip package."""
-    session.install("wheel")
-    session.install("setuptools")
-    session.run("python", "setup.py", "-q", "sdist", "bdist_wheel")
+    session.install("build")
+    session.run("python", "-m", "build")
 
 
 @nox.session(name="finish")

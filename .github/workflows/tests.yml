@@ -39,3 +39,19 @@ jobs:
         run: nox -s lint
       - name: Run mypy
         run: nox -s typing
+  package-check:
+      - name: Pyroma
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.11]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: pip install nox
+      - name: Run pyroma
+        run: nox -s check-package
