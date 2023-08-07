@@ -67,6 +67,7 @@ Transform Examples:
 To compute a one-dimensional fast wavelet transform, consider the code snippet below:
 
 .. code-block:: python
+
   import jax.numpy as jnp
   import jaxwt as jwt
 
@@ -90,6 +91,7 @@ Use `jaxwt` if you require gradient or GPU support.
 The process for two-dimensional fast wavelet transforms works similarly:
 
 .. code-block:: python
+
   import jaxwt as jwt
   import jax.numpy as jnp
   from scipy.datasets import face
@@ -106,6 +108,7 @@ The example above moves the color channel to the front because wavedec2 transfor
 We can avoid doing so by using the ``axes`` argument. Consider the batched example below:
 
 .. code-block:: python
+
   import jaxwt as jwt
   import jax.numpy as jnp
   from scipy.datasets import face
