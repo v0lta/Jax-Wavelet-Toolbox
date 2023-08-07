@@ -123,7 +123,7 @@ We can avoid doing so by using the ``axes`` argument. Consider the batched examp
   jnp.max(jnp.abs(image - reconstruction))
 
 For more code examples, follow the documentation link above or visit
-the [examples](https://github.com/v0lta/Jax-Wavelet-Toolbox/tree/master/examples) folder.
+the `examples <https://github.com/v0lta/Jax-Wavelet-Toolbox/tree/master/examples>` folder.
 
 
 
