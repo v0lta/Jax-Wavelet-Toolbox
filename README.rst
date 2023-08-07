@@ -41,8 +41,8 @@ Differentiable and GPU-enabled fast wavelet transforms in JAX.
 
 Features
 """"""""
-- `wavedec` and `waverec` implement 1d analysis and synthesis transforms.
-- Similarly, `wavedec2` and `waverec` provide 2d transform support.
+- ``wavedec`` and ``waverec`` implement 1d analysis and synthesis transforms.
+- Similarly, ``wavedec2`` and ``waverec`` provide 2d transform support.
 - The ``cwt``-function supports 1d continuous wavelet transforms.
 - The ``WaveletPacket`` object supports 1d wavelet packet transforms.
 - ``WaveletPacket2d`` implements two-dimensional wavelet packet transforms.
