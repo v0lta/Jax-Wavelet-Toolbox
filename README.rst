@@ -122,7 +122,9 @@ We can avoid doing so by using the ``axes`` argument. Consider the batched examp
   reconstruction = jwt.waverec2(transformed, "haar", axes=(1,2))
   jnp.max(jnp.abs(image - reconstruction))
 
-Follow the documentation link above for more examples.
+For more code examples, follow the documentation link above or visit
+the [examples](https://github.com/v0lta/Jax-Wavelet-Toolbox/tree/master/examples) folder.
+
 
 
 Testing
