@@ -83,7 +83,7 @@ def wavedec(
         The coefficients are in ``pywt`` order:
 
             [cA_n, cD_n, cD_n-1, …, cD2, cD1].
-        
+
         A denotes approximation and D detail coefficients.
 
     Raises:
