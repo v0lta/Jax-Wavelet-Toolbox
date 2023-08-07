@@ -46,7 +46,7 @@ Features
 - The ``cwt``-function supports 1d continuous wavelet transforms.
 - The ``WaveletPacket`` object supports 1d wavelet packet transforms.
 - ``WaveletPacket2d`` implements two-dimensional wavelet packet transforms.
-- `swt` and `iswt` allow 1d-stationary transformations.
+- ``swt`` and ``iswt`` allow 1d-stationary transformations.
 
 This toolbox extends `PyWavelets <https://pywavelets.readthedocs.io/en/latest/>`_ . 
 We additionally provide GPU and gradient support via a Jax backend.
