@@ -65,7 +65,9 @@ def test_inverse_packets_1d(input_shape, wavelet, level, mode, base_key):
     assert jnp.allclose(wp[""].data, jwp[""][:, : input_shape[-1]])
 
 
-@pytest.mark.parametrize("input_shape", ((2, 32, 32), (3, 33, 33), (1, 32, 33)))
+@pytest.mark.parametrize(
+    "input_shape", ((2, 32, 32), (3, 33, 33), (1, 32, 33), (3, 2, 32, 32))
+)
 @pytest.mark.parametrize("wavelet", ("haar", "db2"))
 @pytest.mark.parametrize("level", (2, 3))
 @pytest.mark.parametrize("mode", ("reflect", "symmetric", "zero"))

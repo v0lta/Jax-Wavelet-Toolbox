@@ -1,11 +1,17 @@
 """Test the continuous transformation code."""
+#
+# Copyright (c) 2023 Moritz Wolter
+#
 from typing import Union
 
 import jax.numpy as jnp
 import numpy as np
 import pytest
 import pywt
+from jax.config import config
 from scipy import signal
+
+config.update("jax_enable_x64", True)
 
 from src.jaxwt.continuous_transform import cwt
 
@@ -39,7 +45,7 @@ def test_cwt(
 ) -> None:
     """Test the cwt implementation for various wavelets."""
     t = np.linspace(-1, 1, samples, endpoint=False)
-    sig = signal.chirp(t, f0=1, f1=50, t1=10, method="linear")
+    sig = signal.chirp(t, f0=1, f1=50, t1=10, method="linear").astype(np.float64)
     cwtmatr, freqs = pywt.cwt(data=sig, scales=scales, wavelet=wavelet)
     cwtmatr_jax, freqs_jax = cwt(jnp.array(sig), jnp.array(scales), wavelet)
     assert jnp.allclose(cwtmatr_jax, cwtmatr)

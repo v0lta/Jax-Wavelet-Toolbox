@@ -28,17 +28,17 @@ class WaveletPacket(BaseDict):
     def __init__(
         self,
         data: jnp.ndarray,
-        wavelet: pywt.Wavelet,
-        mode: str = "reflect",
+        wavelet: Union[pywt.Wavelet, str],
+        mode: str = "symmetric",
         max_level: Optional[int] = None,
     ):
         """Create a wavelet packet decomposition object.
 
         Args:
             data (jnp.ndarray): The input data array of shape [batch_size, time].
-            wavelet (pywt.Wavelet): The wavelet used for the decomposition.
+            wavelet (Union[pywt.Wavelet, str]): The wavelet used for the decomposition.
             mode (str): The desired padding method. Choose i.e.
-                "reflect", "symmetric" or "zero". Defaults to "reflect".
+                "reflect", "symmetric" or "zero". Defaults to "symmetric".
 
         Example:
             >>> import pywt
@@ -100,7 +100,9 @@ class WaveletPacket(BaseDict):
     ) -> None:
         self.data[path] = data
         if level < self.max_level:
-            res_lo, res_hi = wavedec(data, self.wavelet, 1, mode=self.mode)
+            res_lo, res_hi = wavedec(
+                data=data, wavelet=self.wavelet, level=1, mode=self.mode
+            )
             self._recursive_dwt(res_lo, level + 1, path + "a")
             self._recursive_dwt(res_hi, level + 1, path + "d")
         else:
@@ -147,7 +149,7 @@ class WaveletPacket2D(BaseDict):
         self,
         data: jnp.ndarray,
         wavelet: Union[str, pywt.Wavelet],
-        mode: str = "reflect",
+        mode: str = "symmetric",
         max_level: Optional[int] = None,
     ):
         """Create a 2D-wavelet packet decomposition object.
@@ -159,7 +161,7 @@ class WaveletPacket2D(BaseDict):
             data (jnp.ndarray): The input data array of shape [batch_size, height, width].
             wavelet (pywt.Wavelet or str): The wavelet used for the decomposition.
             mode (str): The desired padding method. Choose i.e.
-                "reflect", "symmetric" or "zero". Defaults to "reflect".
+                "reflect", "symmetric" or "zero". Defaults to "symmetric".
             max_level (int, optional): Choose the desired decomposition level.
         """
         self.input_data = data
@@ -183,7 +185,7 @@ class WaveletPacket2D(BaseDict):
         self.data[path] = data
         if level < self.max_level:
             result_a, (result_h, result_v, result_d) = wavedec2(
-                data, self.wavelet, 1, mode=self.mode
+                data=data, wavelet=self.wavelet, level=1, mode=self.mode
             )
             # assert for type checking
             assert not isinstance(result_a, tuple)

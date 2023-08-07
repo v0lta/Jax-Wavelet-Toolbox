@@ -1,10 +1,12 @@
 """Various utility functions."""
-
-# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2023 Moritz Wolter
+#
 from collections import namedtuple
-from typing import List, Tuple, Union
+from typing import Any, List, Tuple, Union
 
 import jax.numpy as jnp
+import numpy as np
 import pywt
 
 __all__ = ["flatten_2d_coeff_lst"]
@@ -59,3 +61,75 @@ def _as_wavelet(wavelet: Union[Wavelet, str]) -> pywt.Wavelet:
         return pywt.Wavelet(wavelet)
     else:
         return wavelet
+
+
+def _fold_axes(data: jnp.ndarray, keep_no: int) -> Tuple[jnp.ndarray, List[int]]:
+    """Fold unchanged leading dimensions into a single batch dimension.
+
+    Args:
+        data (jnp.ndarray): The input data array.
+        keep_no (int): The number of dimensions to keep.
+
+    Returns:
+        Tuple[jnp.ndarray, List[int]]:
+            The folded result array, and the shape of the original input.
+    """
+    dshape = list(data.shape)
+    return jnp.reshape(data, [np.prod(dshape[:-keep_no])] + dshape[-keep_no:]), dshape
+
+
+def _unfold_axes(data: jnp.ndarray, ds: List[int], keep_no: int) -> jnp.ndarray:
+    """Unfold i.e. [batch*channel, height, widht] into [batch, channel, height, width]."""
+    return jnp.reshape(data, ds[:-keep_no] + list(data.shape[-keep_no:]))
+
+
+def _adjust_padding_at_reconstruction(
+    res_size: int, coeff_size: int, pad_end: int, pad_start: int
+) -> Tuple[int, int]:
+    pred_size = res_size - (pad_start + pad_end)
+    next_size = coeff_size
+    if next_size == pred_size:
+        pass
+    elif next_size == pred_size - 1:
+        pad_end += 1
+    else:
+        raise AssertionError(
+            "padding error, please check if dec as well as rec wavelets \
+             and axes are identical."
+        )
+    return pad_end, pad_start
+
+
+def _check_if_array(array: Any) -> jnp.ndarray:
+    if not isinstance(array, jnp.ndarray):
+        raise ValueError(
+            "First element of coeffs must be the approximation coefficient tensor."
+        )
+    return array
+
+
+def _check_axes_argument(axes: List[int]) -> None:
+    if len(set(axes)) != len(axes):
+        raise ValueError("Cant transform the same axis twice.")
+
+
+def _get_transpose_order(
+    axes: List[int], data_shape: List[int]
+) -> Tuple[List[int], List[int]]:
+    axes = list(map(lambda a: a + len(data_shape) if a < 0 else a, axes))
+    all_axes = list(range(len(data_shape)))
+    remove_transformed = list(filter(lambda a: a not in axes, all_axes))
+    return remove_transformed, axes
+
+
+def _swap_axes(data: jnp.ndarray, axes: List[int]) -> jnp.ndarray:
+    _check_axes_argument(axes)
+    front, back = _get_transpose_order(axes, list(data.shape))
+    return jnp.transpose(data, front + back)
+
+
+def _undo_swap_axes(data: jnp.ndarray, axes: List[int]) -> jnp.ndarray:
+    _check_axes_argument(axes)
+    front, back = _get_transpose_order(axes, list(data.shape))
+    restore_sorted = jnp.argsort(jnp.array(front + back))
+    return jnp.transpose(data, restore_sorted)

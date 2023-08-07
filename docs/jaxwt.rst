@@ -17,6 +17,14 @@ jaxwt.conv\_fwt\_2d module
    :undoc-members:
    :show-inheritance:
 
+jaxwt.conv\_fwt\_3d module
+--------------------------
+
+.. automodule:: jaxwt.conv_fwt_3d
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 jaxwt.continuous\_transform
 ---------------------------
 
@@ -33,10 +41,10 @@ jaxwt.packets module
    :undoc-members:
    :show-inheritance:
 
-jaxwt.utils module
-------------------
+jaxwt.stationary_transform
+--------------------------
 
-.. automodule:: jaxwt.utils
+.. automodule:: jaxwt.stationary_transform
    :members:
    :undoc-members:
    :show-inheritance:
