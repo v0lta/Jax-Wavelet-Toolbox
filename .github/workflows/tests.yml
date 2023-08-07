@@ -40,7 +40,7 @@ jobs:
       - name: Run mypy
         run: nox -s typing
   package-check:
-      - name: Pyroma
+    name: Pyroma
     runs-on: ubuntu-latest
     strategy:
       matrix:
