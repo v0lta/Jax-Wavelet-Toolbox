@@ -98,7 +98,6 @@ def wavedec(
         >>> jwt.wavedec(data, wavelet=pywt.Wavelet('haar'), level=2)
 
     """
-
     if axis != -1:
         if isinstance(axis, int):
             data = data.swapaxes(axis, -1)
