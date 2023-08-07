@@ -81,7 +81,9 @@ def wavedec(
     Returns:
         list: List containing the wavelet coefficients.
         The coefficients are in ``pywt`` order:
+
             [cA_n, cD_n, cD_n-1, …, cD2, cD1].
+        
         A denotes approximation and D detail coefficients.
 
     Raises:
@@ -94,7 +96,9 @@ def wavedec(
         >>> # generate an input of even length.
         >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
         >>> jwt.wavedec(data, wavelet=pywt.Wavelet('haar'), level=2)
+
     """
+
     if axis != -1:
         if isinstance(axis, int):
             data = data.swapaxes(axis, -1)
