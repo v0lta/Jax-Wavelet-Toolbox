@@ -58,7 +58,7 @@ Afterward, type ``pip install jaxwt`` to install the Jax-Wavelet-Toolbox. You ca
 
 Documentation
 """""""""""""
-Complete documentation of all toolbox functions is available at: https://jax-wavelet-toolbox.readthedocs.io .
+Complete documentation of all toolbox functions is available at: https://jax-wavelet-toolbox.readthedocs.io/en/latest/jaxwt.html .
 
 
 Transform Examples:
