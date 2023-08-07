@@ -58,7 +58,8 @@ Afterward, type ``pip install jaxwt`` to install the Jax-Wavelet-Toolbox. You ca
 
 Documentation
 """""""""""""
-Complete documentation of all toolbox functions is available at: https://jax-wavelet-toolbox.readthedocs.io/en/latest/jaxwt.html .
+Complete documentation of all toolbox functions is available at
+`readthedocs <https://jax-wavelet-toolbox.readthedocs.io/en/latest/jaxwt.html>`_.
 
 
 Transform Examples:
@@ -85,6 +86,7 @@ To compute a one-dimensional fast wavelet transform, consider the code snippet b
   print(jwt.waverec(jwt.wavedec(data, 'haar', mode='zero', level=2),
                     'haar'))
 
+
 The snipped also evaluates the `pywt` implementation to demonstrate that the coefficients are the same.
 Use `jaxwt` if you require gradient or GPU support.
 
@@ -102,6 +104,7 @@ The process for two-dimensional fast wavelet transforms works similarly:
                              level=2, mode="reflect")
   reconstruction = jwt.waverec2(transformed, "haar")
   jnp.max(jnp.abs(image - reconstruction))
+
 
 ``jaxwt`` allows transforming batched data.
 The example above moves the color channel to the front because wavedec2 transforms the last two axes by default.
@@ -121,6 +124,7 @@ We can avoid doing so by using the ``axes`` argument. Consider the batched examp
                              axes=(1,2))
   reconstruction = jwt.waverec2(transformed, "haar", axes=(1,2))
   jnp.max(jnp.abs(image - reconstruction))
+
 
 For more code examples, follow the documentation link above or visit
 the `examples <https://github.com/v0lta/Jax-Wavelet-Toolbox/tree/master/examples>`_ folder.
