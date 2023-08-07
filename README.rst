@@ -103,7 +103,7 @@ The process for two-dimensional fast wavelet transforms works similarly:
   reconstruction = jwt.waverec2(transformed, "haar")
   jnp.max(jnp.abs(image - reconstruction))
 
-`ptwt` allows transforming batched data.
+``jaxwt`` allows transforming batched data.
 The example above moves the color channel to the front because wavedec2 transforms the last two axes by default.
 We can avoid doing so by using the ``axes`` argument. Consider the batched example below:
 
