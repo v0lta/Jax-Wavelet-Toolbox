@@ -11,12 +11,11 @@ import numpy as np
 import pytest
 import pywt
 from jax import random
-from jax.config import config
 
 from src.jaxwt.conv_fwt import wavedec, waverec
 from tests._lorenz import generate_lorenz
 
-config.update("jax_enable_x64", True)
+jax.config.update("jax_enable_x64", True)
 
 
 def test_haar_fwt_ifwt_16_float32():

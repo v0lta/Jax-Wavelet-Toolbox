@@ -1,4 +1,5 @@
 """Test the wavelet packet code."""
+
 #
 # Created on Fri Jun 19 2020
 # Copyright (c) 2020 Moritz Wolter
@@ -6,15 +7,15 @@
 
 from itertools import product
 
+import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
 import pywt
-from jax.config import config
 
 from src.jaxwt.packets import WaveletPacket, WaveletPacket2D
 
-config.update("jax_enable_x64", True)
+jax.config.update("jax_enable_x64", True)
 
 
 # TODO: add more input shapes. and level none

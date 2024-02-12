@@ -1,4 +1,5 @@
 """Test utility code."""
+
 #
 # Copyright (c) 2023 Moritz Wolter
 #

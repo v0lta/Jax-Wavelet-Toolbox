@@ -1,4 +1,5 @@
 """Test jit compilation."""
+
 #
 # Copyright (c) 2023 Moritz Wolter
 #

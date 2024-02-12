@@ -1,4 +1,5 @@
 """Code for stationary wavelet transforms."""
+
 #
 # Created on Fri Aug 04 2023
 # Copyright (c) 2023 Moritz Wolter
@@ -129,13 +130,6 @@ def _conv_transpose_dedilate(
     Returns:
         jnp.ndarray: The convolution result.
 
-
-    Example:
-        >>> import jax, jaxwt
-        >>> import jax.numpy as jnp
-        >>> signal = jax.random.randint(
-                jax.random.PRNGKey(42), [1, 10], 0, 9).astype(jnp.float32)
-        >>> jaxwt.iswt(jaxwt.swt(signal, "haar", level=2), "haar")
     """
     recs = []
     to_conv_t_list = [
@@ -176,6 +170,14 @@ def iswt(
 
     Returns:
         jnp.ndarray: The reconstruction of the original signal.
+
+
+    Example:
+        >>> import jax, jaxwt
+        >>> import jax.numpy as jnp
+        >>> signal = jax.random.randint(
+                jax.random.PRNGKey(42), [1, 10], 0, 9).astype(jnp.float32)
+        >>> jaxwt.iswt(jaxwt.swt(signal, "haar", level=2), "haar")
     """
     if axis != -1:
         swap = []
