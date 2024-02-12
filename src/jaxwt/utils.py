@@ -133,4 +133,4 @@ def _undo_swap_axes(data: jnp.ndarray, axes: List[int]) -> jnp.ndarray:
     _check_axes_argument(axes)
     front, back = _get_transpose_order(axes, list(data.shape))
     restore_sorted = jnp.argsort(jnp.array(front + back))
-    return jnp.transpose(data, restore_sorted)
+    return jnp.transpose(data, list(restore_sorted))
