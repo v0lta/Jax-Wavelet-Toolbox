@@ -73,7 +73,7 @@ def wavedec3(
 
     if tuple(axes) != (-3, -2, -1):
         if len(axes) != 3:
-            raise ValueError("3d transforms work with two axes.")
+            raise ValueError("3d transforms work with three axes.")
         else:
             data = _swap_axes(data, list(axes))
 
@@ -183,7 +183,7 @@ def waverec3(
 
     if tuple(axes) != (-3, -2, -1):
         if len(axes) != 3:
-            raise ValueError("3d transforms work with two axes.")
+            raise ValueError("3d transforms work with three axes.")
         else:
             _check_axes_argument(list(axes))
             to_tree = partial(_swap_axes, axes=list(axes))
