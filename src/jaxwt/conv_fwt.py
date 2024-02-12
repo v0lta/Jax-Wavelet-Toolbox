@@ -282,7 +282,7 @@ def _fwt_pad(data: jnp.ndarray, filt_len: int, mode: str = "reflect") -> jnp.nda
 
 
 def _get_filter_arrays(
-    wavelet: pywt.Wavelet, flip: bool, dtype: jnp.dtype = jnp.float64  # type: ignore
+    wavelet: pywt.Wavelet, flip: bool, dtype: jnp.dtype = jnp.float64
 ) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
     """Extract the filter coefficients from an input wavelet object.
 
