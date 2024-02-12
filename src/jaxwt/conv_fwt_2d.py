@@ -1,4 +1,5 @@
 """Two dimensional convolution based fast wavelet transforms."""
+
 #
 # Created on Thu Jun 12 2020
 # Copyright (c) 2020 Moritz Wolter

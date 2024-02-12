@@ -1,4 +1,5 @@
 """Jax compatible cwt code."""
+
 from typing import Tuple, Union
 
 import jax.numpy as jnp

@@ -1,4 +1,5 @@
 """Test 3d transform support."""
+
 #
 # Created on Fri Aug 04 2023
 # Copyright (c) 2023 Moritz Wolter
@@ -10,12 +11,11 @@ import jax
 import jax.numpy as jnp
 import pytest
 import pywt
-from jax.config import config
 
 from src.jaxwt.conv_fwt_3d import wavedec3, waverec3
 
-config.update("jax_enable_x64", True)
-config.update("jax_platform_name", "cpu")
+jax.config.update("jax_enable_x64", True)
+jax.config.update("jax_platform_name", "cpu")
 
 
 def _compare_coeffs(jaxwt_coeff, pywt_coeff):

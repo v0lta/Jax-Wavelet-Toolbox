@@ -1,4 +1,5 @@
 """Test the stationary wavelet transformation code."""
+
 #
 # Created on Fri Aug 04 2023
 # Copyright (c) 2023 Moritz Wolter
@@ -8,13 +9,12 @@ import jax
 import jax.numpy as jnp
 import pytest
 import pywt
-from jax.config import config
 
 from src.jaxwt.conv_fwt import _get_filter_arrays
 from src.jaxwt.stationary_transform import _conv_transpose_dedilate, iswt, swt
 from src.jaxwt.utils import _as_wavelet
 
-config.update("jax_enable_x64", True)
+jax.config.update("jax_enable_x64", True)
 
 
 @pytest.mark.slow

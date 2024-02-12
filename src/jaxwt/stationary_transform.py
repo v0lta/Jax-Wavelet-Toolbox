@@ -1,4 +1,5 @@
 """Code for stationary wavelet transforms."""
+
 #
 # Created on Fri Aug 04 2023
 # Copyright (c) 2023 Moritz Wolter

@@ -1,4 +1,5 @@
 """Various utility functions."""
+
 #
 # Copyright (c) 2023 Moritz Wolter
 #

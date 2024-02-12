@@ -1,4 +1,5 @@
 """2d Convolution fast wavelet transform test code."""
+
 #
 # Copyright (c) 2023 Moritz Wolter
 #
@@ -10,13 +11,12 @@ import jax.numpy as jnp
 import pytest
 import pywt
 import scipy.datasets
-from jax.config import config
 
 from src.jaxwt.conv_fwt_2d import wavedec2, waverec2
 from src.jaxwt.utils import flatten_2d_coeff_lst
 
-config.update("jax_enable_x64", True)
-config.update("jax_platform_name", "cpu")
+jax.config.update("jax_enable_x64", True)
+jax.config.update("jax_platform_name", "cpu")
 
 
 @pytest.mark.parametrize("mode", ["symmetric", "reflect", "zero"])

@@ -1,17 +1,18 @@
 """Test the continuous transformation code."""
+
 #
 # Copyright (c) 2023 Moritz Wolter
 #
 from typing import Union
 
+import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
 import pywt
-from jax.config import config
 from scipy import signal
 
-config.update("jax_enable_x64", True)
+jax.config.update("jax_enable_x64", True)
 
 from src.jaxwt.continuous_transform import cwt
 
