@@ -6,17 +6,16 @@ import nox
 def install_test_dependencies(session):
     """Set up test dependencies."""
     session.install("pytest")
-    session.install("nox")
+    session.install("scipy")
     # pooch conveniently loads a test image.
     session.install("pooch")
+    session.install(".")
 
 
 @nox.session(name="test")
 def run_test(session):
     """Run pytest."""
     install_test_dependencies(session)
-    session.install(".")
-    session.install("pytest")
     session.run("pytest")
 
 
@@ -24,8 +23,7 @@ def run_test(session):
 def run_test_fast(session):
     """Run pytest."""
     install_test_dependencies(session)
-    session.install(".")
-    session.install("pytest")
+    
     session.run("pytest", "-m", "not slow")
 
 
