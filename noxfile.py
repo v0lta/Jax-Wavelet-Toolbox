@@ -23,7 +23,7 @@ def run_test(session):
 def run_test_fast(session):
     """Run pytest."""
     install_test_dependencies(session)
-    
+
     session.run("pytest", "-m", "not slow")
 
 
