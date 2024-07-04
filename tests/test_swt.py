@@ -65,7 +65,7 @@ def test_inverse_dilation(wavelet_str):
     data = jnp.expand_dims(jnp.arange(length).astype(jnp.float64), (0, 1))
     data = jnp.concatenate([data, data + 1], 0)
 
-    dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True, dtype=data.dtype)
+    dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True)
     filt_len = dec_lo.shape[-1]
     filt = jnp.stack([dec_lo, dec_hi], 0)
 
@@ -82,7 +82,7 @@ def test_inverse_dilation(wavelet_str):
     )
 
     # unlike pytorch lax's transpose conv requires filter flips.
-    _, _, rec_lo, rec_hi = _get_filter_arrays(wavelet, flip=True, dtype=data.dtype)
+    _, _, rec_lo, rec_hi = _get_filter_arrays(wavelet, flip=True)
     filt_len = rec_lo.shape[-1]
     rec_filt = jnp.stack([rec_lo, rec_hi], 1)
     padl, padr = dilation * (filt_len // 2), dilation * (filt_len // 2 - 1)
