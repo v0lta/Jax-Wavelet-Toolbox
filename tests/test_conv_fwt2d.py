@@ -24,7 +24,7 @@ jax.config.update("jax_enable_x64", True)
 class TestConv2D(parameterized.TestCase):
     """Tests fort the two-dimensional fwt code."""
 
-    @chex.all_variants(with_pmap=False)
+    @chex.all_variants(with_pmap=True)
     @parameterized.product(
         mode=["symmetric", "zero"],
         wavelet=["haar", "db3", "sym4"],
@@ -79,7 +79,7 @@ def _compare_coeffs(jaxwt_coeff, pywt_coeff):
 class TestMultiDimInput(parameterized.TestCase):
     """Test the multi-dimensional input handling."""
 
-    @chex.all_variants(with_pmap=False)
+    @chex.all_variants(with_pmap=True)
     @parameterized.product(size=[[5, 4, 64, 64], [4, 3, 2, 32, 32], [1, 1, 1, 16, 16]])
     def test_multidim_input(self, size: List[int]):
         """Run the test."""
@@ -107,7 +107,6 @@ class TestAxisArgument(parameterized.TestCase):
         """Ensure the axes argument works as expected."""
         key = jax.random.PRNGKey(42)
         data = jax.random.uniform(key, [32, 32, 32, 32]).astype(jnp.float64)
-        axes = jnp.array(axes)
 
         all_variants_wavedec2 = self.variant(
             partial(wavedec2, wavelet="db2", level=3, axes=axes)

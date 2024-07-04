@@ -8,9 +8,9 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 import pywt
+from functools import partial
 
 import src.jaxwt as jaxwt
-from src.jaxwt.utils import create_wavelet_named_tuple
 from tests._lorenz import generate_lorenz
 
 jax.config.update("jax_enable_x64", True)
@@ -28,11 +28,10 @@ def test_conv_fwt_jit(wavelet_string, level, length, batch_size, dtype):
 
     wavelet = pywt.Wavelet(wavelet_string)
     # pywt.Wavelets do not compile with jax.jit
-    wavelet = create_wavelet_named_tuple(wavelet, dtype=dtype)
-    jit_wavedec = jax.jit(jaxwt.wavedec, static_argnames=["level"])
-    coeff = jit_wavedec(data, wavelet, level=level)
-    jit_waverec = jax.jit(jaxwt.waverec)
-    res = jit_waverec(coeff, wavelet)
+    jit_wavedec = jax.jit(partial(jaxwt.wavedec, wavelet=wavelet), static_argnames=["level"])
+    coeff = jit_wavedec(data, level=level)
+    jit_waverec = jax.jit(partial(jaxwt.waverec, wavelet=wavelet))
+    res = jit_waverec(coeff)
     assert jnp.allclose(data, res[:, : data.shape[-1]])
 
 
@@ -41,9 +40,8 @@ def test_conv_fwt_jit_2d(level):
     """Test the jit compilation feature for the wavedec2 function."""
     data = jnp.array(np.random.randn(10, 64, 64)).astype(jnp.float64)
     wavelet = pywt.Wavelet("db2")
-    wavelet = create_wavelet_named_tuple(wavelet, jnp.float64)
-    jit_wavedec2 = jax.jit(jaxwt.wavedec2, static_argnames=["level"])
-    coeff = jit_wavedec2(data, wavelet, level=level)
-    jit_waverec2 = jax.jit(jaxwt.waverec2)
-    rec = jit_waverec2(coeff, wavelet=wavelet)
+    jit_wavedec2 = jax.jit(partial(jaxwt.wavedec2, wavelet=wavelet), static_argnames=["level"])
+    coeff = jit_wavedec2(data, level=level)
+    jit_waverec2 = jax.jit(partial(jaxwt.waverec2, wavelet=wavelet))
+    rec = jit_waverec2(coeff)
     assert np.allclose(rec, data)

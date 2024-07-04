@@ -88,9 +88,9 @@ def _as_wavelet(
     if isinstance(wavelet, WaveletNamedTuple):
         return wavelet
     elif isinstance(wavelet, str):
-        return create_wavelet_named_tuple(pywt.Wavelet(wavelet), dtype)
+        return _create_wavelet_named_tuple(pywt.Wavelet(wavelet), dtype)
     elif isinstance(wavelet, pywt.Wavelet):
-        return create_wavelet_named_tuple(wavelet, dtype)
+        return _create_wavelet_named_tuple(wavelet, dtype)
     else:
         raise ValueError("Invalid wavelet input.")
 
@@ -167,13 +167,14 @@ def _undo_swap_axes(data: jnp.ndarray, axes: list[int]) -> jnp.ndarray:
     return jnp.transpose(data, list(restore_sorted))
 
 
-def create_wavelet_named_tuple(
+def _create_wavelet_named_tuple(
     wavelet: Union[pywt.Wavelet, str], dtype: jnp.dtype[Any] = jnp.float64
 ) -> WaveletNamedTuple:
     """Create a WaveletNamedTuple from a pywt.Wavelet object.
 
     Conversion is required to take advante of JAX's JIT compilation.
-
+    Note: Jax Jit does not allow strings.
+    
     Args:
         wavelet (pywt.Wavelet): The pywt.Wavelet or wavelet-str
             to create the WaveletNamedTuple from. # noqa DAR003

@@ -13,7 +13,6 @@ import jax.numpy as jnp
 import pywt
 
 from .utils import (
-    WaveletNamedTuple,
     _as_wavelet,
     _check_if_array,
     _fold_axes,
@@ -60,7 +59,7 @@ def _preprocess_result_list_rec1d(
 
 def wavedec(
     data: jnp.ndarray,
-    wavelet: Union[pywt.Wavelet, str, WaveletNamedTuple],
+    wavelet: Union[pywt.Wavelet, str],
     mode: str = "symmetric",
     level: Optional[int] = None,
     axis: int = -1,
@@ -71,12 +70,10 @@ def wavedec(
     Args:
         data (jnp.ndarray): Input data array.
             I.e. of shape [batch, time].
-        wavelet (WaveletNamedTuple, pywt.Wavelet or str):
-            A WaveletNamedTuple, wavelet name-string or pywt.Wavelet object
+        wavelet (pywt.Wavelet or str):
+            Wavelet name-string or pywt.Wavelet object
             containing the wavelet filter arrays.
             Check pywt.wavelist() for a list of options.
-            Use the WaveletNamedTuple to pass Jax-compatible arrays as
-            wavelet filters.
         mode (str): The padding used to extend the input signal.
             Choose reflect, symmetric or zero.
             Defaults to symmetric.
@@ -157,7 +154,7 @@ def wavedec(
 
 def waverec(
     coeffs: List[jnp.ndarray],
-    wavelet: Union[pywt.Wavelet, str, WaveletNamedTuple],
+    wavelet: Union[pywt.Wavelet, str],
     axis: int = -1,
     precision: str = "highest",
 ) -> jnp.ndarray:

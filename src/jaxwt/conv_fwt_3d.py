@@ -99,7 +99,7 @@ def wavedec3(
     if level is None:
         level = pywt.dwtn_max_level(
             [data.shape[-3], data.shape[-2], data.shape[-1]],
-            pywt.Wavelet("MyWavelet", wavelet),
+            pywt.Wavelet(wavelet.name),
         )
 
     result_list: List[Union[jnp.ndarray, Dict[str, jnp.ndarray]]] = []
