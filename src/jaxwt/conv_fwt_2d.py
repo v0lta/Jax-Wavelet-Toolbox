@@ -13,6 +13,7 @@ import pywt
 
 from .conv_fwt import _get_filter_arrays
 from .utils import (
+    WaveletNamedTuple,
     _adjust_padding_at_reconstruction,
     _as_wavelet,
     _check_axes_argument,
@@ -42,7 +43,7 @@ def _preprocess_array_dec2d(
 
 def wavedec2(
     data: jnp.ndarray,
-    wavelet: Union[pywt.Wavelet, str],
+    wavelet: Union[pywt.Wavelet, str, WaveletNamedTuple],
     mode: str = "symmetric",
     level: Optional[int] = None,
     axes: Tuple[int, int] = (-2, -1),
@@ -53,7 +54,7 @@ def wavedec2(
     Args:
         data (jnp.ndarray): Jax array containing the data to be transformed.
             A possible input shape would be [batch size, height, width].
-        wavelet (Union[pywt.Wavelet, str]):  A wavelet object or wavelet string
+        wavelet (pywt.Wavelet, str, WaveletNamedTuple):  A wavelet object or wavelet string
             for the transformation. Check pywt.wavelist() for a list of options.
         mode (str): The desired padding mode. Choose "reflect", "symmetric" or "zero".
             Defaults to symmetric.
@@ -61,6 +62,7 @@ def wavedec2(
                                will be used. Defaults to None.
         axes (Tuple[int, int]): Compute the transform over these axes instead of the
             last two. Defaults to (-2, -1).
+            Jit-compiled code will only work with the last two axes.
         precision (str): For the desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
 
@@ -82,7 +84,7 @@ def wavedec2(
         >>> face = face.astype(jnp.float32)
         >>> jwt.wavedec2(face, "haar", level=2)
     """
-    wavelet = _as_wavelet(wavelet)
+    wavelet = _as_wavelet(wavelet, dtype=data.dtype)
 
     if tuple(axes) != (-2, -1):
         if len(axes) != 2:
@@ -91,11 +93,11 @@ def wavedec2(
             data = _swap_axes(data, list(axes))
 
     data, ds = _preprocess_array_dec2d(data)
-    dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True, dtype=data.dtype)
+    dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True)
     dec_filt = _construct_2d_filt(lo=dec_lo, hi=dec_hi)
 
     if level is None:
-        level = pywt.dwtn_max_level([data.shape[-1], data.shape[-2]], wavelet)
+        level = pywt.dwtn_max_level([data.shape[-1], data.shape[-2]], wavelet.as_pywt())
 
     result_list: List[
         Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]]
@@ -162,7 +164,7 @@ def waverec2(
         >>> jwt.waverec2(transformed, "haar")
 
     """
-    wavelet = _as_wavelet(wavelet)
+    wavelet = _as_wavelet(wavelet, dtype=_check_if_array(coeffs[0]).dtype)
 
     if tuple(axes) != (-2, -1):
         if len(axes) != 2:
@@ -181,9 +183,7 @@ def waverec2(
     else:
         fcoeffs = coeffs
 
-    _, _, rec_lo, rec_hi = _get_filter_arrays(
-        wavelet, flip=True, dtype=_check_if_array(fcoeffs[0]).dtype
-    )
+    _, _, rec_lo, rec_hi = _get_filter_arrays(wavelet, flip=True)
     filt_len = rec_lo.shape[-1]
     rec_filt = _construct_2d_filt(lo=rec_lo, hi=rec_hi)
     rec_filt = jnp.transpose(rec_filt, [1, 0, 2, 3])

@@ -44,6 +44,7 @@ def wavedec3(
                                will be used. Defaults to None.
         axes (Tuple[int, int, int]): Compute the transform over these axes instead of the
             last three. Defaults to (-3, -2, -1).
+            Jit-compiled functions are only supported for the last three axes.
         precision (str): For desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
 
@@ -69,7 +70,7 @@ def wavedec3(
         >>> jwt.wavedec3(data, "haar", level=2)
     """
     ds = None
-    wavelet = _as_wavelet(wavelet)
+    wavelet = _as_wavelet(wavelet, dtype=data.dtype)
 
     if tuple(axes) != (-3, -2, -1):
         if len(axes) != 3:
@@ -88,7 +89,7 @@ def wavedec3(
                          three input dimensions to work."
         )
 
-    dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True, dtype=data.dtype)
+    dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True)
     dec_filt = _construct_3d_filt(lo=dec_lo, hi=dec_hi)
 
     if mode == "zero":
@@ -179,7 +180,7 @@ def waverec3(
         >>> jax.numpy.allclose(data, rec)
 
     """
-    wavelet = _as_wavelet(wavelet)
+    wavelet = _as_wavelet(wavelet, dtype=_check_if_array(coeffs[0]).dtype)
 
     if tuple(axes) != (-3, -2, -1):
         if len(axes) != 3:
@@ -196,9 +197,7 @@ def waverec3(
         _tree_fold = lambda array: _fold_axes_keep3(array)[0]  # noqa: E731
         coeffs = jax.tree_util.tree_map(_tree_fold, coeffs)
 
-    _, _, rec_lo, rec_hi = _get_filter_arrays(
-        wavelet, flip=True, dtype=_check_if_array(coeffs[0]).dtype
-    )
+    _, _, rec_lo, rec_hi = _get_filter_arrays(wavelet, flip=True)
     filt_len = rec_lo.shape[-1]
     rec_filt = _construct_3d_filt(lo=rec_lo, hi=rec_hi)
     rec_filt = jnp.transpose(rec_filt, [1, 0, 2, 3, 4])
