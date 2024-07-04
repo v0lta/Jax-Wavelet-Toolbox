@@ -16,7 +16,6 @@ from absl.testing import parameterized
 from jax import random
 
 from jaxwt.conv_fwt import wavedec, waverec
-from jaxwt.utils import create_wavelet_named_tuple
 from tests._lorenz import generate_lorenz
 
 jax.config.update("jax_enable_x64", True)
@@ -51,15 +50,14 @@ class TestHaar(parameterized.TestCase):
         ).astype(jnp.float32)
         data = jnp.expand_dims(data, 0)
         coeffs_pywt = pywt.wavedec(data, wavelet, level=2)
-        jax_wavelet = create_wavelet_named_tuple(wavelet, jnp.float32)
         all_variants_wavedec = self.variant(
-            partial(wavedec, wavelet=jax_wavelet, level=2)
+            partial(wavedec, wavelet=wavelet, level=2)
         )
         coeffs_jaxwt = all_variants_wavedec(data)
         cat_coeffs_pywt = jnp.concatenate(coeffs_pywt, -1)
         cat_coeffs_jaxwt = jnp.concatenate(coeffs_jaxwt, -1)
         assert jnp.allclose(cat_coeffs_pywt, cat_coeffs_jaxwt)
-        all_variants_waverec = self.variant(partial(waverec, wavelet=jax_wavelet))
+        all_variants_waverec = self.variant(partial(waverec, wavelet=wavelet))
         reconstructed_data = all_variants_waverec(coeffs_jaxwt)
         assert jnp.allclose(reconstructed_data, data)
 
@@ -80,16 +78,15 @@ class TestInvert(parameterized.TestCase):
         lorenz = jnp.transpose(
             jnp.expand_dims(generate_lorenz(tmax=tmax)[:, 0], -1), [1, 0]
         ).astype(jnp.float64)
-        jax_wavelet = create_wavelet_named_tuple(wavelet, jnp.float64)
         all_variants_wavedec = self.variant(
-            partial(wavedec, wavelet=jax_wavelet, mode=mode, level=level)
+            partial(wavedec, wavelet=wavelet, mode=mode, level=level)
         )
         coeff = all_variants_wavedec(lorenz)
         pywt_coeff = pywt.wavedec(lorenz, wavelet, mode=mode, level=level)
         jwt_cat_coeff = jnp.concatenate(coeff, axis=-1).squeeze()
         pywt_cat_coeff = jnp.concatenate(pywt_coeff, axis=-1).squeeze()
         assert jnp.allclose(jwt_cat_coeff, pywt_cat_coeff)
-        all_variants_waverec = self.variant(partial(waverec, wavelet=jax_wavelet))
+        all_variants_waverec = self.variant(partial(waverec, wavelet=wavelet))
         rec_data = all_variants_waverec(coeff)
         assert jnp.allclose(rec_data[..., : lorenz.shape[-1]], lorenz)
 
@@ -137,9 +134,8 @@ class TestMultiBatch(parameterized.TestCase):
         key = random.PRNGKey(42)
         data = jax.random.normal(key, shape, jnp.float64)
 
-        jaxwt_wavelet = create_wavelet_named_tuple("haar", jnp.float64)
         all_variants_wavedec = self.variant(
-            partial(wavedec, wavelet=jaxwt_wavelet, level=level)
+            partial(wavedec, wavelet="haar", level=level)
         )
         jaxwt_coeff = all_variants_wavedec(data)
 
@@ -149,7 +145,7 @@ class TestMultiBatch(parameterized.TestCase):
         for jaxwtc, pywtc in zip(jaxwt_coeff, pywt_coeff):
             test.append(jnp.allclose(jaxwtc, pywtc))
         assert all(test)
-        all_variants_waverec = self.variant(partial(waverec, wavelet=jaxwt_wavelet))
+        all_variants_waverec = self.variant(partial(waverec, wavelet="haar"))
         rec = all_variants_waverec(jaxwt_coeff)
         assert np.allclose(data, rec)
 
