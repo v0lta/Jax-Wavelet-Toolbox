@@ -50,9 +50,7 @@ class TestHaar(parameterized.TestCase):
         ).astype(jnp.float32)
         data = jnp.expand_dims(data, 0)
         coeffs_pywt = pywt.wavedec(data, wavelet, level=2)
-        all_variants_wavedec = self.variant(
-            partial(wavedec, wavelet=wavelet, level=2)
-        )
+        all_variants_wavedec = self.variant(partial(wavedec, wavelet=wavelet, level=2))
         coeffs_jaxwt = all_variants_wavedec(data)
         cat_coeffs_pywt = jnp.concatenate(coeffs_pywt, -1)
         cat_coeffs_jaxwt = jnp.concatenate(coeffs_jaxwt, -1)

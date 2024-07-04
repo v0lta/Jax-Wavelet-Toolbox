@@ -3,12 +3,13 @@
 #
 # Copyright (c) 2023 Moritz Wolter
 #
+from functools import partial
+
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
 import pywt
-from functools import partial
 
 import src.jaxwt as jaxwt
 from tests._lorenz import generate_lorenz
@@ -28,7 +29,9 @@ def test_conv_fwt_jit(wavelet_string, level, length, batch_size, dtype):
 
     wavelet = pywt.Wavelet(wavelet_string)
     # pywt.Wavelets do not compile with jax.jit
-    jit_wavedec = jax.jit(partial(jaxwt.wavedec, wavelet=wavelet), static_argnames=["level"])
+    jit_wavedec = jax.jit(
+        partial(jaxwt.wavedec, wavelet=wavelet), static_argnames=["level"]
+    )
     coeff = jit_wavedec(data, level=level)
     jit_waverec = jax.jit(partial(jaxwt.waverec, wavelet=wavelet))
     res = jit_waverec(coeff)
@@ -40,7 +43,9 @@ def test_conv_fwt_jit_2d(level):
     """Test the jit compilation feature for the wavedec2 function."""
     data = jnp.array(np.random.randn(10, 64, 64)).astype(jnp.float64)
     wavelet = pywt.Wavelet("db2")
-    jit_wavedec2 = jax.jit(partial(jaxwt.wavedec2, wavelet=wavelet), static_argnames=["level"])
+    jit_wavedec2 = jax.jit(
+        partial(jaxwt.wavedec2, wavelet=wavelet), static_argnames=["level"]
+    )
     coeff = jit_wavedec2(data, level=level)
     jit_waverec2 = jax.jit(partial(jaxwt.waverec2, wavelet=wavelet))
     rec = jit_waverec2(coeff)

@@ -174,7 +174,7 @@ def _create_wavelet_named_tuple(
 
     Conversion is required to take advante of JAX's JIT compilation.
     Note: Jax Jit does not allow strings.
-    
+
     Args:
         wavelet (pywt.Wavelet): The pywt.Wavelet or wavelet-str
             to create the WaveletNamedTuple from. # noqa DAR003
