@@ -102,8 +102,12 @@ def wavedec(
         >>> import jax.numpy as jnp
         >>> # generate an input of even length.
         >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
-        >>> jwt.wavedec(data, wavelet=pywt.Wavelet('haar'), level=2)
+        >>> jwt.wavedec(data, wavelet='haar', level=2)
 
+        >>> import jax
+        >>> from functools import partial
+        >>> jit_wavedec = jax.jit(partial(jwt.wavedec, wavelet='haar', level=2))
+        >>> jit_wavedec(data)
     """
     if axis != -1:
         if isinstance(axis, int):
@@ -185,6 +189,11 @@ def waverec(
         >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
         >>> transformed = jwt.wavedec(data, pywt.Wavelet('haar'))
         >>> jwt.waverec(transformed, pywt.Wavelet('haar'))
+
+        >>> import jax
+        >>> from functools import partial
+        >>> jit_waverec = jax.jit(partial(jwt.waverec, wavelet='haar'))
+        >>> jit_waverec(transformed)
     """
     if axis != -1:
         swap = []

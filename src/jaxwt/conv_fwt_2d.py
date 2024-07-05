@@ -62,7 +62,8 @@ def wavedec2(
                                will be used. Defaults to None.
         axes (Tuple[int, int]): Compute the transform over these axes instead of the
             last two. Defaults to (-2, -1).
-            Jit-compiled code will only work with the last two axes.
+            This argument is not supported for Jit-compiled code.
+            Jit will only work with the last two axes.
         precision (str): For the desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
 

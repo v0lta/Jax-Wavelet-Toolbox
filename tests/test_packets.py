@@ -13,7 +13,7 @@ import numpy as np
 import pytest
 import pywt
 
-from src.jaxwt.packets import WaveletPacket, WaveletPacket2D
+from jaxwt.packets import WaveletPacket, WaveletPacket2D
 
 jax.config.update("jax_enable_x64", True)
 

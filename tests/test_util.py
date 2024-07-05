@@ -11,7 +11,7 @@ import numpy as np
 from absl.testing import parameterized
 from jax import random
 
-from src.jaxwt.utils import _fold_axes, _unfold_axes
+from jaxwt.utils import _fold_axes, _unfold_axes
 
 
 class TestFold(parameterized.TestCase):

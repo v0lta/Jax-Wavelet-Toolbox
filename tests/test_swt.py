@@ -10,9 +10,9 @@ import jax.numpy as jnp
 import pytest
 import pywt
 
-from src.jaxwt.conv_fwt import _get_filter_arrays
-from src.jaxwt.stationary_transform import _conv_transpose_dedilate, iswt, swt
-from src.jaxwt.utils import _as_wavelet
+from jaxwt.conv_fwt import _get_filter_arrays
+from jaxwt.stationary_transform import _conv_transpose_dedilate, iswt, swt
+from jaxwt.utils import _as_wavelet
 
 jax.config.update("jax_enable_x64", True)
 
