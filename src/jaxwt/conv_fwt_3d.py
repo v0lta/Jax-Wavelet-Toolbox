@@ -177,7 +177,7 @@ def waverec3(
         >>> data = jax.random.uniform(jax.random.PRNGKey(42),
         >>>                           [3, 16, 16, 16])
         >>> rec = jwt.waverec3(jwt.wavedec3(data, "haar", level=2), "haar")
-        >>> jax.numpy.allclose(data, rec)
+        >>> jax.numpy.allclose(data, rec, atol=1e-5)
 
     """
     wavelet = _as_wavelet(wavelet, dtype=_check_if_array(coeffs[0]).dtype)
