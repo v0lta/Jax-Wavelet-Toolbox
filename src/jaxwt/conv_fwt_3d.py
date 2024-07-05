@@ -44,7 +44,7 @@ def wavedec3(
                                will be used. Defaults to None.
         axes (Tuple[int, int, int]): Compute the transform over these axes instead of the
             last three. Defaults to (-3, -2, -1).
-            Jit-compiled functions are only supported for the last three axes.
+            Jitting is only supported for the last three axes.
         precision (str): For desired precision, choose "fastest", "high" or "highest".
             Defaults to "highest".
 
