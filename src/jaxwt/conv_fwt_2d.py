@@ -43,7 +43,7 @@ def _preprocess_array_dec2d(
 
 def wavedec2(
     data: jnp.ndarray,
-    wavelet: Union[pywt.Wavelet, str, WaveletNamedTuple],
+    wavelet: Union[pywt.Wavelet, str],
     mode: str = "symmetric",
     level: Optional[int] = None,
     axes: Tuple[int, int] = (-2, -1),
@@ -54,7 +54,7 @@ def wavedec2(
     Args:
         data (jnp.ndarray): Jax array containing the data to be transformed.
             A possible input shape would be [batch size, height, width].
-        wavelet (pywt.Wavelet, str, WaveletNamedTuple):  A wavelet object or wavelet string
+        wavelet (pywt.Wavelet, str):  A wavelet object or wavelet string
             for the transformation. Check pywt.wavelist() for a list of options.
         mode (str): The desired padding mode. Choose "reflect", "symmetric" or "zero".
             Defaults to symmetric.
