@@ -3,7 +3,7 @@
 #
 # Copyright (c) 2023 Moritz Wolter
 #
-from collections import namedtuple
+from functools import partial
 
 import jax
 import jax.numpy as jnp
@@ -14,16 +14,7 @@ import pywt
 import src.jaxwt as jaxwt
 from tests._lorenz import generate_lorenz
 
-WaveletTuple = namedtuple("Wavelet", ["dec_lo", "dec_hi", "rec_lo", "rec_hi"])
-
-
-def _to_wavelet_tuple(wavelet: pywt.Wavelet) -> WaveletTuple:
-    return WaveletTuple(
-        jnp.array(wavelet.dec_lo),
-        jnp.array(wavelet.dec_hi),
-        jnp.array(wavelet.rec_lo),
-        jnp.array(wavelet.rec_hi),
-    )
+jax.config.update("jax_enable_x64", True)
 
 
 @pytest.mark.slow
@@ -38,11 +29,12 @@ def test_conv_fwt_jit(wavelet_string, level, length, batch_size, dtype):
 
     wavelet = pywt.Wavelet(wavelet_string)
     # pywt.Wavelets do not compile with jax.jit
-    wavelet = _to_wavelet_tuple(wavelet)
-    jit_wavedec = jax.jit(jaxwt.wavedec, static_argnames=["level"])
-    coeff = jit_wavedec(data, wavelet, level=level)
-    jit_waverec = jax.jit(jaxwt.waverec)
-    res = jit_waverec(coeff, wavelet)
+    jit_wavedec = jax.jit(
+        partial(jaxwt.wavedec, wavelet=wavelet), static_argnames=["level"]
+    )
+    coeff = jit_wavedec(data, level=level)
+    jit_waverec = jax.jit(partial(jaxwt.waverec, wavelet=wavelet))
+    res = jit_waverec(coeff)
     assert jnp.allclose(data, res[:, : data.shape[-1]])
 
 
@@ -51,9 +43,10 @@ def test_conv_fwt_jit_2d(level):
     """Test the jit compilation feature for the wavedec2 function."""
     data = jnp.array(np.random.randn(10, 64, 64)).astype(jnp.float64)
     wavelet = pywt.Wavelet("db2")
-    wavelet = _to_wavelet_tuple(wavelet)
-    jit_wavedec2 = jax.jit(jaxwt.wavedec2, static_argnames=["level"])
-    coeff = jit_wavedec2(data, wavelet, level=level)
-    jit_waverec2 = jax.jit(jaxwt.waverec2)
-    rec = jit_waverec2(coeff, wavelet=wavelet)
+    jit_wavedec2 = jax.jit(
+        partial(jaxwt.wavedec2, wavelet=wavelet), static_argnames=["level"]
+    )
+    coeff = jit_wavedec2(data, level=level)
+    jit_waverec2 = jax.jit(partial(jaxwt.waverec2, wavelet=wavelet))
+    rec = jit_waverec2(coeff)
     assert np.allclose(rec, data)

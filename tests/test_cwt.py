@@ -14,7 +14,7 @@ from scipy import signal
 
 jax.config.update("jax_enable_x64", True)
 
-from src.jaxwt.continuous_transform import cwt
+from jaxwt.continuous_transform import cwt
 
 continuous_wavelets = [
     "cgau1",

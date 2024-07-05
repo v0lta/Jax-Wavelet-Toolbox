@@ -64,10 +64,10 @@ def swt(
         else:
             raise ValueError("swt transforms a single axis.")
 
-    wavelet = _as_wavelet(wavelet)
+    wavelet = _as_wavelet(wavelet, dtype=data.dtype)
     data, ds = _preprocess_array_dec1d(data)
 
-    dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True, dtype=data.dtype)
+    dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True)
     filt_len = dec_lo.shape[-1]
     filt = jnp.stack([dec_lo, dec_hi], 0)
 
@@ -193,9 +193,9 @@ def iswt(
     if coeffs[0].ndim > 2:
         coeffs, ds = _preprocess_result_list_rec1d(coeffs)
 
-    wavelet = _as_wavelet(wavelet)
+    wavelet = _as_wavelet(wavelet, dtype=coeffs[0].dtype)
     # unlike pytorch lax's transpose conv requires filter flips.
-    _, _, rec_lo, rec_hi = _get_filter_arrays(wavelet, flip=True, dtype=coeffs[0].dtype)
+    _, _, rec_lo, rec_hi = _get_filter_arrays(wavelet, flip=True)
     filt_len = rec_lo.shape[-1]
     rec_filt = jnp.stack([rec_lo, rec_hi], 1)
 

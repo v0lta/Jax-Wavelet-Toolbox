@@ -5,14 +5,20 @@
 # Created on Thu Jun 11 2020
 # Copyright (c) 2020 Moritz Wolter
 #
-from typing import Any, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import jax
 import jax.lax
 import jax.numpy as jnp
 import pywt
 
-from .utils import _as_wavelet, _check_if_array, _fold_axes, _unfold_axes
+from .utils import (
+    _as_wavelet,
+    _check_if_array,
+    _fold_axes,
+    _get_filter_arrays,
+    _unfold_axes,
+)
 
 
 def _preprocess_array_dec1d(
@@ -64,7 +70,8 @@ def wavedec(
     Args:
         data (jnp.ndarray): Input data array.
             I.e. of shape [batch, time].
-        wavelet (pywt.Wavelet): A wavelet name-string or a wavelet object
+        wavelet (pywt.Wavelet or str):
+            Wavelet name-string or pywt.Wavelet object
             containing the wavelet filter arrays.
             Check pywt.wavelist() for a list of options.
         mode (str): The padding used to extend the input signal.
@@ -95,8 +102,12 @@ def wavedec(
         >>> import jax.numpy as jnp
         >>> # generate an input of even length.
         >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
-        >>> jwt.wavedec(data, wavelet=pywt.Wavelet('haar'), level=2)
+        >>> jwt.wavedec(data, wavelet='haar', level=2)
 
+        >>> import jax
+        >>> from functools import partial
+        >>> jit_wavedec = jax.jit(partial(jwt.wavedec, wavelet='haar', level=2))
+        >>> jit_wavedec(data)
     """
     if axis != -1:
         if isinstance(axis, int):
@@ -104,10 +115,10 @@ def wavedec(
         else:
             raise ValueError("wavedec transforms a single axis only.")
 
-    wavelet = _as_wavelet(wavelet)
+    wavelet = _as_wavelet(wavelet, data.dtype)
+    dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True)
     data, ds = _preprocess_array_dec1d(data)
 
-    dec_lo, dec_hi, _, _ = _get_filter_arrays(wavelet, flip=True, dtype=data.dtype)
     filt_len = dec_lo.shape[-1]
     filt = jnp.stack([dec_lo, dec_hi], 0)
 
@@ -157,7 +168,7 @@ def waverec(
         coeffs (List[jnp.ndarray]): Wavelet coefficients, typically produced
             by the ``wavedec`` function.
             List entries of shape [batch_size, coefficients] work.
-        wavelet (Union[pywt.Wavelet, str]): A string with a wavelet name or
+        wavelet (pywt.Wavelet, str): A string with a wavelet name or
             a wavelet object containing the wavelet filters used to evaluate
             the decomposition.
         axis (int): Transform this axis instead of the last one. Defaults to -1.
@@ -178,6 +189,11 @@ def waverec(
         >>> data = jnp.array([0., 1., 2., 3, 4, 5, 5, 4, 3, 2, 1, 0])
         >>> transformed = jwt.wavedec(data, pywt.Wavelet('haar'))
         >>> jwt.waverec(transformed, pywt.Wavelet('haar'))
+
+        >>> import jax
+        >>> from functools import partial
+        >>> jit_waverec = jax.jit(partial(jwt.waverec, wavelet='haar'))
+        >>> jit_waverec(transformed)
     """
     if axis != -1:
         swap = []
@@ -192,9 +208,9 @@ def waverec(
     if coeffs[0].ndim > 2:
         coeffs, ds = _preprocess_result_list_rec1d(coeffs)
 
-    wavelet = _as_wavelet(wavelet)
+    wavelet = _as_wavelet(wavelet, coeffs[0].dtype)
     # unlike pytorch lax's transpose conv requires filter flips.
-    _, _, rec_lo, rec_hi = _get_filter_arrays(wavelet, flip=True, dtype=coeffs[0].dtype)
+    _, _, rec_lo, rec_hi = _get_filter_arrays(wavelet, flip=True)
     filt_len = rec_lo.shape[-1]
     filt = jnp.stack([rec_lo, rec_hi], 1)
 
@@ -279,44 +295,3 @@ def _fwt_pad(data: jnp.ndarray, filt_len: int, mode: str = "reflect") -> jnp.nda
 
     data = jnp.pad(data, [(0, 0)] * (data.ndim - 1) + [(padl, padr)], mode)
     return data
-
-
-def _get_filter_arrays(
-    wavelet: pywt.Wavelet, flip: bool, dtype: jnp.dtype[Any] = jnp.float64
-) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
-    """Extract the filter coefficients from an input wavelet object.
-
-    Args:
-        wavelet (pywt.Wavelet): A pywt-style input wavelet.
-        flip (bool): If true flip the input coefficients.
-        dtype: The desired precision. Defaults to jnp.float64 .
-
-    Returns:
-        tuple: The dec_lo, dec_hi, rec_lo and rec_hi
-            filter coefficients as jax arrays.
-    """
-
-    def create_array(filter: Union[List[float], jnp.ndarray]) -> jnp.ndarray:
-        if flip:
-            if type(filter) is jnp.ndarray:
-                return jnp.expand_dims(jnp.flip(filter), 0)
-            else:
-                return jnp.expand_dims(jnp.array(filter[::-1]), 0)
-        else:
-            if type(filter) is jnp.ndarray:
-                return jnp.expand_dims(filter, 0)
-            else:
-                return jnp.expand_dims(jnp.array(filter), 0)
-
-    if isinstance(wavelet, str):
-        wavelet = pywt.Wavelet(wavelet)
-        dec_lo, dec_hi, rec_lo, rec_hi = wavelet.filter_bank
-    elif type(wavelet) is pywt.Wavelet:
-        dec_lo, dec_hi, rec_lo, rec_hi = wavelet.filter_bank
-    else:
-        dec_lo, dec_hi, rec_lo, rec_hi = wavelet
-    dec_lo = create_array(dec_lo).astype(dtype)
-    dec_hi = create_array(dec_hi).astype(dtype)
-    rec_lo = create_array(rec_lo).astype(dtype)
-    rec_hi = create_array(rec_hi).astype(dtype)
-    return dec_lo, dec_hi, rec_lo, rec_hi

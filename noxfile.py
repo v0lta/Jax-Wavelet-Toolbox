@@ -3,26 +3,17 @@
 import nox
 
 
-def install_test_dependencies(session):
-    """Set up test dependencies."""
-    session.install("pytest")
-    session.install("scipy")
-    # pooch conveniently loads a test image.
-    session.install("pooch")
-    session.install(".")
-
-
 @nox.session(name="test")
 def run_test(session):
     """Run pytest."""
-    install_test_dependencies(session)
+    session.install(".[tests]")
     session.run("pytest")
 
 
 @nox.session(name="fast-test")
 def run_test_fast(session):
     """Run pytest."""
-    install_test_dependencies(session)
+    session.install(".[tests]")
 
     session.run("pytest", "-m", "not slow")
 
@@ -46,7 +37,7 @@ def lint(session):
 @nox.session(name="typing")
 def mypy(session):
     """Check type hints."""
-    install_test_dependencies(session)
+    session.install(".[tests]")
     session.install(".")
     session.install("mypy")
     session.run(
@@ -74,7 +65,7 @@ def format(session):
 @nox.session(name="coverage")
 def check_coverage(session):
     """Check test coverage and generate a html report."""
-    install_test_dependencies(session)
+    session.install(".[tests]")
     session.install(".")
     session.install("coverage")
     try:
