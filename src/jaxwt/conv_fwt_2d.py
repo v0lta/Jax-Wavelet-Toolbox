@@ -13,7 +13,6 @@ import pywt
 
 from .conv_fwt import _get_filter_arrays
 from .utils import (
-    WaveletNamedTuple,
     _adjust_padding_at_reconstruction,
     _as_wavelet,
     _check_axes_argument,
